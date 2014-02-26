@@ -1,0 +1,86 @@
+﻿<div class="modal fade" id="timeRegistrationdialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" data-bind="with: selectedTimeRegistration">
+        <form role="form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-bind="click: cancelSave" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Time registration</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group" data-bind="visible: !locked()">
+                                <label for="clientInput">Client</label>
+                                <select id="clientInput" class="form-control selectpicker" data-bind="options: view.clients, value: clientId, dropdown: '', optionsText: 'name', optionsValue: 'id'" title=''></select>
+                            </div>
+                            <div class="form-group" data-bind="visible: locked()">
+                                <label for="clientDisplay">Client</label>
+                                <input id="clientDisplay" type="text" class="form-control" disabled="disabled" placeholder="Client" data-bind="value: clientDisplay">
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group" data-bind="visible: !locked()">
+                                <label for="projectInput">Project</label>
+                                <select id="projectInput" class="form-control selectpicker" data-bind="options: projects, value: projectId, dropdown: '', optionsText: 'name', optionsValue: 'id'" title=''></select>
+                            </div>
+                            <div class="form-group" data-bind="visible: locked()">
+                                <label for="projectDisplay">Project</label>
+                                <input id="projectDisplay" type="text" class="form-control" disabled="disabled" placeholder="Project" data-bind="value: projectDisplay">
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group" data-bind="visible: !locked()">
+                                <label for="taskInput">Task</label>
+                                <select id="taskInput" class="form-control selectpicker" data-bind="options: tasks, value: task, dropdown: '', optionsText: 'name', optionsValue: 'name'" title=''></select>
+                            </div>
+                            <div class="form-group" data-bind="visible: locked()">
+                                <label for=" taskDisplay">Task</label>
+                                <input id="taskDisplay" type="text" class="form-control" disabled="disabled" placeholder="Task" data-bind="value: taskDisplay">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="descriptionInput">Description</label>
+                        <input type="text" class="form-control" id="descriptionInput" placeholder="Description" data-bind="value: description ">
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="fromInput">From</label>
+                                <input type="text" class="form-control" id="fromInput" placeholder="From" data-bind="value: from">
+                            </div>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="toInput">To</label>
+                                <input type="text" class="form-control" id="toInput" placeholder="To" data-bind="value: to">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="fromInput">Corrected Income</label>
+                                <input type="text" class="form-control" id="fromInput" placeholder="Corrected Income" data-bind="value: correctedIncome">
+                            </div>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="toInput">Message</label>
+                                <input type="text" class="form-control" id="toInput" placeholder="Message" data-bind="value: correctedIncomeMessage">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="pull-left">
+                        <button type="button" class="btn btn-default" data-bind="click: executeDelete, visible: !isNew()">Delete</button>
+                        <div class="spinner" data-bind="visible: isBusy"></div><span data-bind="text: message"></span>
+                    </div>
+                    <button type="button" class="btn btn-default" data-bind="click: cancelSave">Close</button>
+                    <button type="submit" class="btn btn-primary" data-bind="enable: canSave, click: save, text: updateText">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

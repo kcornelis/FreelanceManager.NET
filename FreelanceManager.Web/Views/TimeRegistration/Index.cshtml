@@ -1,0 +1,77 @@
+﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+@{
+    ViewBag.Title = "Time Registration - Overview";
+}
+
+@section Menu{
+    <li class="active"><a href="/timeregistration">Registrations</a></li>
+    <li><a href="/timeregistration/report">Report</a></li>
+    <li><a href="/timeregistration/import">Import</a></li>
+    <li><a href="/timeregistration/export">Export</a></li>
+}
+
+@section Scripts{
+    <script src="/bundles/viewmodels/timeregistration" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        var viewModel = new TimeRegistrationIndexViewModel();
+        viewModel.selectedTimeRegistration.subscribe(function (newValue) {
+            if (!newValue)
+                $("#timeRegistrationdialog").modal("hide");
+            else $("#timeRegistrationdialog").modal("show");
+        });
+
+
+        $(document).ready(function () {
+            ko.applyBindings(viewModel);
+
+            $('.date-selection input').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+        });
+
+    </script>
+}
+
+<div class="date-selection pull-right">
+    <button type="button" class="btn btn-default btn-xs" data-bind="click: previousDate"><span class="glyphicon glyphicon-chevron-left"></span></button>
+    <input type="text" class="form-control" data-bind="value: dateSelector" style="width: 100px;" />
+    <button type="button" class="btn btn-default btn-xs" data-bind="click: nextDate"><span class="glyphicon glyphicon-chevron-right"></span></button>
+</div>
+
+<div class="clearfix"></div>
+
+<h1 class="text-center" data-bind="moment: selectedDate, pattern: 'DD MMMM YYYY'"></h1>
+
+<div class="panel panel-default panel-margin" data-bind="visible: hasNoTimeRegistrations">
+    <div class="panel-body text-center">
+        No items
+    </div>
+</div>
+
+
+<div id="timeRegistrationList" class="list-group" data-bind="foreach: timeRegistrations">
+    <a href="#" class="list-group-item" data-bind="attr: { 'data-timeregistrationid': id }, css: { active: selected }, click: select">
+        <div class="row">
+            <div class="col-xs-2">
+                <strong><span data-bind="text: from">&nbsp;</span></strong><br />
+                <strong><span data-bind="text: to">&nbsp;</span></strong>
+            </div>
+            <div class="col-xs-8">
+                <strong class="hideOverflow"><span data-bind="text: clientDisplay">&nbsp;</span> - <span data-bind="    text: projectDisplay">&nbsp;</span></strong>
+                <span class="hideOverflow"><span data-bind="text: taskDisplay">&nbsp;</span> - <span data-bind="    text: description">&nbsp;</span></span>
+            </div>
+            <div class="col-xs-2">
+                <span data-bind="moment: timespan, pattern: 'HH:mm'">&nbsp;</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+<button id="add-workitem" type="button" class="btn btn-primary pull-right" data-bind="click: newTimeRegistration"
+        data-toggle="modal" data-target="#timeRegistrationdialog">
+    <span class="glyphicon glyphicon-plus"></span>
+</button>
+
+
+@Html.Partial("TimeRegistrationDialog")

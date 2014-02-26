@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Freelance project manager">
+    <meta name="author" content="Cornelis Kevin">
+    <title>"Freelance manager</title>
+    <link href="/bundles/css/all" type="text/css" rel="stylesheet" />
+    <script src="/bundles/js/jquery" type="text/javascript"></script>
+    <script src="/bundles/js/modernizr" type="text/javascript"></script>
+</head>
+<body>
+    <div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/setup">Freelance Manager SETUP</a>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/bundles/js/common" type="text/javascript"></script>
+    @RenderSection("Scripts", false)
+</body>
+</html>

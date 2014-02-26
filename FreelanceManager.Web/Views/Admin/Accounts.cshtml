@@ -1,0 +1,133 @@
+﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+@{
+    ViewBag.Title = "Freelance manager - Admin - Accounts";
+    Layout = "Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Scripts{
+    <script src="/bundles/viewmodels/admin" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        var viewModel = new accountIndexViewModel();
+        viewModel.selectedAccount.subscribe(function (newValue) {
+            if (!newValue)
+                $("#accountDialog").modal("hide");
+            else $("#accountDialog").modal("show");
+        });
+        viewModel.accountToChangePassword.subscribe(function (newValue) {
+            if (!newValue)
+                $("#changePasswordDialog").modal("hide");
+            else $("#changePasswordDialog").modal("show");
+        });
+
+        $(document).ready(function () {
+            ko.applyBindings(viewModel);
+        });
+
+    </script>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>First name</th>
+            <th>Last name</th>
+            <th>Email</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: accounts">
+        <tr>
+            <td><span data-bind="text: name">&nbsp;</span></td>
+            <td><span data-bind="text: firstName">&nbsp;</span></td>
+            <td><span data-bind="text: lastName">&nbsp;</span></td>
+            <td><span data-bind="text: email">&nbsp;</span></td>
+            <td>
+                <div class="pull-right">
+                    <a href="#" class="btn btn-primary btn-xs" data-bind="click: changePassword">
+                        <i class="icon-key"></i> Password
+                    </a>
+                    <a href="#" class="btn btn-success btn-xs" data-bind="click: select">
+                        <i class="icon-edit"></i> Edit
+                    </a>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<button type="button" class="btn btn-primary pull-right" data-bind="click: newAccount"
+        data-toggle="modal" data-target="#accountDialog">
+    <span class="glyphicon glyphicon-plus"></span>
+</button>
+
+
+<div class="modal fade" id="accountDialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" data-bind="with: selectedAccount">
+        <form role="form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-bind="click: cancelSave" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Account</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nameInput">Name</label>
+                        <input type="text" class="form-control" id="nameInput" placeholder="Name" data-bind="value: name">
+                    </div>
+                    <div class="form-group">
+                        <label for="firstNameInput">First name</label>
+                        <input type="text" class="form-control" id="firstNameInput" placeholder="First name" data-bind="value: firstName">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastNameInput">Last name</label>
+                        <input type="text" class="form-control" id="lastNameInput" placeholder="Last name" data-bind="value: lastName">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailInput">Email</label>
+                        <input type="text" class="form-control" id="emailInput" placeholder="Email" data-bind="value: email">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="pull-left">
+                        <i class="icon-repeat" data-bind="visible: isBusy"></i><span data-bind="    text: message"></span>
+                    </div>
+                    <button type="button" class="btn btn-default" data-bind="click: cancelSave">Close</button>
+                    <button type="submit" class="btn btn-primary" data-bind="enable: canSave, click: save, text: updateText">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="modal fade" id="changePasswordDialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" data-bind="with: accountToChangePassword">
+        <form role="form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-bind="click: cancelNewPassword" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Change password</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nameInput">New password</label>
+                        <input type="password" class="form-control" id="passwordInput" placeholder="New password" data-bind="value: password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="pull-left">
+                        <i class="icon-repeat" data-bind="visible: isBusy"></i><span data-bind="text: message"></span>
+                    </div>
+                    <button type="button" class="btn btn-default" data-bind="click: cancelNewPassword">Close</button>
+                    <button type="submit" class="btn btn-primary" data-bind="enable: cancelNewPassword, click: saveNewPassword">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+

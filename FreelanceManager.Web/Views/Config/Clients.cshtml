@@ -1,0 +1,69 @@
+﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+@{
+    ViewBag.Title = "Freelance manager - Clients";
+}
+
+@section Scripts{
+    <script src="/bundles/viewmodels/config" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        var viewModel = new ConfigClientsViewModel();
+        viewModel.selectedClient.subscribe(function (newValue) {
+            toggleDialog("#clientDialog", newValue);
+        });
+        viewModel.selectedProject.subscribe(function (newValue) {
+            if (!newValue)
+                $("#projectDialog").modal("hide");
+            else $("#projectDialog").modal("show");
+        });
+        viewModel.selectedProjectTasks.subscribe(function (newValue) {
+            if (!newValue)
+                $("#projectTasksDialog").modal("hide");
+            else $("#projectTasksDialog").modal("show");
+        });
+
+        $(document).ready(function () {
+            ko.applyBindings(viewModel);
+        });
+
+    </script>
+}
+
+<h1 class="text-center">
+    Clients &amp; Projects
+</h1>
+
+<div class="client-list" data-bind="foreach: clients">
+
+    <div class="btn-group pull-right">
+        <button type="button" class="btn btn-primary btn-xs" data-bind="attr: { 'data-clientid': id }, click: select">Edit Client</button>
+        <button type="button" class="btn btn-primary btn-xs" data-bind="click: newProject" data-toggle="modal" data-target="#projectDialog">
+            Add Project
+        </button>
+    </div>
+    <h3 class="panel-title hideOverflow" data-bind="text: name"></h3>
+    <hr />
+
+    <ul class="list-group" data-bind="foreach: projects">
+        <li class="list-group-item" data-bind="css: { 'hidden-project': hidden }">
+
+            <button type="button" class="btn btn-primary btn-xs pull-right" data-bind="attr: { 'data-project': id }, click: select">Edit</button>
+            <button type="button" class="btn btn-primary btn-xs pull-right" data-bind="attr: { 'data-project': id }, click: selectTasks">Tasks</button>
+            <h4 class="list-group-item-heading" data-bind="text: name">&nbsp;</h4>
+            <p class="list-group-item-text" data-bind="text: description">&nbsp;</p>
+
+        </li>
+    </ul>
+
+</div>
+
+<button id="add-client" type="button" class="btn btn-primary pull-right" data-bind="click: newClient"
+        data-toggle="modal" data-target="#clientDialog">
+    <span class="glyphicon glyphicon-plus"></span>
+</button>
+
+@Html.Partial("ClientDialog")
+
+@Html.Partial("ProjectDialog")
+
+@Html.Partial("ProjectTasksDialog")

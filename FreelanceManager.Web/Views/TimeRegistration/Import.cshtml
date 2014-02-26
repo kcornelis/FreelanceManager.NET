@@ -1,0 +1,77 @@
+﻿@model FreelanceManager.Web.ViewModels.TimeRegistration.ImportViewModel
+@{
+    ViewBag.Title = "Time Registration - Import";
+}
+
+@section Menu{
+    <li><a href="@Url.Action("Index")">Registrations</a></li>
+    <li><a href="@Url.Action("Report")">Report</a></li>
+    <li class="active"><a href="@Url.Action("Import")">Import</a></li>
+    <li><a href="@Url.Action("Export")">Export</a></li>
+}
+
+<h1 class="text-center">Import</h1>
+
+@if (Model.ColumnNames != null)
+{
+    using (Html.BeginForm("Import", "TimeRegistration", FormMethod.Post, new { role = "form" }))
+    {
+        @Html.HiddenFor(m => m.ServerFile)
+    
+        <div class="form-group">
+            <label for="ClientIdColumn">Client column</label>
+            @Html.DropDownListFor(m => m.ClientIdColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">Project column</label>
+            @Html.DropDownListFor(m => m.ProjectIdColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">Task column</label>
+            @Html.DropDownListFor(m => m.TaskColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">Rate column</label>
+            @Html.DropDownListFor(m => m.RateColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">From column</label>
+            @Html.DropDownListFor(m => m.FromColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">To column</label>
+            @Html.DropDownListFor(m => m.ToColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <div class="form-group">
+            <label for="ClientIdColumn">Description column</label>
+            @Html.DropDownListFor(m => m.DescriptionColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+        </div>
+
+        <button type="submit" class="btn btn-default">Submit</button>
+    }
+}
+else
+{
+    using (Html.BeginForm("ImportUpload", "TimeRegistration", FormMethod.Post, new { EncType = "multipart/form-data", role = "form" }))
+    {
+        <div class="form-group">
+            <div style="position:relative;">
+                <a class='btn btn-primary' href='javascript:;'>
+                    Choose File...
+                    <input type="file" style='position:absolute;z-index:2;top:0;left:0;filter: alpha(opacity=0);-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";opacity:0;background-color:transparent;color:transparent;' name="ExcelFile" size="40" onchange='$("#upload-file-info").html($(this).val());'>
+                </a>
+                &nbsp;
+                <span class='label label-info' id="upload-file-info"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-default">Submit</button>
+    }
+}
+
