@@ -1,65 +1,99 @@
-﻿@model FreelanceManager.Web.ViewModels.TimeRegistration.ImportViewModel
+﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<FreelanceManager.Web.ViewModels.TimeRegistration.ImportViewModel>
 @{
     ViewBag.Title = "Time Registration - Import";
 }
 
 @section Menu{
-    <li><a href="@Url.Action("Index")">Registrations</a></li>
-    <li><a href="@Url.Action("Report")">Report</a></li>
-    <li class="active"><a href="@Url.Action("Import")">Import</a></li>
-    <li><a href="@Url.Action("Export")">Export</a></li>
+    <li><a href="/timeregistration">Registrations</a></li>
+    <li><a href="/timeregistration/report">Report</a></li>
+    <li class="active"><a href="/timeregistration/import">Import</a></li>
+    <li><a href="/timeregistration/export">Export</a></li>
 }
 
 <h1 class="text-center">Import</h1>
 
 @if (Model.ColumnNames != null)
 {
-    using (Html.BeginForm("Import", "TimeRegistration", FormMethod.Post, new { role = "form" }))
-    {
-        @Html.HiddenFor(m => m.ServerFile)
-    
+    <form method="post" action="/timeregistration/import">
+        <input type="hidden" name="serverFile" value="@Model.ServerFile" />
+
         <div class="form-group">
-            <label for="ClientIdColumn">Client column</label>
-            @Html.DropDownListFor(m => m.ClientIdColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="clientIdColumn">Client column</label>
+            <select id="clientIdColumn" name="clientIdColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">Project column</label>
-            @Html.DropDownListFor(m => m.ProjectIdColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="projectIdColumn">Project column</label>
+            <select id="projectIdColumn" name="projectIdColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">Task column</label>
-            @Html.DropDownListFor(m => m.TaskColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="taskColumn">Task column</label>
+            <select id="taskColumn" name="taskColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">Rate column</label>
-            @Html.DropDownListFor(m => m.RateColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="rateColumn">Rate column</label>
+            <select id="rateColumn" name="rateColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">From column</label>
-            @Html.DropDownListFor(m => m.FromColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="fromColumn">From column</label>
+            <select id="fromColumn" name="fromColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">To column</label>
-            @Html.DropDownListFor(m => m.ToColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="toColumn">To column</label>
+            <select id="toColumn" name="toColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <div class="form-group">
-            <label for="ClientIdColumn">Description column</label>
-            @Html.DropDownListFor(m => m.DescriptionColumn, new SelectList(Model.ColumnNames, "Column", "Name"), new { @class = "form-control selectpicker" })
+            <label for="descriptionColumn">Description column</label>
+            <select id="descriptionColumn" name="descriptionColumn" class="form-control selectpicker">
+                @foreach (var column in Model.ColumnNames)
+                {
+                    <option value="@column.Column">@column.Name</option>
+                }
+            </select>
         </div>
 
         <button type="submit" class="btn btn-default">Submit</button>
-    }
+
+    </form>
 }
 else
 {
-    using (Html.BeginForm("ImportUpload", "TimeRegistration", FormMethod.Post, new { EncType = "multipart/form-data", role = "form" }))
-    {
+    <form method="post" action="/timeregistration/importupload" enctype="multipart/form-data">
         <div class="form-group">
             <div style="position:relative;">
                 <a class='btn btn-primary' href='javascript:;'>
@@ -72,6 +106,6 @@ else
         </div>
 
         <button type="submit" class="btn btn-default">Submit</button>
-    }
+    </form>
 }
 
