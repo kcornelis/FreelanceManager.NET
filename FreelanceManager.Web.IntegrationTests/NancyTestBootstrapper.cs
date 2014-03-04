@@ -4,7 +4,6 @@ using System.Reflection;
 using Autofac;
 using EventStore;
 using EventStore.Serialization;
-using FreelanceManager.Bus;
 using FreelanceManager.Infrastructure;
 using FreelanceManager.Web.Shared;
 using MongoDB.Bson.Serialization;
@@ -17,8 +16,13 @@ using Nancy.Security;
 
 namespace FreelanceManager.Web
 {
-    public class Bootstrapper : AutofacNancyBootstrapper
+    public class NancyTestBootstrapper : AutofacNancyBootstrapper
     {
+        public ILifetimeScope CreateContainer()
+        {
+            return base.CreateRequestContainer();
+        }
+
         protected override void ConfigureConventions(Nancy.Conventions.NancyConventions nancyConventions)
         {
             base.ConfigureConventions(nancyConventions);
@@ -77,17 +81,22 @@ namespace FreelanceManager.Web
             builder.RegisterType<GuidGenerator>().As<IIdGenerator>();
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
-            builder.RegisterType<MsmqServiceBus>().As<IServiceBus>().SingleInstance();
+            builder.RegisterType<InMemoryServiceBus>().As<IServiceBus>().SingleInstance().WithParameter("container", container);
 
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
-            builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
+            builder.RegisterType<StaticContentResolverForInMemory>().As<IStaticContentResolver>();
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))
                    .AsImplementedInterfaces();
+            builder.RegisterAssemblyTypes(readModelAssembly)
+                   .Where(t => t.Name.EndsWith("Handlers"))
+                   .AsSelf();
 
             builder.Update(container.ComponentRegistry);
+
+            ((InMemoryServiceBus)container.Resolve<IServiceBus>()).RegisterHandlersFromAssembly(readModelAssembly);
         }
 
         private void RegisterEventStore(ILifetimeScope container)

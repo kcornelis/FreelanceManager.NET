@@ -63,6 +63,7 @@ namespace FreelanceManager.Web.Modules
                 return Response.AsRedirect("~/timeregistration/mapimport/" + HttpUtility.UrlEncode(fileName));
             };
 
+            // TODO return/show import results
             Post["/import"] = _ =>
             {
                 var viewModel = this.Bind<ImportViewModel>();
