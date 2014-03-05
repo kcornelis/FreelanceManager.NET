@@ -12,7 +12,7 @@ using NLog;
 
 namespace FreelanceManager.Infrastructure.ServiceBus
 {
-    public class MessageReceiver
+    public class MsmqMessageReceiver
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.ServiceBus);
         private Dictionary<Type, List<Type>> _eventTypesWithHandlers = new Dictionary<Type, List<Type>>();
@@ -22,7 +22,7 @@ namespace FreelanceManager.Infrastructure.ServiceBus
         private MessageQueue _queue;
         private int _retryCount = 0;
 
-        public MessageReceiver(IContainer container, string endpoint)
+        public MsmqMessageReceiver(IContainer container, string endpoint)
         {
             _container = container;
             _endpoint = endpoint;

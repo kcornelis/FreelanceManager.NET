@@ -12,9 +12,9 @@ namespace FreelanceManager.Bus
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.ServiceBus);
         private readonly Dictionary<string, MsmqMessageSender> _senders = new Dictionary<string, MsmqMessageSender>();
-        private readonly List<string> _publishTo = new List<string>();
+        private readonly List<string> _receivers = new List<string>();
         private readonly IContainer _container;
-        private MessageReceiver _receiver;
+        private MsmqMessageReceiver _receiver;
         private object _lock = new object();
 
         public MsmqServiceBus() { }
@@ -24,15 +24,15 @@ namespace FreelanceManager.Bus
             _container = container;
         }
 
-        public void RegisterPublishTo(string endpoint)
+        public void RegisterReceiver(string endpoint)
         {
-            if (!_publishTo.Contains(endpoint))
+            if (!_receivers.Contains(endpoint))
             {
                 lock (_lock)
                 {
-                    if (!_publishTo.Contains(endpoint))
+                    if (!_receivers.Contains(endpoint))
                     {
-                        _publishTo.Add(endpoint);
+                        _receivers.Add(endpoint);
                     }
                 }
             }
@@ -46,7 +46,7 @@ namespace FreelanceManager.Bus
             {
                 using (var scope = new TransactionScope(TransactionScopeOption.Required))
                 {
-                    foreach (var endpoint in _publishTo)
+                    foreach (var endpoint in _receivers)
                     {
                         GetSender(endpoint).Send(messages, headers);
                     }
@@ -106,7 +106,7 @@ namespace FreelanceManager.Bus
         {
             _logger.Info("Starting servicebus, listening to " + listenTo);
 
-            _receiver = new MessageReceiver(_container, listenTo);
+            _receiver = new MsmqMessageReceiver(_container, listenTo);
             _receiver.RegisterHandlersFromAssembly(handlers);
             _receiver.Start();
         }

@@ -27,10 +27,15 @@ namespace FreelanceManager.Web
             {
                 var account = new Domain.Account(Guid.NewGuid(),
                     "John Doe BVBA", "John", "Doe", "john@doe.com");
+                var accountAdmin = new Domain.Account(Guid.NewGuid(),
+                    "Jane Doe BVBA", "Jane", "Doe", "jane@doe.com");
 
                 account.ChangePassword("john");
+                accountAdmin.ChangePassword("jane");
+                accountAdmin.MakeAdmin();
 
                 container.Resolve<IAggregateRootRepository>().Save(account);
+                container.Resolve<IAggregateRootRepository>().Save(accountAdmin);
             }
         }
 
@@ -41,7 +46,20 @@ namespace FreelanceManager.Web
 
         public static Browser CreateBrowserAndAuthenticate()
         {
-            return new Browser(_bootstrapper).AuthenticateWithTestUser().Then;
+            return new Browser(_bootstrapper).Post("/account/login", c =>
+            {
+                c.FormValue("email", "john@doe.com");
+                c.FormValue("password", "john");
+            }).Then;
+        }
+
+        public static Browser CreateBrowserAndAuthenticateWithAdmin()
+        {
+            return new Browser(_bootstrapper).Post("/account/login", c =>
+            {
+                c.FormValue("email", "jane@doe.com");
+                c.FormValue("password", "jane");
+            }).Then;
         }
     }
 }

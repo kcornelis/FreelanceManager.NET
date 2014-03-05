@@ -62,5 +62,10 @@ namespace FreelanceManager.Infrastructure
                 }
             }
         }
+
+        public void RegisterReceiver(string endpoint)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
