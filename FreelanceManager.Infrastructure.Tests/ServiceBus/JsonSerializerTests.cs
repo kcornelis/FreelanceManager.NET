@@ -9,7 +9,7 @@ using Xunit;
 
 namespace FreelanceManager.Infrastructure.ServiceBus
 {
-    public class JsonMessageFormatterTests
+    public class JsonSerializerTests
     {
         [Fact]
         public void Basic_Object_Conversion()
@@ -89,12 +89,8 @@ namespace FreelanceManager.Infrastructure.ServiceBus
 
         private T Test<T>(T objectToTest)
         {
-            var formatter = new JsonMessageFormatter<T>();
-            var message = new Message();
-
-            formatter.Write(message, objectToTest);
-
-            return (T)formatter.Read(message);
+            var json = JsonSerializer.Serialize(objectToTest);
+            return (T)JsonSerializer.Deserialize(json);
         }
 
         class Person

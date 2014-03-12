@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace FreelanceManager
 {
-    public interface IServiceBus
+    public interface IServiceBus : IDisposable
     {
-        void RegisterReceiver(string endpoint);
-        void Publish(object[] messages, Dictionary<string, string> headers);
         void Send(string endpoint, object[] messages, Dictionary<string, string> headers);
+        void Publish(object[] messages, Dictionary<string, string> headers);
+        void RegisterHandlers(Assembly assembly);
+        void Start(string name);
     }
 }

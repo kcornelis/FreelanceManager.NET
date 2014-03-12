@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Web;
 using Autofac;
 using EventStore;
+using NLog;
 
 namespace FreelanceManager.Web.Shared
 {
     public class AuthorizationPipelineHook : IPipelineHook
     {
+        private static readonly Logger _logger = LogManager.GetLogger(Loggers.Web);
         private readonly ILifetimeScope _container;
 
         public AuthorizationPipelineHook(ILifetimeScope container)
@@ -37,13 +38,17 @@ namespace FreelanceManager.Web.Shared
             {
                 if (loggedInUserIsAdmin)
                     return committed;
+
+                _logger.Warn(string.Format("{0} is trying to access a document with no tenant but is not allowed.", loggedInUser));
                 return null;
             }
             else
             {
                 if (loggedInUser == tenant)
                     return committed;
-                else return null;
+
+                _logger.Warn(string.Format("{0} is trying to access document with tenant id {1} but is not allowed.", loggedInUser, tenant));
+                return null;
             }
         }
 

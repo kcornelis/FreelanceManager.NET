@@ -70,6 +70,9 @@
     <Reference Include="MassTransit.Transports.AzureServiceBus">
       <HintPath>..\packages\MassTransit.AzureServiceBus.0.2.0\lib\net40\MassTransit.Transports.AzureServiceBus.dll</HintPath>
     </Reference>
+    <Reference Include="MassTransit.Transports.MSMQ">
+      <HintPath>..\packages\MassTransit.MSMQ.2.9.5\lib\net40\MassTransit.Transports.MSMQ.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Owin">
       <HintPath>..\packages\Microsoft.Owin.2.1.0\lib\net45\Microsoft.Owin.dll</HintPath>
     </Reference>

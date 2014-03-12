@@ -8,6 +8,9 @@ namespace FreelanceManager.Web.Modules
 {
     public class BundleModule : NancyModule
     {
+        private static bool _initialized;
+        private static object _lock = new object();
+
         public BundleModule(IStaticContentResolver staticContentResolver)
             : base("/bundles")
         {
@@ -26,14 +29,12 @@ namespace FreelanceManager.Web.Modules
                 Configuration.Instance.CssMimeType);
         }
 
-        Response CreateResponse(string content, string contentType)
+        private Response CreateResponse(string content, string contentType)
         {
             return Response.FromStream(() => new MemoryStream(Encoding.UTF8.GetBytes(content)), contentType)
                            .WithHeader("Cache-Control", "max-age=45");
         }
 
-        static bool _initialized;
-        static object _lock = new object();
         private static void Initialize(IStaticContentResolver staticContentResolver)
         {
             if (_initialized)

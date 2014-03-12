@@ -1,34 +1,57 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
+﻿using System.Configuration;
 using Autofac;
-using FreelanceManager.Bus;
 using FreelanceManager.Infrastructure;
+using NLog;
 
 namespace FreelanceManager.ReadModel.Console
 {
     class Program
     {
+        private static readonly Logger _logger = LogManager.GetLogger(Loggers.ReadModel);
+
         static void Main(string[] args)
         {
+            _logger.Info("Starting read model console");
+
+            using (var container = new ContainerBuilder().Build())
+            {
+                RegisterServices(container);
+                RegisterBus(container);
+
+                _logger.Info("Registering services finished");
+
+                container.Resolve<IServiceBus>().Start(ApplicationServices.ReadModelHandlers);
+
+                System.Console.Read();
+            }
+        }
+
+        static void RegisterServices(IContainer container)
+        {
             var builder = new ContainerBuilder();
+            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
 
-            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))
                    .AsImplementedInterfaces();
 
-            var container = builder.Build();
+            builder.Update(container.ComponentRegistry);
+        }
 
-            var serviceBus = new MsmqServiceBus(container);
-            serviceBus.Start(ConfigurationManager.AppSettings["BusEndpoint"], readModelAssembly);
+        static void RegisterBus(IContainer container)
+        {
+            var builder = new ContainerBuilder();
+            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
-            System.Console.Read();
+            var bus = new MassTransitServiceBus(MassTransitTransport.Msmq, container);
+            bus.RegisterHandlers(readModelAssembly);
 
-            //todo: stop bus
+            builder.RegisterInstance(bus).As<IServiceBus>();
+
+            builder.Update(container.ComponentRegistry);
         }
     }
 }

@@ -18,12 +18,31 @@ namespace FreelanceManager.Infrastructure
             _container = container;
         }
 
-        public void Publish(object[] messages, Dictionary<string, string> headers)
+        public void Send(string endpoint, object[] messages, Dictionary<string, string> headers)
         {
-            Send(null, messages, headers);
+            Publish(messages, headers);
         }
 
-        public void Send(string endpoint, object[] messages, Dictionary<string, string> headers)
+        public void RegisterHandlersFromAssembly(Assembly assembly)
+        {
+            foreach(var type in assembly.GetTypes())
+            {
+                foreach(var handlerInterfaceType in type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandleEvent<>)))
+                {
+                    var messageType = handlerInterfaceType.GetGenericArguments().First();
+
+                    if (!_eventTypesWithHandlers.ContainsKey(messageType))
+                    {
+                        _eventTypesWithHandlers.Add(messageType, new List<Type>());
+                    }
+
+                    _eventTypesWithHandlers[messageType].Add(type); 
+                }
+            }
+        }
+
+
+        public void Publish(object[] messages, Dictionary<string, string> headers)
         {
             // NOTE: we should set the tenant context here if the message 
             // infrastructure get's decoupled from the web
@@ -45,27 +64,19 @@ namespace FreelanceManager.Infrastructure
             }
         }
 
-        public void RegisterHandlersFromAssembly(Assembly assembly)
+        public void RegisterHandlers(Assembly assembly)
         {
-            foreach(var type in assembly.GetTypes())
-            {
-                foreach(var handlerInterfaceType in type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandleEvent<>)))
-                {
-                    var messageType = handlerInterfaceType.GetGenericArguments().First();
-
-                    if (!_eventTypesWithHandlers.ContainsKey(messageType))
-                    {
-                        _eventTypesWithHandlers.Add(messageType, new List<Type>());
-                    }
-
-                    _eventTypesWithHandlers[messageType].Add(type); 
-                }
-            }
+          
         }
 
-        public void RegisterReceiver(string endpoint)
+        public void Start(string name)
         {
-            throw new NotImplementedException();
+           
+        }
+
+        public void Dispose()
+        {
+           
         }
     }
 }

@@ -5,5 +5,6 @@
         public const string ServiceBus = "FreelanceManager.ServiceBus";
         public const string Web = "FreelanceManager.Web";
         public const string EventStore = "FreelanceManager.EventStore";
+        public const string ReadModel = "FreelanceManager.ReadModel";
     }
 }

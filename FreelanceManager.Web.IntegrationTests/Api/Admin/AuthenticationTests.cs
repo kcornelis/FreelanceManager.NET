@@ -59,7 +59,7 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticate();
 
-            var code = browser.Get("/read/admin/account/" + Guid.NewGuid())
+            var code = browser.Get("/read/admin/accounts/" + Guid.NewGuid())
                               .StatusCode;
 
             Assert.Equal(HttpStatusCode.Forbidden, code);

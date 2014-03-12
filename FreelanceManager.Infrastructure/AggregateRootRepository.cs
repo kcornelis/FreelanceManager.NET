@@ -4,11 +4,14 @@ using System.Linq;
 using System.Transactions;
 using EventStore;
 using FreelanceManager.Events;
+using NLog;
 
 namespace FreelanceManager.Infrastructure
 {
     public class AggregateRootRepository : IAggregateRootRepository, IDisposable
     {
+        private static readonly Logger _logger = LogManager.GetLogger(Loggers.EventStore);
+
         private const string AggregateTypeHeader = "AggregateType";
         private const string TenantHeader = "Tenant";
         private const string AggregateIdHeader = "AggregateId";

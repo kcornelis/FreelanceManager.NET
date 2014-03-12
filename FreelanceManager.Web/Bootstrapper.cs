@@ -4,7 +4,6 @@ using System.Reflection;
 using Autofac;
 using EventStore;
 using EventStore.Serialization;
-using FreelanceManager.Bus;
 using FreelanceManager.Infrastructure;
 using FreelanceManager.Web.Shared;
 using MongoDB.Bson.Serialization;
@@ -19,6 +18,7 @@ namespace FreelanceManager.Web
 {
     public class Bootstrapper : AutofacNancyBootstrapper
     {
+
         protected override void ConfigureConventions(Nancy.Conventions.NancyConventions nancyConventions)
         {
             base.ConfigureConventions(nancyConventions);
@@ -35,6 +35,7 @@ namespace FreelanceManager.Web
         protected override void ConfigureApplicationContainer(ILifetimeScope existingContainer)
         {
             RegisterServices(existingContainer);
+            RegisterBus(existingContainer);
             RegisterEventStore(existingContainer);
         }
 
@@ -72,20 +73,35 @@ namespace FreelanceManager.Web
         private void RegisterServices(ILifetimeScope container)
         {
             var builder = new ContainerBuilder();
+            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
             builder.RegisterType<NancyUserMapper>().As<IUserMapper>();
             builder.RegisterType<GuidGenerator>().As<IIdGenerator>();
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
-            builder.RegisterType<MsmqServiceBus>().As<IServiceBus>().SingleInstance();
+
 
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
             builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
 
-            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
+            
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))
                    .AsImplementedInterfaces();
+
+            builder.Update(container.ComponentRegistry);
+        }
+
+        private void RegisterBus(ILifetimeScope container)
+        {
+            var builder = new ContainerBuilder();
+
+            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
+
+            var bus = new MassTransitServiceBus(MassTransitTransport.Msmq, container);
+            bus.Start(ApplicationServices.Web);
+
+            builder.RegisterInstance(bus).As<IServiceBus>();
 
             builder.Update(container.ComponentRegistry);
         }
@@ -107,7 +123,6 @@ namespace FreelanceManager.Web
             BsonClassMap.LookupClassMap(typeof(Named));
 
             var eventStore = Wireup.Init()
-                .LogToOutputWindow()
                 .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())
                 .InitializeStorageEngine()
                 .HookIntoPipelineUsing(new[] { new AuthorizationPipelineHook(container) })

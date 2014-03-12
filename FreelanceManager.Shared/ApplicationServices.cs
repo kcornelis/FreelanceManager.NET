@@ -3,8 +3,9 @@ using System.Reflection;
 
 namespace FreelanceManager
 {
-    public class BusEndpoints
+    public class ApplicationServices
     {
         public const string ReadModelHandlers = "freelancemanager.readmodel.host";
+        public const string Web = "freelancemanager.web";
     }
 }

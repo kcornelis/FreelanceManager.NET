@@ -71,6 +71,7 @@
     <Compile Include="IHandleEvent.cs" />
     <Compile Include="IServiceBus.cs" />
     <Compile Include="Loggers.cs" />
+    <Compile Include="MessageTypes.cs" />
     <Compile Include="Money.cs" />
     <Compile Include="Named.cs" />
     <Compile Include="Time.cs" />
@@ -91,7 +92,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="IAggregateRoot.cs" />
     <Compile Include="IAggregateRootRepository.cs" />
-    <Compile Include="BusEndpoints.cs" />
+    <Compile Include="ApplicationServices.cs" />
     <Compile Include="IMongoContext.cs" />
     <Compile Include="IIdGenerator.cs" />
     <Compile Include="ITenantContext.cs" />

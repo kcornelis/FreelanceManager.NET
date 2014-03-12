@@ -20,12 +20,19 @@ namespace FreelanceManager.Web.Shared
         {
             try
             {
-                _logger.Debug("Dispatching commit, number of events: " + commit.Events.Count);
-
                 var _bus = _container.Resolve<IServiceBus>();
-                _bus.Send(BusEndpoints.ReadModelHandlers,
-                    commit.Events.Select(e => e.Body).ToArray(),
-                    commit.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()));
+
+                if (_logger.IsDebugEnabled)
+                {
+                    _logger.Debug("Dispatching commit, number of events: " + commit.Events.Count);
+                }
+
+                var @events = commit.Events.Select(e => e.Body).ToArray();
+                var headers = commit.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
+                headers.Add("ApplicationService", ApplicationServices.Web);
+                headers.Add("MessageType", "DomainEvent");
+
+                _bus.Publish(@events, headers);
             }
             catch (Exception ex)
             {
