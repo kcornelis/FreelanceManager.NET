@@ -96,7 +96,7 @@ namespace FreelanceManager.Web
 
             builder.Update(container.ComponentRegistry);
 
-            ((InMemoryServiceBus)container.Resolve<IServiceBus>()).RegisterHandlersFromAssembly(readModelAssembly);
+            container.Resolve<IServiceBus>().RegisterHandlers(readModelAssembly);
         }
 
         private void RegisterEventStore(ILifetimeScope container)

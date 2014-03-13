@@ -23,25 +23,6 @@ namespace FreelanceManager.Infrastructure
             Publish(messages, headers);
         }
 
-        public void RegisterHandlersFromAssembly(Assembly assembly)
-        {
-            foreach(var type in assembly.GetTypes())
-            {
-                foreach(var handlerInterfaceType in type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandleEvent<>)))
-                {
-                    var messageType = handlerInterfaceType.GetGenericArguments().First();
-
-                    if (!_eventTypesWithHandlers.ContainsKey(messageType))
-                    {
-                        _eventTypesWithHandlers.Add(messageType, new List<Type>());
-                    }
-
-                    _eventTypesWithHandlers[messageType].Add(type); 
-                }
-            }
-        }
-
-
         public void Publish(object[] messages, Dictionary<string, string> headers)
         {
             // NOTE: we should set the tenant context here if the message 
@@ -66,7 +47,20 @@ namespace FreelanceManager.Infrastructure
 
         public void RegisterHandlers(Assembly assembly)
         {
-          
+            foreach (var type in assembly.GetTypes())
+            {
+                foreach (var handlerInterfaceType in type.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandleEvent<>)))
+                {
+                    var messageType = handlerInterfaceType.GetGenericArguments().First();
+
+                    if (!_eventTypesWithHandlers.ContainsKey(messageType))
+                    {
+                        _eventTypesWithHandlers.Add(messageType, new List<Type>());
+                    }
+
+                    _eventTypesWithHandlers[messageType].Add(type);
+                }
+            }
         }
 
         public void Start(string name)

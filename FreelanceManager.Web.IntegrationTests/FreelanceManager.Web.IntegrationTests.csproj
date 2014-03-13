@@ -175,10 +175,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\Admin\AuthenticationTests.cs" />
-    <Compile Include="Api\Admin\CRUDTests.cs" />
+    <Compile Include="Api\Admin\ApiTests.cs" />
+    <Compile Include="Api\Clients\ApiTests.cs" />
+    <Compile Include="Api\Clients\AuthenticationTests.cs" />
+    <Compile Include="Api\Projects\AuthenticationTests.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="NancyTestBootstrapper.cs" />
-    <Compile Include="Test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -211,8 +213,6 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Api\Clients\" />
-    <Folder Include="Api\Projects\" />
     <Folder Include="Api\TimeRegistrations\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

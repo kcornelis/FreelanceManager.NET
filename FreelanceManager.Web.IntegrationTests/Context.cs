@@ -62,4 +62,15 @@ namespace FreelanceManager.Web
             }).Then;
         }
     }
+
+    public static class Extensions
+    {
+        public static bool RedirectedToLogin(this BrowserResponse br)
+        {
+            if(!br.Headers.ContainsKey("Location"))
+                return false;
+
+            return br.Headers["Location"].StartsWith("/account/login", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }
