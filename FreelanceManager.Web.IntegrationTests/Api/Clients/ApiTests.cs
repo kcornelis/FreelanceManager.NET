@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Nancy.Testing;
-using Newtonsoft.Json.Linq;
+using FreelanceManager.Web.Tools;
 using Xunit;
 
 namespace FreelanceManager.Web.Api.Clients
@@ -14,7 +13,7 @@ namespace FreelanceManager.Web.Api.Clients
         {
             var browser = Context.CreateBrowserAndAuthenticate();
 
-            var response = CreateClient(browser);
+            var response = browser.CreateClient();
 
             Assert.NotNull((string)response.Client.Id);
             Assert.Equal("johny bvba", (string)response.Client.Name);
@@ -26,8 +25,8 @@ namespace FreelanceManager.Web.Api.Clients
         {
             var browser = Context.CreateBrowserAndAuthenticate();
 
-            var id = (string)CreateClient(browser).Client.Id;
-            var client = ReadClient(browser, id);
+            var id = (string)browser.CreateClient().Client.Id;
+            var client = browser.ReadClient(id);
 
             Assert.Equal("johny bvba", (string)client.Name);
             Assert.Equal(id, (string)client.Id);
@@ -40,8 +39,8 @@ namespace FreelanceManager.Web.Api.Clients
         {
             var browser = Context.CreateBrowserAndAuthenticate();
 
-            var id = (string)CreateClient(browser).Client.Id;
-            IEnumerable<dynamic> accounts = Enumerable.Cast<dynamic>(ReadClients(browser));
+            var id = (string)browser.CreateClient().Client.Id;
+            IEnumerable<dynamic> accounts = Enumerable.Cast<dynamic>(browser.ReadClients());
 
             var account = accounts.Where(a => a.Id == id).FirstOrDefault();
 
@@ -53,43 +52,11 @@ namespace FreelanceManager.Web.Api.Clients
         {
             var browser = Context.CreateBrowserAndAuthenticate();
 
-            var id = (string)CreateClient(browser).Client.Id;
-            var response = UpdateClient(browser, id);
+            var id = (string)browser.CreateClient().Client.Id;
+            var response = browser.UpdateClient(id);
 
             Assert.Equal(id, (string)response.Client.Id);
             Assert.Equal("jane bvba", (string)response.Client.Name);
-        }
-
-        private dynamic CreateClient(Browser browser)
-        {
-            return JObject.Parse(browser.Post("/write/client/create", c =>
-            {
-                c.JsonBody(new
-                {
-                    Name = "johny bvba"
-                });
-            }).Body.AsString());
-        }
-
-        private dynamic ReadClient(Browser browser, string id)
-        {
-            return JObject.Parse(browser.Get("/read/clients/" + id).Body.AsString());
-        }
-
-        private dynamic ReadClients(Browser browser)
-        {
-            return JArray.Parse(browser.Get("/read/clients").Body.AsString());
-        }
-
-        private dynamic UpdateClient(Browser browser, string id)
-        {
-            return JObject.Parse(browser.Post("/write/client/update/" + id, c =>
-            {
-                c.JsonBody(new
-                {
-                    Name = "jane bvba"
-                });
-            }).Body.AsString());
         }
     }
 }

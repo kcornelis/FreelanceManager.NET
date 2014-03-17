@@ -178,10 +178,18 @@
     <Compile Include="Api\Admin\ApiTests.cs" />
     <Compile Include="Api\Clients\ApiTests.cs" />
     <Compile Include="Api\Clients\AuthenticationTests.cs" />
+    <Compile Include="Api\Projects\ApiTests.cs" />
     <Compile Include="Api\Projects\AuthenticationTests.cs" />
+    <Compile Include="Api\TimeRegistrations\ApiTests.cs" />
+    <Compile Include="Api\TimeRegistrations\AuthenticationTests.cs" />
+    <Compile Include="Api\TimeRegistrations\ScenarioTests.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="NancyTestBootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tools\Account.cs" />
+    <Compile Include="Tools\Client.cs" />
+    <Compile Include="Tools\Project.cs" />
+    <Compile Include="Tools\TimeRegistration.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -212,9 +220,7 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Api\TimeRegistrations\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

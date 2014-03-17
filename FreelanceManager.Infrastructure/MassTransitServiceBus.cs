@@ -8,6 +8,8 @@ using FreelanceManager.Infrastructure.ServiceBus;
 using FreelanceManager.Tools;
 using MassTransit;
 using NLog;
+using MassTransit.Transports.AzureServiceBus;
+using MassTransit.Transports.AzureServiceBus.Configuration;
 using MassTransit.NLogIntegration;
 
 namespace FreelanceManager.Infrastructure
@@ -41,14 +43,19 @@ namespace FreelanceManager.Infrastructure
             _bus = ServiceBusFactory.New(sbc =>
             {
                 sbc.UseNLog();
-
+                
+                //sbc.ReceiveFrom("azure-sb://RootManageSharedAccessKey:7moM1rrMPZHZw6K1WdpUlqQ+TkZtiE2nje4hQybQzTE=@myNamespace/my-application");
+                //RootManageSharedAccessKey 7moM1rrMPZHZw6K1WdpUlqQ+TkZtiE2nje4hQybQzTE=
+                
                 sbc.SetCreateTransactionalQueues(true);
+                
                 sbc.UseMsmq(c =>
                 {
                     c.UseMulticastSubscriptionClient();
                     c.VerifyMsmqConfiguration();
                    
                 });
+
                 sbc.UseJsonSerializer();
           
                 sbc.Subscribe(c =>

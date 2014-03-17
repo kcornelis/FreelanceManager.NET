@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Nancy.Testing;
-using Newtonsoft.Json.Linq;
+using FreelanceManager.Web.Tools;
 using Xunit;
 
 namespace FreelanceManager.Web.Api.Admin
@@ -14,7 +13,7 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticateWithAdmin();
 
-            var account = CreateAccount(browser);
+            var account = browser.CreateAccount();
 
             Assert.NotNull((string)account.Account.Id);
             Assert.Equal("johny bvba", (string)account.Account.Name);
@@ -30,8 +29,8 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticateWithAdmin();
 
-            var id = (string)CreateAccount(browser).Account.Id;
-            var account = ReadAccount(browser, id);
+            var id = (string)browser.CreateAccount().Account.Id;
+            var account = browser.ReadAccount(id);
 
             Assert.Equal(false, (bool)account.Admin);
             Assert.Equal("johny bvba", (string)account.Name);
@@ -49,8 +48,8 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticateWithAdmin();
 
-            var id = (string)CreateAccount(browser).Account.Id;
-            IEnumerable<dynamic> accounts = Enumerable.Cast<dynamic>(ReadAccounts(browser));
+            var id = (string)browser.CreateAccount().Account.Id;
+            IEnumerable<dynamic> accounts = Enumerable.Cast<dynamic>(browser.ReadAccounts());
 
             var account = accounts.Where(a => a.Id == id).FirstOrDefault();
 
@@ -66,8 +65,8 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticateWithAdmin();
 
-            var id = (string)CreateAccount(browser).Account.Id;
-            var account = UpdateAccount(browser, id);
+            var id = (string)browser.CreateAccount().Account.Id;
+            var account = browser.UpdateAccount(id);
 
             Assert.Equal(id, (string)account.Account.Id);
             Assert.Equal("jane bvba", (string)account.Account.Name);
@@ -81,8 +80,8 @@ namespace FreelanceManager.Web.Api.Admin
         {
             var browser = Context.CreateBrowserAndAuthenticateWithAdmin();
 
-            var response = CreateAccount(browser);
-            ChangeAccountPassword(browser, (string)response.Account.Id);
+            var response = browser.CreateAccount();
+            browser.ChangeAccountPassword((string)response.Account.Id);
 
             // TODO verify the result
             //var test = Context.CreateBrowser().Post("/account/login", c =>
@@ -90,55 +89,6 @@ namespace FreelanceManager.Web.Api.Admin
             //    c.FormValue("email", "johny@turbo.com");
             //    c.FormValue("password", (string)response.Password);
             //});
-        }
-
-        private dynamic CreateAccount(Browser browser)
-        {
-            return JObject.Parse(browser.Post("/write/admin/account/create", c =>
-            {
-                c.JsonBody(new
-                {
-                    Name = "johny bvba",
-                    FirstName = "johny",
-                    LastName = "turbo",
-                    Email = "johny@turbo.com"
-                });
-            }).Body.AsString());
-        }
-
-        private dynamic ReadAccount(Browser browser, string id)
-        {
-            return JObject.Parse(browser.Get("/read/admin/accounts/" + id).Body.AsString());
-        }
-
-        private dynamic ReadAccounts(Browser browser)
-        {
-            return JArray.Parse(browser.Get("/read/admin/accounts/").Body.AsString());
-        }
-
-        private dynamic UpdateAccount(Browser browser, string id)
-        {
-            return JObject.Parse(browser.Post("/write/admin/account/update/" + id, c =>
-            {
-                c.JsonBody(new
-                {
-                    Name = "jane bvba",
-                    FirstName = "jane",
-                    LastName = "doe",
-                    Email = "jane@turbo.com"
-                });
-            }).Body.AsString());
-        }
-
-        private void ChangeAccountPassword(Browser browser, string id)
-        {
-            browser.Post("/write/admin/account/" + id + "/changepassword", c =>
-            {
-                c.JsonBody(new
-                {
-                    Password = "blabla"
-                });
-            });
         }
     }
 }
