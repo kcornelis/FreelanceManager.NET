@@ -95,11 +95,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AggregateRootRepository.cs" />
+    <Compile Include="AzureServiceBus.cs" />
     <Compile Include="GuidGenerator.cs" />
     <Compile Include="InMemoryServiceBus.cs" />
-    <Compile Include="MassTransitServiceBus.cs" />
     <Compile Include="MongoContext.cs" />
+    <Compile Include="MsmqServiceBus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceBusBase.cs" />
     <Compile Include="ServiceBus\JsonSerializer.cs" />
     <Compile Include="ThreadStaticTenantContext.cs" />
   </ItemGroup>
@@ -110,7 +112,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

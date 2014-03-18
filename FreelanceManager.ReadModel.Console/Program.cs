@@ -20,7 +20,7 @@ namespace FreelanceManager.ReadModel.Console
 
                 _logger.Info("Registering services finished");
 
-                container.Resolve<IServiceBus>().Start(ApplicationServices.ReadModelHandlers);
+                container.Resolve<IServiceBus>().Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
 
                 System.Console.Read();
             }
@@ -46,7 +46,7 @@ namespace FreelanceManager.ReadModel.Console
             var builder = new ContainerBuilder();
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
-            var bus = new MassTransitServiceBus(MassTransitTransport.Msmq, container);
+            var bus = new MsmqServiceBus(container);
             bus.RegisterHandlers(readModelAssembly);
 
             builder.RegisterInstance(bus).As<IServiceBus>();

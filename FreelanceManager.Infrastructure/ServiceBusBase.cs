@@ -6,98 +6,26 @@ using System.Transactions;
 using Autofac;
 using FreelanceManager.Infrastructure.ServiceBus;
 using FreelanceManager.Tools;
-using MassTransit;
 using NLog;
-using MassTransit.Transports.AzureServiceBus;
-using MassTransit.Transports.AzureServiceBus.Configuration;
-using MassTransit.NLogIntegration;
 
 namespace FreelanceManager.Infrastructure
 {
-    public enum MassTransitTransport
-    {
-        Msmq,
-        Azure
-    }
-
-    public class MassTransitServiceBus : IServiceBus, IDisposable
+    public abstract class ServiceBusBase : IServiceBus
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.ServiceBus);
-
         private readonly Dictionary<Type, List<Type>> _eventTypesWithHandlers = new Dictionary<Type, List<Type>>();
-        private MassTransit.IServiceBus _bus;
         private ILifetimeScope _container;
 
-        public MassTransitServiceBus(MassTransitTransport transport, ILifetimeScope container)
+        public ServiceBusBase(ILifetimeScope container)
         {
             _container = container;
         }
 
-        public void Start(string name)
-        {
-            if (_bus != null)
-                throw new Exception("Bus already started");
+        public abstract void Start(string name);
+        public abstract void Dispose();
+        protected abstract void Publish(BusMessage message);
 
-            _logger.Info("Starting service bus, enpoint name " + name);
-
-            _bus = ServiceBusFactory.New(sbc =>
-            {
-                sbc.UseNLog();
-                
-                //sbc.ReceiveFrom("azure-sb://RootManageSharedAccessKey:7moM1rrMPZHZw6K1WdpUlqQ+TkZtiE2nje4hQybQzTE=@myNamespace/my-application");
-                //RootManageSharedAccessKey 7moM1rrMPZHZw6K1WdpUlqQ+TkZtiE2nje4hQybQzTE=
-                
-                sbc.SetCreateTransactionalQueues(true);
-                
-                sbc.UseMsmq(c =>
-                {
-                    c.UseMulticastSubscriptionClient();
-                    c.VerifyMsmqConfiguration();
-                   
-                });
-
-                sbc.UseJsonSerializer();
-          
-                sbc.Subscribe(c =>
-                {
-                    if (_eventTypesWithHandlers.Any())
-                    {
-                        c.Handler<BusMessage>(HandleBusMessage);
-                    }
-                });
-
-                sbc.ReceiveFrom("msmq://localhost/" + name);
-            });
-        }
-
-        public void Send(string endpoint, object[] messages, Dictionary<string, string> headers)
-        {
-            if (_logger.IsDebugEnabled)
-            {
-                _logger.Debug("Sending " + messages.Length + " messages to " + endpoint);
-            }
-
-            if (_logger.IsTraceEnabled)
-            {
-                foreach (var m in messages)
-                {
-                    _logger.Trace("Sending " + JsonSerializer.Serialize(m));
-                }
-            }
-
-            var busMessage = new BusMessage
-            {
-                Messages = messages.Select(m => JsonSerializer.Serialize(m)).ToArray(),
-                Headers = headers
-            };
-
-            using (var scope = new TransactionScope(TransactionScopeOption.Required))
-            {
-                _bus.GetEndpoint(new Uri("msmq://localhost/" + endpoint)).Send(busMessage);
-
-                scope.Complete();
-            }
-        }
+        protected bool BusHasHandlers { get { return _eventTypesWithHandlers.Any(); } }
 
         public void Publish(object[] messages, Dictionary<string, string> headers)
         {
@@ -111,7 +39,7 @@ namespace FreelanceManager.Infrastructure
 
             using (var scope = new TransactionScope(TransactionScopeOption.Required))
             {
-                _bus.Publish(busMessage);
+                Publish(busMessage);
 
                 scope.Complete();
             }
@@ -142,12 +70,7 @@ namespace FreelanceManager.Infrastructure
             }
         }
 
-        public void Dispose()
-        {
-            _bus.Dispose();
-        }
-
-        private void HandleBusMessage(BusMessage busMessage)
+        protected void HandleBusMessage(BusMessage busMessage)
         {
             using (var lifeTimeScope = _container.BeginLifetimeScope())
             {

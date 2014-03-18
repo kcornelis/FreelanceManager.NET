@@ -98,8 +98,8 @@ namespace FreelanceManager.Web
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
-            var bus = new MassTransitServiceBus(MassTransitTransport.Msmq, container);
-            bus.Start(ApplicationServices.Web);
+            var bus = new MsmqServiceBus(container);
+            bus.Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
 
             builder.RegisterInstance(bus).As<IServiceBus>();
 
@@ -120,7 +120,6 @@ namespace FreelanceManager.Web
             BsonClassMap.LookupClassMap(typeof(Date));
             BsonClassMap.LookupClassMap(typeof(Time));
             BsonClassMap.LookupClassMap(typeof(Money));
-            BsonClassMap.LookupClassMap(typeof(Named));
 
             var eventStore = Wireup.Init()
                 .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())

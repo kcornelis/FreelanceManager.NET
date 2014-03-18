@@ -113,7 +113,6 @@ namespace FreelanceManager.Web
             BsonClassMap.LookupClassMap(typeof(Date));
             BsonClassMap.LookupClassMap(typeof(Time));
             BsonClassMap.LookupClassMap(typeof(Money));
-            BsonClassMap.LookupClassMap(typeof(Named));
 
             var eventStore = Wireup.Init()
                 .LogToOutputWindow()

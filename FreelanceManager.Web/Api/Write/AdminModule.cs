@@ -9,7 +9,7 @@ namespace FreelanceManager.Web.Api.Write
     public class AdminModule : NancyModule
     {
         public AdminModule(IAggregateRootRepository repository,
-                             IIdGenerator idGenerator)
+                           IIdGenerator idGenerator)
             : base("/write/admin")
         {
             this.RequiresAuthentication();

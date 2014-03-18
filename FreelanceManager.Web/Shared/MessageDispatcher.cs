@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Linq;
 using Autofac;
 using EventStore.Dispatcher;
@@ -9,6 +10,7 @@ namespace FreelanceManager.Web.Shared
     public class MessageDispatcher : IDispatchCommits
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.EventStore);
+        private static readonly string _endpoint = ConfigurationManager.AppSettings["serviceBusEndpoint"];
         private readonly ILifetimeScope _container;
 
         public MessageDispatcher(ILifetimeScope container)
@@ -29,7 +31,7 @@ namespace FreelanceManager.Web.Shared
 
                 var @events = commit.Events.Select(e => e.Body).ToArray();
                 var headers = commit.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
-                headers.Add("ApplicationService", ApplicationServices.Web);
+                headers.Add("ApplicationService", _endpoint);
                 headers.Add("MessageType", "DomainEvent");
 
                 _bus.Publish(@events, headers);
