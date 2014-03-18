@@ -446,3 +446,5 @@
 /// <reference path="vectormap-data/world.js" />
 /// <reference path="../viewmodels/admin/accountindexviewmodel.js" />
 /// <reference path="../viewmodels/admin/accountviewmodel.js" />
+/// <reference path="../viewmodels/timeregistration/timeregistrationimportviewmodel.js" />
+/// <reference path="../viewmodels/timeregistration/timeregistrationimportprojectmodel.js" />

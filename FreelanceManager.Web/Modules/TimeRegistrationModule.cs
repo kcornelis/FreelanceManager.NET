@@ -29,13 +29,9 @@ namespace FreelanceManager.Web.Modules
 
             Get["/report"] = _ => View["Report"];
 
-            Get["/import"] = _ =>
-            {
-                var viewModel = new ImportViewModel();
-                return View["Import", viewModel];
-            };
+            Get["/import"] = _ =>View["Import"];
 
-            Get["/mapimport/{url*}"] = parameters =>
+            Get["/importmap/{url*}"] = parameters =>
             {
                 var viewModel = new ImportViewModel();
                 
@@ -47,7 +43,7 @@ namespace FreelanceManager.Web.Modules
                 foreach (var firstRowCell in worksheet.Cells[worksheet.Dimension.Start.Row, worksheet.Dimension.Start.Column, 1, worksheet.Dimension.End.Column])
                     viewModel.ColumnNames.Add(new ImportViewModel.ColumnInfo { Column = firstRowCell.Start.Column, Name = firstRowCell.Text });
 
-                return View["Import", viewModel];
+                return View["ImportMap", viewModel];
             };
 
             Post["/importupload"] = _ =>
@@ -60,7 +56,7 @@ namespace FreelanceManager.Web.Modules
                     Request.Files.First().Value.CopyTo(fileStream);
                 }
 
-                return Response.AsRedirect("~/timeregistration/mapimport/" + HttpUtility.UrlEncode(fileName));
+                return Response.AsRedirect("~/timeregistration/importmap/" + HttpUtility.UrlEncode(fileName));
             };
 
             // TODO return/show import results

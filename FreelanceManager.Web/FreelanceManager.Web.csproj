@@ -809,6 +809,8 @@
     <Content Include="ViewModels\Config\ConfigClientsViewModel.js" />
     <Content Include="ViewModels\Config\ConfigProjectModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationClientModel.js" />
+    <Content Include="ViewModels\TimeRegistration\TimeRegistrationImportProjectModel.js" />
+    <Content Include="ViewModels\TimeRegistration\TimeRegistrationImportViewModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationIndexViewModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationProjectModel.js" />
@@ -843,6 +845,7 @@
     <Content Include="Views\Shared\_AdminLayout.cshtml" />
     <Content Include="Views\Setup\Index.cshtml" />
     <Content Include="Views\Shared\_SetupLayout.cshtml" />
+    <Content Include="Views\TimeRegistration\ImportMap.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
