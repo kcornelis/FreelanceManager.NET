@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FreelanceManager.Events;
 using FreelanceManager.Tools;
 
-namespace FreelanceManager.Domain
+namespace FreelanceManager
 {
     public interface IEntity<TKey>
     {

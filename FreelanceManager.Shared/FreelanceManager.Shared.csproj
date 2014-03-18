@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AggregateRoot.cs" />
     <Compile Include="BusMessage.cs" />
     <Compile Include="Date.cs" />
     <Compile Include="Dtos\Task.cs" />
