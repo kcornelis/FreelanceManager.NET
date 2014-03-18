@@ -29,7 +29,7 @@ namespace FreelanceManager.Web.Modules
 
             Get["/report"] = _ => View["Report"];
 
-            Get["/import"] = _ =>View["Import"];
+            Get["/import"] = _ => View["Import"];
 
             Get["/importmap/{url*}"] = parameters =>
             {

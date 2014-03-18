@@ -42,26 +42,28 @@
     </form>
 </div>
 
-<h4 class="text-center">Import Info</h4>
+<div class="panel panel-default">
+    <div class="panel-heading text-center"><strong>Import Info</strong></div>
+    <table class="table table-bordered table-condensed">
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Client Id</th>
+                <th>Project</th>
+                <th>Project Id</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: projects">
+            <tr>
+                <td data-bind="text: clientName"></td>
+                <td data-bind="text: clientId"></td>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: id"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Client</th>
-            <th>Client Id</th>
-            <th>Project</th>
-            <th>Project Id</th>
-        </tr>
-    </thead>
-    <tbody data-bind="foreach: projects">
-        <tr>
-            <td data-bind="text: clientName"></td>
-            <td data-bind="text: clientId"></td>
-            <td data-bind="text: name"></td>
-            <td data-bind="text: id"></td>
-        </tr>
-    </tbody>
-</table>
 
 
 
