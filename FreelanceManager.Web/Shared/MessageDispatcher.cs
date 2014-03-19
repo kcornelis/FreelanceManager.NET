@@ -22,19 +22,23 @@ namespace FreelanceManager.Web.Shared
         {
             try
             {
-                var _bus = _container.Resolve<IServiceBus>();
-
-                if (_logger.IsDebugEnabled)
+                using (var scope = _container.BeginLifetimeScope())
                 {
-                    _logger.Debug("Dispatching commit, number of events: " + commit.Events.Count);
+                    var _bus = scope.Resolve<IServiceBus>();
+
+                    if (_logger.IsDebugEnabled)
+                    {
+                        _logger.Debug("Dispatching commit, number of events: " + commit.Events.Count);
+                    }
+
+                    var @events = commit.Events.Select(e => e.Body).ToArray();
+                    var headers = commit.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
+                    headers.Add("ApplicationService", _endpoint);
+                    headers.Add("MessageType", "DomainEvent");
+                    headers.Add("LastEventRevision", commit.StreamRevision.ToString());
+
+                    _bus.Publish(@events, headers);
                 }
-
-                var @events = commit.Events.Select(e => e.Body).ToArray();
-                var headers = commit.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
-                headers.Add("ApplicationService", _endpoint);
-                headers.Add("MessageType", "DomainEvent");
-
-                _bus.Publish(@events, headers);
             }
             catch (Exception ex)
             {

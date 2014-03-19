@@ -28,8 +28,6 @@ namespace FreelanceManager.Infrastructure
             {
                 sbc.UseNLog();
                 
-                sbc.SetCreateTransactionalQueues(true);
-                
                 sbc.UseMsmq(c =>
                 {
                     c.UseMulticastSubscriptionClient();

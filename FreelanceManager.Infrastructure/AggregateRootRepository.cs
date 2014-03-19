@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Transactions;
 using EventStore;
 using FreelanceManager.Events;
 using NLog;
@@ -90,13 +89,8 @@ namespace FreelanceManager.Infrastructure
 
             try
             {
-                using (var scope = new TransactionScope())
-                {
-                    stream.CommitChanges(commitId);
-                    aggregate.MarkChangesAsCommitted();
-
-                    scope.Complete();
-                }
+                stream.CommitChanges(commitId);
+                aggregate.MarkChangesAsCommitted();
             }
             catch (DuplicateCommitException)
             {

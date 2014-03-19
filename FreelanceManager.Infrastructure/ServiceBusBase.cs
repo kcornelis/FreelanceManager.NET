@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Transactions;
 using Autofac;
 using FreelanceManager.Infrastructure.ServiceBus;
 using FreelanceManager.Tools;
@@ -37,12 +36,7 @@ namespace FreelanceManager.Infrastructure
                 Headers = headers
             };
 
-            //using (var scope = new TransactionScope(TransactionScopeOption.Required))
-            //{
-                Publish(busMessage);
-
-            //  scope.Complete();
-            //}
+            Publish(busMessage);
         }
 
         public void RegisterHandlers(Assembly assembly)
@@ -72,7 +66,7 @@ namespace FreelanceManager.Infrastructure
 
         protected void HandleBusMessage(BusMessage busMessage)
         {
-            using (var lifeTimeScope = _container.BeginLifetimeScope())
+            using (var scope = _container.BeginLifetimeScope())
             {
                 var messages = busMessage.Messages.Select(m => JsonSerializer.Deserialize((string)m));
                 foreach (var message in messages)
@@ -80,7 +74,7 @@ namespace FreelanceManager.Infrastructure
                     _logger.Debug("Received message contains event with type " + message.GetType().Name);
 
                     // todo rethink about the admin parameter
-                    lifeTimeScope.Resolve<ITenantContext>().SetTenantId(busMessage.Headers["Tenant"], false);
+                    scope.Resolve<ITenantContext>().SetTenantId(busMessage.Headers["Tenant"], false);
 
                     var eventType = message.GetType();
                     List<Type> handlerTypes;
@@ -91,7 +85,7 @@ namespace FreelanceManager.Infrastructure
 
                         foreach (var handlerType in handlerTypes)
                         {
-                            var handler = lifeTimeScope.Resolve(handlerType);
+                            var handler = scope.Resolve(handlerType);
 
                             handler.AsDynamic().Handle(message);
                         }

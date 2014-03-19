@@ -46,7 +46,11 @@ namespace FreelanceManager.ReadModel.Console
             var builder = new ContainerBuilder();
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
+#if DEBUG
+            var bus = new MsmqServiceBus(container);
+#else
             var bus = new AzureServiceBus(container);
+#endif
             bus.RegisterHandlers(readModelAssembly);
 
             builder.RegisterInstance(bus).As<IServiceBus>();

@@ -80,11 +80,9 @@ namespace FreelanceManager.Web
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
 
-
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
             builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
 
-            
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))
                    .AsImplementedInterfaces();
@@ -98,7 +96,12 @@ namespace FreelanceManager.Web
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
+#if DEBUG
+            var bus = new MsmqServiceBus(container);
+#else
             var bus = new AzureServiceBus(container);
+#endif
+
             bus.Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
 
             builder.RegisterInstance(bus).As<IServiceBus>();
@@ -125,7 +128,7 @@ namespace FreelanceManager.Web
                 .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())
                 .InitializeStorageEngine()
                 .HookIntoPipelineUsing(new[] { new AuthorizationPipelineHook(container) })
-                .UsingSynchronousDispatchScheduler()
+                .UsingAsynchronousDispatchScheduler()
                     .DispatchTo(new MessageDispatcher(container))
                 .Build();
 
