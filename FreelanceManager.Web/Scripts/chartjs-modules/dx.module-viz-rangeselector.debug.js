@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization RangeSelector (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -320,7 +320,7 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                     isEqualDates = utils.isDate(minValue) && utils.isDate(maxValue) && minValue.getTime() === maxValue.getTime();
                     if (minValue !== maxValue && !isEqualDates) {
                         translatorRange.invertX = inverted;
-                        translatorRange.getBoundRange({
+                        translatorRange.addRange({
                             minX: minValue,
                             maxX: maxValue,
                             minVisibleX: minValue,
@@ -435,7 +435,7 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                 };
             var updateTranslatorRangeInterval = function(translatorRange, scaleOptions) {
                     var intervalX = scaleOptions.minorTickInterval || scaleOptions.majorTickInterval;
-                    translatorRange = translatorRange.getBoundRange({intervalX: intervalX})
+                    translatorRange = translatorRange.addRange({intervalX: intervalX})
                 };
             var prepareScaleOptions = function(self, seriesDataSource) {
                     var scaleOptions = $.extend(true, {}, self.option('scale')),
@@ -594,8 +594,10 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                         }
                     }
                 };
-            var initSelection = function(self, scaleOptions) {
-                    var selectedRangeOptions = self.option('selectedRange'),
+            var initSelection = function(_this, scaleOptions) {
+                    var selectedRangeOptions = _this.option('selectedRange'),
+                        startValue,
+                        endValue,
                         parser = scaleOptions.parser || function() {
                             return null
                         },
@@ -605,7 +607,7 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                             if (utils.isDefined(value))
                                 parsedValue = parser(value);
                             if (!utils.isDefined(parsedValue))
-                                self.option('incidentOccured').call(null, 'The ' + entity + ' field of the "selectedRange" configuration object is not valid.');
+                                _this.option('incidentOccured').call(null, 'The ' + entity + ' field of the "selectedRange" configuration object is not valid.');
                             else
                                 result = parsedValue;
                             return result
@@ -615,11 +617,16 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                                 startValue: scaleOptions.startValue,
                                 endValue: scaleOptions.endValue
                             };
-                    else
+                    else {
+                        startValue = parseValue(selectedRangeOptions.startValue, 'startValue');
+                        startValue = _this.rangeContainer.slidersContainer.truncateSelectedRange(startValue, scaleOptions);
+                        endValue = parseValue(selectedRangeOptions.endValue, 'endValue');
+                        endValue = _this.rangeContainer.slidersContainer.truncateSelectedRange(endValue, scaleOptions);
                         return {
-                                startValue: parseValue(selectedRangeOptions.startValue, 'startValue'),
-                                endValue: parseValue(selectedRangeOptions.endValue, 'endValue')
+                                startValue: startValue,
+                                endValue: endValue
                             }
+                    }
                 };
             var _isSizeChanged = function(self) {
                     var actualSize = self._actualSize,
@@ -651,8 +658,10 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                         clearContainer(self.container);
                         self.renderer = createRenderer(self);
                         self.rangeContainer = createRangeContainer(self.renderer);
-                        if (self.option('redrawOnResize') === true)
-                            utils.windowResizeCallbacks.add(_resizeHandler(self));
+                        if (self.option('redrawOnResize') === true) {
+                            self._resizeHandler = _resizeHandler(self);
+                            utils.windowResizeCallbacks.add(self._resizeHandler)
+                        }
                         if (!$.isFunction(self.option('incidentOccured'))) {
                             utils.debug.assert(false, 'Function should be passed as "info" callback');
                             self.option('incidentOccured', $.noop)
@@ -663,6 +672,17 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                     },
                     _reinitDataSource: function() {
                         this._refreshDataSource()
+                    },
+                    _dispose: function() {
+                        var _this = this,
+                            disposeObject = function(propName) {
+                                _this[propName] && _this[propName].dispose(),
+                                _this[propName] = null
+                            };
+                        utils.windowResizeCallbacks.remove(this._resizeHandler);
+                        disposeObject("renderer");
+                        disposeObject("translator");
+                        disposeObject("rangeContainer")
                     },
                     _initOptions: function(options) {
                         var self = this,
@@ -765,7 +785,7 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                         return this
                     }
                 }
-        }()).include(DX.ui.DataHelperMixin).include(core.loadIndicatorMixin.base).include(core.widgetMarkupMixin)
+        }()).include(DX.ui.DataHelperMixin).inherit(core.loadIndicatorMixin.base).include(core.widgetMarkupMixin)
     })(jQuery, DevExpress);
     /*! Module viz-rangeselector, file rangeContainer.js */
     (function($, DX, undefined) {
@@ -888,10 +908,15 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                     self.slidersContainer.appendTrackers(self._trackersGroup);
                     self.scale.redraw()
                 };
+            var dispose = function() {
+                    this.slidersContainer.dispose();
+                    this.slidersContainer = null
+                };
             var prototypeObject = {
                     createSlidersContainer: createSlidersContainer,
                     createScale: createScale,
                     ctor: ctor,
+                    dispose: dispose,
                     _applyOptions: _applyOptions,
                     _draw: _draw,
                     _update: _update
@@ -1238,6 +1263,10 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                         selectedAreaTracker.append(group);
                         self._controller.setAreaTrackers(areaTracker, selectedAreaTracker)
                     },
+                    dispose: function() {
+                        this._eventsManager.dispose();
+                        this._eventManager = null
+                    },
                     _processSelectionChanged: function(moving, blockSelectedRangeChanged) {
                         var self = this,
                             equalLastSelectedRange = function(selectedRange) {
@@ -1283,12 +1312,21 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                     getSelectedRange: function() {
                         return this._controller.getSelectedRange()
                     },
+                    truncateSelectedRange: function(value, scaleOptions) {
+                        var min = scaleOptions.startValue > scaleOptions.endValue ? scaleOptions.endValue : scaleOptions.startValue,
+                            max = scaleOptions.startValue > scaleOptions.endValue ? scaleOptions.startValue : scaleOptions.endValue;
+                        if (value < min)
+                            value = min;
+                        if (value > max)
+                            value = max;
+                        return value
+                    },
                     setSelectedRange: function(selectedRange) {
-                        var self = this,
-                            scale = self._options.scale,
+                        var _this = this,
+                            scale = _this._options.scale,
                             startValue,
                             endValue,
-                            currentSelectedRange = self._options.selectedRange;
+                            currentSelectedRange = _this._options.selectedRange;
                         if (selectedRange) {
                             startValue = selectedRange.startValue;
                             endValue = selectedRange.endValue
@@ -1297,9 +1335,11 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                             currentSelectedRange.startValue = startValue;
                         if (isNumber(scale.endValue) && isNumber(endValue) || isDate(scale.endValue) && isDate(endValue))
                             currentSelectedRange.endValue = endValue;
-                        self._controller.applySelectedRange(currentSelectedRange);
-                        self._controller.applyPosition();
-                        self._processSelectionChanged(false, selectedRange && selectedRange.blockSelectedRangeChanged)
+                        currentSelectedRange.startValue = _this.truncateSelectedRange(currentSelectedRange.startValue, scale);
+                        currentSelectedRange.endValue = _this.truncateSelectedRange(currentSelectedRange.endValue, scale);
+                        _this._controller.applySelectedRange(currentSelectedRange);
+                        _this._controller.applyPosition();
+                        _this._processSelectionChanged(false, selectedRange && selectedRange.blockSelectedRangeChanged)
                     },
                     appendTrackers: function(group) {
                         this._controller.appendTrackers(group)
@@ -1526,17 +1566,22 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
     /*! Module viz-rangeselector, file slidersEventsManager.js */
     (function($, DX, undefined) {
         var rangeSelector = DX.viz.rangeSelector,
-            utils = DX.utils;
+            utils = DX.utils,
+            EVENT_NS = ".dx-range-selector";
         var setEvents = function() {
                 var win = window;
                 win = DX.viz.rangeSelector.mockWindow || window;
                 var touchSupport = "ontouchstart" in win;
                 var msPointerEnabled = win.navigator.msPointerEnabled;
                 var pointerEnabled = win.navigator.pointerEnabled;
+                var addNStoEvents = function(str) {
+                        var regExp = /(\w+)(\s|$)/g;
+                        return str.replace(regExp, "$1" + EVENT_NS + "$2")
+                    };
                 rangeSelector.events = {
-                    start: pointerEnabled ? "pointerdown" : msPointerEnabled ? "MSPointerDown" : touchSupport ? "touchstart mousedown" : "mousedown",
-                    move: pointerEnabled ? "pointermove" : msPointerEnabled ? "MSPointerMove" : touchSupport ? "touchmove mousemove" : "mousemove",
-                    end: pointerEnabled ? "pointerup pointercancel" : msPointerEnabled ? "MSPointerUp MSPointerCancel" : touchSupport ? "touchend mouseup" : "mouseup"
+                    start: addNStoEvents(pointerEnabled ? "pointerdown" : msPointerEnabled ? "MSPointerDown" : touchSupport ? "touchstart mousedown" : "mousedown"),
+                    move: addNStoEvents(pointerEnabled ? "pointermove" : msPointerEnabled ? "MSPointerMove" : touchSupport ? "touchmove mousemove" : "mousemove"),
+                    end: addNStoEvents(pointerEnabled ? "pointerup pointercancel" : msPointerEnabled ? "MSPointerUp MSPointerCancel" : touchSupport ? "touchend mouseup" : "mouseup")
                 }
             };
         setEvents();
@@ -1742,6 +1787,9 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                     },
                     applyOptions: function(options) {
                         this._options = options
+                    },
+                    dispose: function() {
+                        $(document).off(EVENT_NS)
                     },
                     initialize: function() {
                         var self = this;
@@ -2462,13 +2510,14 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
     /*! Module viz-rangeselector, file seriesDataSource.js */
     (function($, DX, undefined) {
         var rangeSelector = DX.viz.rangeSelector,
-            charts = DX.viz.charts;
+            charts = DX.viz.charts,
+            utils = DX.utils;
         rangeSelector.SeriesDataSource = DX.Class.inherit(function() {
             var createThemeManager = function(chartOptions) {
                     return charts.factory.createThemeManager(chartOptions, 'rangeSelector.chart')
                 };
             var isArrayOfSimpleTypes = function(data) {
-                    return $.isArray(data) && data.length > 0 && (DX.utils.isNumber(data[0]) || DX.utils.isDate(data[0]))
+                    return $.isArray(data) && data.length > 0 && (utils.isNumber(data[0]) || utils.isDate(data[0]))
                 };
             var convertToArrayOfObjects = function(data) {
                     return $.map(data, function(item, i) {
@@ -2575,11 +2624,13 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                         var self = this,
                             seriesElement,
                             rangeData,
+                            valueAxisMin = self._valueAxis.min,
+                            valueAxisMax = self._valueAxis.max,
                             range = new charts.Range({
-                                minY: self._valueAxis.min,
-                                minVisibleY: self._valueAxis.min,
-                                maxY: self._valueAxis.max,
-                                maxVisibleY: self._valueAxis.max
+                                minY: valueAxisMin,
+                                minVisibleY: valueAxisMin,
+                                maxY: valueAxisMax,
+                                maxVisibleY: valueAxisMax
                             }),
                             rangeYSize,
                             rangeVisibleSizeY,
@@ -2588,15 +2639,21 @@ if (!DevExpress.MOD_VIZ_RANGESELECTOR) {
                             maxIndent;
                         for (i = 0; i < self._series.length; i++) {
                             rangeData = self._series[i].getRangeData();
-                            range = range.getBoundRange(rangeData)
+                            range = range.addRange(rangeData)
                         }
                         if (range.isDefined()) {
                             minIndent = self._valueAxis.inverted ? self._indent.top : self._indent.bottom;
                             maxIndent = self._valueAxis.inverted ? self._indent.bottom : self._indent.top;
                             rangeYSize = range.maxY - range.minY;
                             rangeVisibleSizeY = ($.isNumeric(range.maxVisibleY) ? range.maxVisibleY : range.maxY) - ($.isNumeric(range.minVisibleY) ? range.minVisibleY : range.minY);
-                            range.minY -= rangeYSize * minIndent;
-                            range.maxY += rangeYSize * maxIndent;
+                            if (utils.isDate(range.minY))
+                                range.minY = new Date(range.minY.valueOf() - rangeYSize * minIndent);
+                            else
+                                range.minY -= rangeYSize * minIndent;
+                            if (utils.isDate(range.maxY))
+                                range.maxY = new Date(range.maxY.valueOf() + rangeYSize * maxIndent);
+                            else
+                                range.maxY += rangeYSize * maxIndent;
                             if ($.isNumeric(rangeVisibleSizeY)) {
                                 range.maxVisibleY = range.maxVisibleY ? range.maxVisibleY + rangeVisibleSizeY * maxIndent : undefined;
                                 range.minVisibleY = range.minVisibleY ? range.minVisibleY - rangeVisibleSizeY * minIndent : undefined

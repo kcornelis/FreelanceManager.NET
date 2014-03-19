@@ -131,6 +131,7 @@ input[type="checkbox"].input-validation-error {
 .form-control { border-radius: 0; }
 .dropdown-menu { border-radius: 0; }
 .panel { border-radius: 0; }
+.well { border-radius: 0; }
 .nav-tabs > li > a { border-radius: 0; }
 
 /*

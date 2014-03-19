@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization Charts (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -177,6 +177,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     size = options.markerSize,
                     defaultHatchigStep = 5,
                     defaultHatchingWidth = 2,
+                    hoverPatternColor,
+                    selectedPatternColor,
                     isHoverPattern,
                     isSelectedPattern,
                     states,
@@ -191,12 +193,14 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 }).append(group);
                 if (!settings.markerPatterns) {
                     states = settings.styles.states || settings.options.states;
+                    hoverPatternColor = settings.hoverPatternColor ? settings.hoverPatternColor : states.hover.fill;
+                    selectedPatternColor = settings.selectedPatternColor ? settings.selectedPatternColor : states.selected.fill;
                     hoverHatching = $.extend({}, states.hover.hatching, {
                         step: defaultHatchigStep,
                         width: defaultHatchingWidth
                     });
-                    isHoverPattern = states.hover.fill !== 'none' && hoverHatching.direction !== 'none';
-                    hoverPattern = isHoverPattern ? _this.renderer.createPattern(states.hover.fill, hoverHatching).append() : {
+                    isHoverPattern = hoverPatternColor !== 'none' && hoverHatching.direction !== 'none';
+                    hoverPattern = isHoverPattern ? _this.renderer.createPattern(hoverPatternColor, hoverHatching).append() : {
                         id: settings.styles.themeColor,
                         append: $.noop
                     };
@@ -204,8 +208,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         step: defaultHatchigStep,
                         width: defaultHatchingWidth
                     });
-                    isSelectedPattern = states.selected.fill !== 'none' && selectedHatching.direction !== 'none';
-                    selectedPattern = isSelectedPattern ? _this.renderer.createPattern(states.selected.fill, selectedHatching).append() : {
+                    isSelectedPattern = selectedPatternColor !== 'none' && selectedHatching.direction !== 'none';
+                    selectedPattern = isSelectedPattern ? _this.renderer.createPattern(selectedPatternColor, selectedHatching).append() : {
                         id: settings.styles.themeColor,
                         append: $.noop
                     };
@@ -541,9 +545,6 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
             getBoundingRect: function() {
                 return this.insideLegendGroup && this.insideLegendGroup.getBBox() || {}
             },
-            toForeground: function() {
-                this.legendGroup && this.legendGroup.toForeground()
-            },
             createClipRect: function() {
                 var _this = this,
                     canvas = _this.canvas,
@@ -768,6 +769,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     _this.constantLines = null;
                     _this._axisStripGroup = null;
                     _this._axisConstantLineGroup = null;
+                    _this._axisLableGroup = null;
                     _this._axisLineGroup = null;
                     _this._axisElementsGroup = null;
                     _this._axisGridGroup = null;
@@ -824,14 +826,14 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         options = self.options,
                         businessRange = self.translator.getBusinessRange(),
                         interval;
-                    if (businessRange && businessRange.getBoundRange && !options.categories) {
+                    if (businessRange && businessRange.addRange && !options.categories) {
                         tickValues = self.getTickValues();
                         for (i = 0; i < tickValues.length - 1; i++) {
                             interval = mathAbs(tickValues[i] - tickValues[i + 1]);
                             if (options.isHorizontal)
-                                businessRange.getBoundRange({intervalX: interval});
+                                businessRange.addRange({intervalX: interval});
                             else
-                                businessRange.getBoundRange({intervalY: interval})
+                                businessRange.addRange({intervalY: interval})
                         }
                     }
                 };
@@ -1350,6 +1352,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         positionTo,
                         lineOptions,
                         range = translator.businessRange,
+                        firstSide,
+                        lastSide,
                         line;
                     var getPos = function(lineValue) {
                             var translate = isHorizontal ? function(val) {
@@ -1361,7 +1365,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                                 value = translate(parsedValue),
                                 isContinous = isHorizontal ? !!(range.minVisibleX || range.maxVisibleX) : !!(range.minVisibleY || range.maxVisibleY),
                                 categories = (isHorizontal ? range.categoriesX : range.categoriesY) || [];
-                            if (!isContinous && $.inArray(lineValue, categories) === -1 || !utils.isDefined(value))
+                            if (!isContinous && $.inArray(lineValue, categories) === -1 || !utils.isDefined(value) || value < firstSide || value > lastSide)
                                 return null;
                             return {
                                     value: value,
@@ -1370,6 +1374,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         };
                     positionFrom = isHorizontal ? translator.translateY(CANVAS_POSITION_BOTTOM) : translator.translateX(CANVAS_POSITION_LEFT);
                     positionTo = isHorizontal ? translator.translateY(CANVAS_POSITION_TOP) : translator.translateX(CANVAS_POSITION_RIGHT);
+                    firstSide = !isHorizontal ? translator.translateY(CANVAS_POSITION_TOP) : translator.translateX(CANVAS_POSITION_LEFT);
+                    lastSide = !isHorizontal ? translator.translateY(CANVAS_POSITION_BOTTOM) : translator.translateX(CANVAS_POSITION_RIGHT);
                     for (i = 0; i < data.length; i++) {
                         lineOptions = data[i];
                         if (lineOptions.value !== undefined) {
@@ -1647,7 +1653,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                             rect.append(group);
                             stripRects.push(rect);
                             if (stripOptions.label && stripOptions.label.text)
-                                stripLabels.push(drawStripLabel(self, stripOptions.label, stripPos.stripFrom, stripPos.stripTo, group));
+                                stripLabels.push(drawStripLabel(self, stripOptions.label, stripPos.stripFrom, stripPos.stripTo, self._axisLableGroup));
                             else
                                 stripLabels.push(null)
                         }
@@ -1864,13 +1870,15 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     if (_this._axisGroup) {
                         _this._axisGroup.detach();
                         _this._axisStripGroup.detach();
+                        _this._axisLableGroup.detach();
                         _this._axisConstantLineGroup.detach();
                         _this._axisTitleGroup.clear();
                         _this._axisGridGroup.clear();
                         _this._axisElementsGroup.clear();
                         _this._axisLineGroup.clear();
                         _this._axisStripGroup.clear();
-                        _this._axisConstantLineGroup.clear()
+                        _this._axisConstantLineGroup.clear();
+                        _this._axisLableGroup.clear()
                     }
                     else {
                         _this._axisGroup = _this.renderer.createGroup({
@@ -1882,7 +1890,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         _this._axisElementsGroup = _this.renderer.createGroup({'class': 'dxc-elements'}).append(_this._axisGroup);
                         _this._axisLineGroup = _this.renderer.createGroup({'class': 'dxc-line'}).append(_this._axisGroup);
                         _this._axisTitleGroup = _this.renderer.createGroup({'class': 'dxc-title'}).append(_this._axisGroup);
-                        _this._axisConstantLineGroup = _this.renderer.createGroup({'class': constantLineClass})
+                        _this._axisConstantLineGroup = _this.renderer.createGroup({'class': constantLineClass});
+                        _this._axisLableGroup = _this.renderer.createGroup({'class': 'dxc-axis-labels'})
                     }
                     initAxisPositions(_this);
                     if (!_this._virtual) {
@@ -1900,6 +1909,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     _this._axisStripGroup.append(_this.stripsGroup);
                     _this._axisConstantLineGroup.append(_this.constantLinesGroup);
                     _this._axisGroup.append(_this.axesContainerGroup);
+                    _this._axisLableGroup.append(_this.labelAxesGroup);
                     adjustConstantLineLabels(_this);
                     adjustLabels(_this);
                     adjustStripLabels(_this);
@@ -1916,7 +1926,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         side = isHorizontal && 'height' || 'width',
                         positionCondition = _this.options.position === (isHorizontal && 'bottom' || 'right'),
                         axisTitleBox = _this.title && _this._axisTitleGroup.getBBox() || axisBox;
-                    if (axisBox.isEmpty && axisTitleBox.isEmpty)
+                    if (axisBox.isEmpty && axisTitleBox.isEmpty && !placeholderSize)
                         return axisBox;
                     start = lineBox[coord] || _this.axisPosition;
                     if (positionCondition) {
@@ -1925,7 +1935,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     }
                     else {
                         axisBox[side] = placeholderSize || lineBox[side] + start - axisTitleBox[coord];
-                        axisBox[coord] = axisTitleBox[coord]
+                        axisBox[coord] = axisTitleBox.isEmpty ? start : axisTitleBox[coord]
                     }
                     return axisBox
                 };
@@ -1938,8 +1948,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     this._axisGroup.applySettings(settings)
                 };
             var applyClipRect = function(clipId) {
-                    this._axisStripGroup.applySettings({clipId: clipId});
-                    this._axisConstantLineGroup.applySettings({clipId: clipId})
+                    this._axisStripGroup.applySettings({clipId: clipId})
                 };
             var validate = function(isArgumentAxis, incidentOccured) {
                     var options = this.options,
@@ -2092,7 +2101,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
             charts = DX.viz.charts,
             utils = DX.utils,
             dataUtils = DX.data.utils,
-            REDRAW_DELAY = 100,
+            TRACKER_RENDERING_DELAY = 1200,
             resizeRedrawOptions = {
                 animate: false,
                 isResize: true
@@ -2125,7 +2134,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                             maxPointCountSupported: 300,
                             asyncSeriesRendering: true,
                             asyncTrackersRendering: true,
-                            trackerRenderingDelay: 1200
+                            trackerRenderingDelay: TRACKER_RENDERING_DELAY
                         },
                         seriesSelectionMode: 'single',
                         pointSelectionMode: 'single',
@@ -2144,6 +2153,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     }
             },
             _init: function() {
+                this.__TRACKER_RENDERING_DELAY = TRACKER_RENDERING_DELAY;
                 var _this = this;
                 _this._checkAndSaveCanvasSize();
                 _this._initRenderer();
@@ -2192,6 +2202,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._constantLinesGroup = renderer.createGroup({'class': 'dxc-constant-lines-group'});
                 _this._axesGroup = renderer.createGroup({'class': 'dxc-axes-group'});
                 _this._panesBorderGroup = renderer.createGroup({'class': 'dxc-border'});
+                _this._labelAxesGroup = renderer.createGroup({'class': 'dxc-strips-labels-group'});
                 _this._seriesGroup = renderer.createGroup({'class': 'dxc-series-group'});
                 _this._labelsGroup = renderer.createGroup({'class': 'dxc-labels-group'});
                 _this._tooltipGroup = renderer.createGroup({'class': 'dxc-tooltip'});
@@ -2226,6 +2237,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._stripsGroup && (_this._stripsGroup.detach(), _this._stripsGroup.clear());
                 _this._constantLinesGroup && (_this._constantLinesGroup.detach(), _this._constantLinesGroup.clear());
                 _this._axesGroup && (_this._axesGroup.detach(), _this._axesGroup.clear());
+                _this._labelAxesGroup && (_this._labelAxesGroup.detach(), _this._labelAxesGroup.clear());
                 _this._seriesGroup && (_this._seriesGroup.detach(), _this._seriesGroup.clear());
                 _this._labelsGroup && (_this._labelsGroup.detach(), _this._labelsGroup.clear());
                 _this._trackerGroup && (_this._trackerGroup.detach(), _this._seriesTrackerGroup.clear(), _this._markerTrackerGroup.clear(), _this._crosshairTrackerGroup.clear());
@@ -2273,6 +2285,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 detachGroup("_stripsGroup");
                 detachGroup("_constantLinesGroup");
                 detachGroup("_axesGroup");
+                detachGroup("_labelAxesGroup");
                 detachGroup("_seriesGroup");
                 detachGroup("_labelsGroup");
                 detachGroup("_trackerGroup");
@@ -2284,6 +2297,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 disposeObject("_stripsGroup");
                 disposeObject("_constantLinesGroup");
                 disposeObject("_axesGroup");
+                disposeObject("_labelAxesGroup");
                 disposeObject("_panesBorderGroup");
                 disposeObject("_seriesGroup");
                 disposeObject("_labelsGroup");
@@ -2296,8 +2310,9 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 disposeObject("_trackerGroup");
                 _this._disposeLoadIndicator()
             },
-            _clean: function _clean() {
+            _clean: function _clean(hideLoadIndicator) {
                 this.renderer && this.renderer.stopAllAnimations();
+                hideLoadIndicator && this.hideLoadingIndicator();
                 this._cleanHtmlStructure();
                 this.callBase();
                 this._saveDirtyCanvas()
@@ -2537,6 +2552,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._stripsGroup.detach();
                 _this._constantLinesGroup.detach();
                 _this._axesGroup.detach();
+                _this._labelAxesGroup.detach();
                 _this._seriesGroup.detach();
                 _this._labelsGroup.detach();
                 _this._trackerGroup.detach();
@@ -2549,6 +2565,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._stripsGroup.clear();
                 _this._constantLinesGroup.clear();
                 _this._axesGroup.clear();
+                _this._labelAxesGroup.clear();
                 _this._seriesGroup.clear();
                 _this._labelsGroup.clear();
                 _this._tooltipGroup.clear();
@@ -2870,7 +2887,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
             render: function(renderOptions) {
                 this._render(renderOptions)
             }
-        }).include(ui.DataHelperMixin).include(core.loadIndicatorMixin.base).include(core.widgetMarkupMixin)
+        }).include(ui.DataHelperMixin).inherit(core.loadIndicatorMixin.base).include(core.widgetMarkupMixin)
     })(jQuery, DevExpress);
     /*! Module viz-charts, file chart.js */
     (function($, DX, undefined) {
@@ -2880,7 +2897,9 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
             MAX_ADJUSTMENT_ATTEMPTS = 5,
             DEFAULT_PANE_NAME = 'default',
             DEFAULT_AXIS_NAME = 'defaultAxisName',
-            DEFAULT_BUSINESS_RANGE_VALUE_MARGIN = 0.1;
+            DEFAULT_BUSINESS_RANGE_VALUE_MARGIN = 0.1,
+            ASYNC_SERIES_RENDERING_DELAY = 25,
+            _each = $.each;
         charts.Chart = charts.BaseChart.inherit({
             _defaultOptions: function() {
                 return $.extend(true, this.callBase(), {
@@ -2946,6 +2965,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this.legend && (_this.legend.dispose(), _this.legend = null);
                 disposeObjectsInArray.call(_this, "panesBackground");
                 disposeObjectsInArray.call(_this, "panesClipRects");
+                disposeObjectsInArray.call(_this, "financialPanesClipRects");
                 disposeObjectsInArray.call(_this, "horizontalAxes");
                 disposeObjectsInArray.call(_this, "verticalAxes");
                 disposeObjectsInArray.call(_this, "seriesFamilies");
@@ -2956,6 +2976,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._paneTrackerGroups = null
             },
             _init: function() {
+                this.__ASYNC_SERIES_RENDERING_DELAY = ASYNC_SERIES_RENDERING_DELAY;
                 this.paneAxis = {};
                 this._crossHairOptions = {};
                 this.callBase()
@@ -3003,7 +3024,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         tickIntervalRange[min] = range[min] - tickInterval;
                         tickIntervalRange[max] = range[max] + tickInterval
                     }
-                    range.getBoundRange(tickIntervalRange);
+                    range.addRange(tickIntervalRange);
                     return true
                 }
                 return false
@@ -3026,8 +3047,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     argAxes = rotated ? self.verticalAxes : self.horizontalAxes,
                     valueField = rotated && 'X' || 'Y',
                     argumentField = rotated && 'Y' || 'X',
-                    valueBoundRange = 'getBoundRange' + valueField,
-                    argumentBoundRange = 'getBoundRange' + argumentField,
+                    valueBoundRange = 'addRange' + valueField,
+                    argumentBoundRange = 'addRange' + argumentField,
                     incidentOccured = self.option('incidentOccured'),
                     useAggregation = self.option('useAggregation'),
                     businessLength,
@@ -3110,10 +3131,10 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 var bussinesRangeCorrectedWithTickInterval = self._correctBusinessRange(argRange, argumentTickInterval, argumentField, setTicksAtUnitBeginning);
                 $.each(businessRanges, function(_, range) {
                     bussinesRangeCorrectedWithTickInterval && range.applyValueMargins();
-                    range = range.getBoundRange(argRange);
+                    range = range.addRange(argRange);
                     var vAxis = valueAxes[range.axis];
                     if (vAxis && vAxis.options.showZero)
-                        range.correctValueZeroLevel();
+                        range['correctValueZeroLevel' + valueField]();
                     !bussinesRangeCorrectedWithTickInterval && range.applyValueMargins();
                     range['stubData' + argumentField] = argRange['stubData' + argumentField];
                     if (!range.isDefined())
@@ -3186,28 +3207,37 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     })
                 })
             },
+            _cleanPanesClipRects: function(clipArrayName) {
+                var _this = this,
+                    clipArray = _this[clipArrayName];
+                _each(clipArray || [], function(_, clipRect) {
+                    clipRect && clipRect.remove()
+                });
+                _this[clipArrayName] = []
+            },
             _createPanes: function() {
                 var _this = this,
                     panes = _this.option('panes'),
+                    panesNameCounter = 0,
                     bottomPaneName;
-                $.each(_this.panesClipRects || [], function(i, clipRect) {
-                    clipRect.remove()
-                });
-                _this.panesClipRects = [];
+                _this._cleanPanesClipRects('panesClipRects');
+                _this._cleanPanesClipRects('financialPanesClipRects');
                 _this.defaultPane = _this.option('defaultPane');
                 panes = $.isArray(panes) ? panes : panes ? [panes] : [];
+                _each(panes, function(_, pane) {
+                    pane.name = !utils.isDefined(pane.name) ? DEFAULT_PANE_NAME + panesNameCounter++ : pane.name
+                });
                 if (!_this._doesPaneExists(panes, _this.defaultPane) && panes.length > 0) {
                     bottomPaneName = panes[panes.length - 1].name;
                     _this.option('incidentOccured')('The "' + _this.defaultPane + '" pane does not exist. The "' + bottomPaneName + '" pane will be used.');
                     _this.defaultPane = bottomPaneName
                 }
-                if (_this.option('rotated'))
-                    panes = panes.reverse();
+                panes = _this.option('rotated') ? panes.reverse() : panes;
                 return panes
             },
             _doesPaneExists: function(panes, paneName) {
                 var found = false;
-                $.each(panes, function(_, pane) {
+                _each(panes, function(_, pane) {
                     if (pane.name === paneName) {
                         found = true;
                         return false
@@ -3618,7 +3648,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     paneName,
                     multiAxesSynchronizer = new charts.MultiAxesSynchronizer,
                     panesBorderOptions = _this._createPanesBorderOptions(),
-                    needHideLoadIndicator;
+                    needHideLoadIndicator,
+                    legendHasInsidePosition = _this.legend && _this.legend.options.position === "inside";
                 var updateAxesPerPane = function(_this, axes) {
                         var translator,
                             axis,
@@ -3648,9 +3679,9 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         });
                         _this._createCrossHairCursor();
                         function applyPaneClipRect(seriesOptions) {
-                            var paneIdx = _this._getPaneIndex(seriesOptions.pane);
-                            seriesOptions.paneClipRectID = _this.panesClipRects[paneIdx].id;
-                            seriesOptions.forceClipping = _this._getPaneBorderVisibility(paneIdx)
+                            var paneIndex = _this._getPaneIndex(seriesOptions.pane);
+                            seriesOptions.paneClipRectID = seriesOptions.isFinancialSeries() ? _this.financialPanesClipRects[paneIndex].id : _this.panesClipRects[paneIndex].id;
+                            seriesOptions.forceClipping = _this._getPaneBorderVisibility(paneIndex)
                         }
                         function preparePointsForSharedTooltip(singleSeries, stackPoints) {
                             if (!_this.option('tooltip').shared)
@@ -3689,7 +3720,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                             particularSeries.draw(_this._getTranslator(particularSeries.pane, particularSeries.axis), drawOptions.animate && particularSeries.getPoints().length <= drawOptions.animationPointsLimit && _this.renderer.animationEnabled())
                         }
                         _this._trackerGroup.append();
-                        if (drawOptions.drawLegend && _this.legend && _this.legend.options.position === 'inside') {
+                        if (drawOptions.drawLegend && _this.legend && legendHasInsidePosition) {
                             _this.legend.canvas = $.extend({}, panes[0].canvas, {
                                 right: panes[panes.length - 1].canvas.right,
                                 bottom: panes[panes.length - 1].canvas.bottom
@@ -3699,8 +3730,6 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                             _this.legend.draw();
                             layoutManager.applyLegendLayout()
                         }
-                        else
-                            _this.legend.options.position == 'inside' && _this.legend.toForeground();
                         needHideLoadIndicator && _this.hideLoadingIndicator();
                         _this.option('drawn')();
                         var drawChartTrackers = function drawChartTrackers() {
@@ -3711,7 +3740,11 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                                 });
                                 for (i = 0; i < _this.series.length; i++)
                                     _this.series[i].drawTrackers();
-                                _this.legend && _this.legend.drawTrackers();
+                                if (_this.legend) {
+                                    _this.legend.drawTrackers();
+                                    legendHasInsidePosition && _this._legendGroup.append();
+                                    legendHasInsidePosition && _this._tooltipGroup.append()
+                                }
                                 _this.tracker._prepare();
                                 $.each(_this._paneTrackerGroups, function(index, paneGroups) {
                                     paneGroups.paneSeriesGroup.append(_this._seriesTrackerGroup);
@@ -3737,14 +3770,14 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     _this._drawTitle();
                     layoutManager.applyTitleLayout()
                 }
-                if (drawOptions.drawLegend && _this.legend && _this.legend.options.position === 'outside') {
+                if (drawOptions.drawLegend && _this.legend && !legendHasInsidePosition) {
                     _this.legend.canvas = _this.canvas;
                     _this._legendGroup.append();
                     _this.legend.draw();
                     layoutManager.applyLegendLayout();
                     if (layoutManager.isCanvasExceeded(false)) {
                         _this.option('incidentOccured')('The container is too small to draw a chart with current settings.');
-                        _this._clean();
+                        _this._clean(true);
                         return
                     }
                 }
@@ -3778,8 +3811,9 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 updateAxesPerPane(_this, _this.horizontalAxes);
                 updateAxesPerPane(_this, _this.verticalAxes);
                 _this._stripsGroup.append();
-                _this._constantLinesGroup.append();
                 _this._axesGroup.append();
+                _this._constantLinesGroup.append();
+                _this._labelAxesGroup.append();
                 do {
                     for (i = 0; i < _this.horizontalAxes.length; i++)
                         _this.horizontalAxes[i].resetTicks();
@@ -3790,6 +3824,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     for (i = 0; i < _this.horizontalAxes.length; i++) {
                         _this.horizontalAxes[i].clipRectID = _this._getCanvasClipRectID();
                         _this.horizontalAxes[i].stripsGroup = _this._stripsGroup;
+                        _this.horizontalAxes[i].labelAxesGroup = _this._labelAxesGroup;
                         _this.horizontalAxes[i].constantLinesGroup = _this._constantLinesGroup;
                         _this.horizontalAxes[i].axesContainerGroup = _this._axesGroup;
                         _this.horizontalAxes[i].draw({borderOptions: panesBorderOptions[_this.horizontalAxes[i].pane]})
@@ -3804,6 +3839,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     for (i = 0; i < _this.verticalAxes.length; i++) {
                         _this.verticalAxes[i].clipRectID = _this._getCanvasClipRectID();
                         _this.verticalAxes[i].stripsGroup = _this._stripsGroup;
+                        _this.verticalAxes[i].labelAxesGroup = _this._labelAxesGroup;
                         _this.verticalAxes[i].constantLinesGroup = _this._constantLinesGroup;
                         _this.verticalAxes[i].axesContainerGroup = _this._axesGroup;
                         _this.verticalAxes[i].draw({borderOptions: panesBorderOptions[_this.verticalAxes[i].pane]})
@@ -3817,7 +3853,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     adjustmentCounter = adjustmentCounter + 1;
                     if (layoutManager.isCanvasExceeded(true)) {
                         _this.option('incidentOccured')('The container is too small to draw a chart with current settings.');
-                        _this._clean();
+                        _this._clean(true);
                         _this.__axisAdjustmentsCount = adjustmentCounter;
                         return
                     }
@@ -3834,16 +3870,14 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._fillPanesBackground();
                 _this._seriesGroup.append();
                 _this._labelsGroup.append();
-                _this._tooltipGroup.append();
                 _this._crossHairCursorGroup.append();
+                _this._legendGroup.append();
+                _this._tooltipGroup.append();
                 needHideLoadIndicator = _this._loadIndicator && _this._loadIndicator.isShown && _this._dataSource && _this._dataSource.isLoaded() && !drawOptions.isResize;
                 if (drawOptions.asyncSeriesRendering)
-                    _this.delayedRedraw = setTimeout(drawSeries, 25);
+                    _this.delayedRedraw = setTimeout(drawSeries, ASYNC_SERIES_RENDERING_DELAY);
                 else
                     drawSeries()
-            },
-            _isInBarTypes: function(type) {
-                return type.slice(-3) === 'bar' ? true : false
             },
             _setPanesClipRectPadding: function(panesBorderOptions, rotated) {
                 var _this = this,
@@ -3975,22 +4009,49 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 });
                 _this._panesBorderGroup.append()
             },
+            _createClipRect: function(clipArray, index, left, top, width, height) {
+                var _this = this,
+                    clipRect = clipArray[index];
+                if (!clipRect) {
+                    clipRect = _this.renderer.createClipRect(left, top, width, height).append();
+                    clipArray[index] = clipRect
+                }
+                else
+                    clipRect.updateRectangle({
+                        x: left,
+                        y: top,
+                        width: width,
+                        height: height
+                    })
+            },
             _createClipRectsForPanes: function() {
-                var _this = this;
+                var _this = this,
+                    canvas = _this.canvas;
                 $.each(_this.panes, function(i, pane) {
-                    var bc = pane.borderCoords,
-                        clipRect = _this.panesClipRects[i];
-                    if (!clipRect) {
-                        clipRect = _this.renderer.createClipRect(bc.left, bc.top, bc.width, bc.height).append();
-                        _this.panesClipRects.push(clipRect)
+                    var hasFinancialSeries = false,
+                        bc = pane.borderCoords,
+                        left = bc.left,
+                        top = bc.top,
+                        width = bc.width,
+                        height = bc.height;
+                    _this._createClipRect(_this.panesClipRects, i, left, top, width, height);
+                    $.each(_this.series, function(_, series) {
+                        if (series.pane === pane.name && series.isFinancialSeries())
+                            hasFinancialSeries = true
+                    });
+                    if (hasFinancialSeries) {
+                        if (_this.option('rotated')) {
+                            top = 0;
+                            height = canvas.height
+                        }
+                        else {
+                            left = 0;
+                            width = canvas.width
+                        }
+                        _this._createClipRect(_this.financialPanesClipRects, i, left, top, width, height)
                     }
                     else
-                        clipRect.updateRectangle({
-                            x: bc.left,
-                            y: bc.top,
-                            width: bc.width,
-                            height: bc.height
-                        })
+                        _this.financialPanesClipRects.push(null)
                 })
             },
             _getPaneIndex: function(paneName) {
@@ -4137,7 +4198,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 if (singleSeries) {
                     range = new charts.Range({series: singleSeries});
                     singleSeriesRange = singleSeries.getRangeData();
-                    range = range.getBoundRange(singleSeriesRange);
+                    range = range.addRange(singleSeriesRange);
                     if (!range.isDefined())
                         range.setStubData();
                     businessRanges.push(range)
@@ -4158,7 +4219,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     particularSeriesOptions,
                     particularSeries,
                     seriesTheme,
-                    seriesType,
+                    seriesParams,
                     commonSeriesSettings = _this.option('commonSeriesSettings'),
                     userCommonSeriesSettings = _this._userOptions.commonSeriesSettings,
                     incidentOccured = _this.option('incidentOccured');
@@ -4178,10 +4239,13 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     seriesTheme.seriesLabelsGroup = _this._labelsGroup;
                     seriesTheme.seriesTrackerGroup = _this._seriesTrackerGroup;
                     seriesTheme.markerTrackerGroup = _this._markerTrackerGroup;
-                    seriesType = seriesTheme.type !== undefined ? seriesTheme.type : _this.option('commonSeriesSettings').type;
-                    particularSeries = charts.factory.createSeries(seriesType, renderer, seriesTheme);
+                    seriesParams = {
+                        seriesType: seriesTheme.type !== undefined ? seriesTheme.type : _this.option('commonSeriesSettings').type,
+                        widgetType: 'pie'
+                    };
+                    particularSeries = charts.factory.createSeries(seriesParams, renderer, seriesTheme);
                     if (!particularSeries)
-                        incidentOccured.call(null, 'Unknown series type requested: ' + seriesType);
+                        incidentOccured.call(null, 'Unknown series type requested: ' + seriesParams.seriesType);
                     else {
                         _this._processSingleSeries(particularSeries, particularSeries.userOptions);
                         _this.series.push(particularSeries)
@@ -4197,9 +4261,10 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     trackerGroup = options.trackerGroup,
                     seriesTrackerGroup = options.seriesTrackerGroup,
                     markerTrackerGroup = options.markerTrackerGroup,
-                    seriesLabelsGroup = options.seriesLabelsGroup;
+                    seriesLabelsGroup = options.seriesLabelsGroup,
+                    getPointsMethod = this.option('paintNullPoints') ? 'getOriginalPoints' : 'getPoints';
                 singleSeries.arrangePoints();
-                points = singleSeries && singleSeries.getPoints() || [];
+                points = singleSeries && singleSeries[getPointsMethod]() || [];
                 options.seriesGroup = null;
                 options.trackerGroup = null;
                 options.seriesTrackerGroup = null;
@@ -4272,7 +4337,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 }
                 if (layoutManager.isCanvasExceeded(false)) {
                     _this.option('incidentOccured')(incidentOccuredMessage);
-                    _this._clean();
+                    _this._clean(true);
                     return
                 }
                 if (_this.chartTitle)
@@ -4280,7 +4345,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 if (_this.series && _this.series[0]) {
                     if (!layoutManager.applyPieChartSeriesLayout()) {
                         _this.option('incidentOccured')(incidentOccuredMessage);
-                        _this._clean();
+                        _this._clean(true);
                         return
                     }
                     _this._seriesGroup.append();
@@ -5149,10 +5214,14 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
             msPointerEnabled = window.navigator.msPointerEnabled && window.navigator.msMaxTouchPoints || window.navigator.pointerEnabled && window.navigator.maxTouchPoints || null,
             MOUSE_EVENT_LOCK_TIMEOUT = 1000,
             CLICK_EVENT_LOCK_TIMEOUT = 600,
+            HOVER_START_DELAY = 100,
+            HOVER_HOLD_DELAY = 200,
             TOOLTIP_HOLD_TIMEOUT = 400,
             NONE_MODE = 'none';
         charts.Tracker = DX.Class.inherit({
             ctor: function(options) {
+                this.__HOVER_HOLD_DELAY = HOVER_HOLD_DELAY;
+                this.__TOOLTIP_HOLD_TIMEOUT = TOOLTIP_HOLD_TIMEOUT;
                 var _this = this,
                     events = options.events = options.events || {},
                     getEventHandler = function(func) {
@@ -5161,8 +5230,8 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 _this._reinit(options);
                 _this.pointSelectionMode = _this._prepareMode(options.pointSelectionMode);
                 _this.seriesSelectionMode = _this._prepareMode(options.seriesSelectionMode);
-                _this.hoverStartDelay = 100;
-                _this.hoverHoldDelay = 200;
+                _this.hoverStartDelay = HOVER_START_DELAY;
+                _this.hoverHoldDelay = HOVER_HOLD_DELAY;
                 _this.sensitivity = 7;
                 if (_this.pointSelectionMode === MULTIPLE_MODE) {
                     _this._releaseSelectedPoint = _this._releaseSelectedPointMultiMode;
@@ -5392,14 +5461,12 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         return;
                     self._setHoveredPoint(point, mode);
                     if (self.tooltipEnabled && point && point.options)
-                        self._showTooltip(self.tooltip, point);
-                    $(point).trigger('testmousehoverpoint')
+                        self._showTooltip(self.tooltip, point)
                 },
                 mouseout: function(self, point, mode) {
                     if (self.mouseLocked)
                         return;
-                    self._clearHover(self);
-                    $(point).trigger('testmouseoutpoint')
+                    self._clearHover(self)
                 },
                 touchmove: function(self, point, mode) {
                     clearTimeout(self.tooltipHoldTimeout);
@@ -5415,8 +5482,7 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     if (self.tooltipEnabled)
                         self.tooltipHoldTimeout = setTimeout(function() {
                             self.showHoldTooltip = true;
-                            self._showTooltip(self.tooltip, point);
-                            $(point).trigger('testHoldTooltip')
+                            self._showTooltip(self.tooltip, point)
                         }, TOOLTIP_HOLD_TIMEOUT)
                 },
                 touchend: function(self, point, mode, event) {
@@ -5442,7 +5508,6 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                         self.hoverHoldTimeOut = clearTimeout(self.hoverHoldTimeOut);
                         self.hoveredObject = point;
                         func(self, point, mode);
-                        $(point).trigger('testHoverHoldTimeOutCleared');
                         return
                     }
                     self._setHover(self, point, mode, func)
@@ -5459,12 +5524,10 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                 mouseover: function(self, series, mode) {
                     if (self.mouseLocked)
                         return;
-                    self._setHoveredSeries(series, mode);
-                    $(series).trigger('testmousehoverseries')
+                    self._setHoveredSeries(series, mode)
                 },
                 mouseout: function(self, series, mode) {
-                    self._clearHover(self);
-                    $(series).trigger('testmouseoutseries')
+                    self._clearHover(self)
                 },
                 mousemove: function(self, pageX, pageY, offsetX, offsetY) {
                     self._getCurCoords(self, pageX, pageY)
@@ -5561,15 +5624,13 @@ if (!DevExpress.MOD_VIZ_CHARTS) {
                     if (isDefined(self.hoveredArgument))
                         self._toAllArgumentPoints(self.hoveredArgument, 'releasePointHoverState');
                     self._toAllArgumentPoints(argument, 'setPointHoverState');
-                    self.hoveredArgument = argument;
-                    $(axis).trigger('testmousehoveraxis')
+                    self.hoveredArgument = argument
                 },
                 mouseout: function(self, axis) {
                     if (self.mouseLocked || !isDefined(self.hoveredArgument))
                         return;
                     self._toAllArgumentPoints(self.hoveredArgument, 'releasePointHoverState');
-                    self.hoveredArgument = null;
-                    $(axis).trigger('testmouseoutaxis')
+                    self.hoveredArgument = null
                 },
                 mousemove: function(self, pageX, pageY) {
                     self._getCurCoords(self, pageX, pageY)

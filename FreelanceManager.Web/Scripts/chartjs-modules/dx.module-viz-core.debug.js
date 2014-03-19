@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization Core Library (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -191,11 +191,14 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     bBox1 = svgElement1.getBBox(),
                     bBox2 = svgElement2.getBBox(),
                     result,
-                    inverted = options.translator.businessRange.invertX;
+                    translator = options.translator,
+                    inverted = translator.businessRange.invertX;
                 if (rotationAngle !== 0)
                     result = self._getDistanceByAngle(bBox1.height, rotationAngle) <= Math.abs(bBox2.x - bBox1.x);
-                else
+                else if (options.isHorizontal)
                     result = !inverted ? bBox1.x + bBox1.width < bBox2.x : bBox2.x + bBox2.width < bBox1.x;
+                else
+                    result = math.abs(translator.translateY(value1) - translator.translateY(value2)) > bBox1.height;
                 svgElement1.remove();
                 svgElement2.remove();
                 return result
@@ -583,7 +586,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
     })(jQuery, DevExpress);
     /*! Module viz-core, file numericTranslator.js */
     (function($, DX, undefined) {
-        var _isDefined = DX.utils.isDefined,
+        var utils = DX.utils,
+            _isDefined = utils.isDefined,
+            _getPower = utils.getPower,
             _round = Math.round;
         DX.viz.core.NumericTranslator = {
             createTranslator: function(type) {
@@ -591,10 +596,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         var _this = this,
                             canvasRange = _this._getCanvasRange(type),
                             distanceFromBasePoint,
+                            doubleError = Math.pow(10, _getPower(canvasRange.rangeMax - canvasRange.rangeMin) - _getPower(canvasRange.lengthCanvas) - 2),
                             specialValue = _this.translateSpecialCases(_this, bp, type);
                         if (_isDefined(specialValue))
                             return specialValue;
-                        if (isNaN(bp) || bp < canvasRange.rangeMin || bp > canvasRange.rangeMax)
+                        if (isNaN(bp) || bp.valueOf() + doubleError < canvasRange.rangeMin || bp.valueOf() - doubleError > canvasRange.rangeMax)
                             return null;
                         distanceFromBasePoint = (bp - canvasRange.rangeMinVisible) * canvasRange.ratioCanvasOfRange;
                         return _round(_this._calculateProjection(distanceFromBasePoint, type))
@@ -676,7 +682,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         result = doubleRound(index - 0.5);
                         if (_this["categories" + type + "Number"] === result)
                             result--;
-                        if (ranges["invert" + type])
+                        if (canvasRange.invert)
                             result = _this["categories" + type + "Number"] - result - 1;
                         return _this.categories[result]
                     }
@@ -881,7 +887,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                                 self[position + 'Interval'] = self[size] / (self['categories' + directionAxis + 'Number'] - 1);
                             else
                                 self[position + 'Interval'] = self[size] / self['categories' + directionAxis + 'Number'];
-                            self['categories' + directionAxis + 'ToPoints'] = makeCategoriesToPoints(categories, self.businessRange['invert' + directionAxis]);
+                            self['categories' + directionAxis + 'ToPoints'] = makeCategoriesToPoints(categories, self._getCanvasRange(directionAxis).invert);
                             break;
                         case'datetime':
                             script = core.DatetimeTranslator;
@@ -1728,6 +1734,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _disposeLoadIndicator: function() {
                     this._loadIndicator && this._loadIndicator.dispose();
                     this._loadIndicator = null
+                },
+                endUpdate: function() {
+                    if (this._updateLockCount === 1 && !this._requireRefresh)
+                        this.hideLoadingIndicator();
+                    this.callBase()
                 }
             },
             gauge: {showLoadingIndicator: function() {
@@ -2387,6 +2398,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         fullstackedarea: {},
                         spline: {width: 2},
                         splinearea: {},
+                        steparea: {border: {
+                                visible: true,
+                                width: 2
+                            }},
+                        bubble: {opacity: 0.5},
                         bar: {cornerRadius: 0},
                         stackedbar: {cornerRadius: 0},
                         fullstackedbar: {cornerRadius: 0},
@@ -3178,11 +3194,13 @@ if (!DevExpress.MOD_VIZ_CORE) {
                             prop = 'stroke-dasharray';
                             value = value.toLowerCase();
                             if (value === 'solid' || value === 'none')
-                                continue;
-                            value = value.replace(/longdash/g, '8,3,').replace(/dash/g, '4,3,').replace(/dot/g, '1,3,').replace(/,$/, '').split(',');
-                            value = $.map(value, function(p) {
-                                return +p * (settings.strokeWidth || 1)
-                            }).join(',')
+                                value = null;
+                            else {
+                                value = value.replace(/longdash/g, '8,3,').replace(/dash/g, '4,3,').replace(/dot/g, '1,3,').replace(/,$/, '').split(',');
+                                value = $.map(value, function(p) {
+                                    return +p * (settings.strokeWidth || 1)
+                                }).join(',')
+                            }
                         }
                         else if (/^(linecap|linejoin)$/i.test(prop))
                             prop = 'stroke-' + prop;
@@ -3268,7 +3286,10 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     return {
                             width: 0,
                             height: 0,
-                            style: {'-webkit-tap-highlight-color': 'rgba(0, 0, 0, 0)'},
+                            style: {
+                                '-webkit-tap-highlight-color': 'rgba(0, 0, 0, 0)',
+                                display: 'block'
+                            },
                             xmlns: 'http://www.w3.org/2000/svg',
                             'xmlns:xlink': 'http://www.w3.org/1999/xlink',
                             version: '1.1',
@@ -4361,6 +4382,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 height: 1,
                 position: 'absolute'
             };
+        var CLIP_RECT_CLASS = "dx-vml-clip-rect";
         var extendDefaultVmlOptions = function(customOptions, baseOptions) {
                 return $.extend(true, baseOptions || {}, defaultVmlSettings, customOptions)
             };
@@ -4445,6 +4467,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     points,
                     value,
                     halfStrokeWidth;
+                if (element.className && element.className.indexOf(CLIP_RECT_CLASS) !== -1)
+                    return;
                 if (tagName === 'div') {
                     if (element.childNodes.length > 0) {
                         resultRect = {};
@@ -4569,6 +4593,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 clear: function() {
                     this.callBase.apply(this, arguments);
                     $.each(this.childElements, function(_, element) {
+                        element._delayAttributes(['opacity']);
+                        element._onDetach();
                         element.parentElement = null
                     });
                     this.childElements = [];
@@ -4652,7 +4678,12 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         this._applyAttributes();
                         $.each(this.childElements, function(_, child) {
                             child.appendComplete()
-                        })
+                        });
+                        if (this.parentElement instanceof GroupVmlElement && this.parentElement._clipRect && this.parentElement._clipRect !== this)
+                            if (this.parentElement._clipRect._isAppended)
+                                this.parentElement._clipRect.toForeground();
+                            else
+                                this.parentElement._clipRect.append(this.parentElement)
                     }
                     else {
                         vmlElementsToAppend.push(this);
@@ -4776,8 +4807,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                             normalized.joinStyle = value;
                         else if (prop === 'dashStyle') {
                             value = value.toLowerCase();
-                            if (value !== 'solid')
-                                normalized.dashstyle = value
+                            normalized.dashstyle = value
                         }
                         else
                             normalized[prop] = value
@@ -5300,6 +5330,30 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 ctor: function(renderer, params) {
                     this.callBase(renderer, 'div', params)
                 },
+                adjustSettings: function() {
+                    if (this.settings.clipId || this._clipRect) {
+                        var rect = this.renderer.getClipRect(this.settings.clipId, this);
+                        if (this._clipRect)
+                            if (rect)
+                                this._clipRect.applySettings({
+                                    x: rect.x,
+                                    y: rect.y,
+                                    width: rect.width,
+                                    height: rect.height
+                                });
+                            else {
+                                this._clipRect.remove();
+                                this._clipRect = null
+                            }
+                        else
+                            this._clipRect = this.renderer.createRect(rect.x, rect.y, rect.width, rect.height, 0, {
+                                fill: "none",
+                                opacity: 0.002,
+                                "class": CLIP_RECT_CLASS
+                            });
+                        this._clipRect && this.childElements.length && this._clipRect.append(this)
+                    }
+                },
                 applySettings: function(settings) {
                     var callBase = this.callBase,
                         rotate;
@@ -5358,7 +5412,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     root.appendComplete()
             },
             recreateCanvas: function(width, height, cssClass) {
-                if (width > 0 && height > 0) {
+                if (width >= 0 && height >= 0) {
                     this._size = {
                         width: width,
                         height: height
@@ -5815,6 +5869,12 @@ if (!DevExpress.MOD_VIZ_CORE) {
             raiseToUtils = utils.raiseTo;
         var NUMBER_EQUALITY_CORRECTION = 1,
             DATETIME_EQUALITY_CORRECTION = 60000;
+        var raiseToCeiledLog = function(value, base) {
+                return raiseToUtils(Math.ceil(getLogUtils(value, base)), base)
+            };
+        var raiseToFlooredLog = function(value, base, correction) {
+                return raiseToUtils(Math.floor(getLogUtils(value, base)) + (correction || 0), base)
+            };
         var otherLessThan = function(thisValue, otherValue) {
                 return otherValue < thisValue
             };
@@ -5822,255 +5882,272 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 return otherValue > thisValue
             };
         var compareAndReplace = function(thisValue, otherValue, setValue, compare) {
-                var thisValueDefined = thisValue !== undefined,
-                    otherValueDefined = otherValue !== undefined;
-                if (thisValueDefined) {
+                var otherValueDefined = isDefinedUtils(otherValue);
+                if (isDefinedUtils(thisValue)) {
                     if (otherValueDefined && compare(thisValue, otherValue))
                         setValue(otherValue)
                 }
                 else if (otherValueDefined)
                     setValue(otherValue)
             };
-        var createSpecific_GetBoundRange_Function = function(specificator) {
+        var applyMargin = function(value, margin, rangeLength, coef, isDateTime) {
+                value = value.valueOf() + coef * rangeLength * margin;
+                return isDateTime ? new Date(value) : value
+            };
+        var createSingleRange = function(specificator) {
                 specificator = (specificator || '').toUpperCase();
-                return function(otherRange) {
-                        var self = this,
-                            categoriesSelector = 'categories' + specificator,
-                            baseSelector = 'base' + specificator,
-                            invertSelector = 'invert' + specificator,
-                            stickSelector = 'stick' + specificator,
-                            axisTypeSelector = 'axisType' + specificator,
-                            keepValueMarginsSelector = 'keepValueMargins' + specificator,
-                            categories = self[categoriesSelector],
-                            categoriesValues,
-                            otherCategories = otherRange[categoriesSelector],
-                            i,
-                            j,
-                            length,
-                            found;
-                        var setIndentByPriority = function(prefix) {
-                                var priorityRelation = (self[prefix + 'Priority'] || 0) - (otherRange[prefix + 'Priority'] || 0);
-                                if ((self[prefix] || 0) < otherRange[prefix] && priorityRelation === 0 || priorityRelation < 0) {
-                                    self[prefix] = otherRange[prefix];
-                                    self[prefix + 'Priority'] = otherRange[prefix + 'Priority']
+                var minSelector = 'min' + specificator,
+                    maxSelector = 'max' + specificator,
+                    minVisibleSelector = 'minVisible' + specificator,
+                    maxVisibleSelector = 'maxVisible' + specificator,
+                    minValueMarginSelector = 'minValueMargin' + specificator,
+                    maxValueMarginSelector = 'maxValueMargin' + specificator,
+                    categoriesSelector = 'categories' + specificator,
+                    keepValueMarginsSelector = 'keepValueMargins' + specificator,
+                    baseSelector = 'base' + specificator,
+                    invertSelector = 'invert' + specificator,
+                    stickSelector = 'stick' + specificator,
+                    axisTypeSelector = 'axisType' + specificator,
+                    intervalSelector = 'interval' + specificator,
+                    stubDataSelector = 'stubData' + specificator;
+                var rangeExtension = {};
+                rangeExtension['addRange' + specificator] = function(otherRange) {
+                    var _this = this,
+                        categories = _this[categoriesSelector],
+                        categoriesValues,
+                        otherCategories = otherRange[categoriesSelector],
+                        i,
+                        j,
+                        length,
+                        found;
+                    var setIndentByPriority = function(prefix) {
+                            var prioritySelector = prefix + 'Priority',
+                                priorityRelation = (_this[prioritySelector] || 0) - (otherRange[prioritySelector] || 0);
+                            if ((_this[prefix] || 0) < otherRange[prefix] && priorityRelation === 0 || priorityRelation < 0) {
+                                _this[prefix] = otherRange[prefix];
+                                _this[prioritySelector] = otherRange[prioritySelector]
+                            }
+                        };
+                    var compareAndReplaceByField = function(field, compare) {
+                            compareAndReplace(_this[field], otherRange[field], function(value) {
+                                _this[field] = value
+                            }, compare)
+                        };
+                    var controlValuesByVisibleBounds = function(valueField, visibleValueField, compare) {
+                            compareAndReplace(_this[valueField], _this[visibleValueField], function(value) {
+                                isDefinedUtils(_this[valueField]) && (_this[valueField] = value)
+                            }, compare)
+                        };
+                    var checkField = function(field) {
+                            _this[field] = _this[field] || otherRange[field]
+                        };
+                    checkField(invertSelector);
+                    checkField(stickSelector);
+                    checkField(axisTypeSelector);
+                    checkField(keepValueMarginsSelector);
+                    if (_this[axisTypeSelector] === 'logarithmic')
+                        checkField(baseSelector);
+                    else
+                        _this[baseSelector] = undefined;
+                    compareAndReplaceByField(minSelector, otherLessThan);
+                    compareAndReplaceByField(maxSelector, otherGreaterThan);
+                    compareAndReplaceByField(minVisibleSelector, otherLessThan);
+                    compareAndReplaceByField(maxVisibleSelector, otherGreaterThan);
+                    compareAndReplaceByField(intervalSelector, otherLessThan);
+                    setIndentByPriority(minValueMarginSelector);
+                    setIndentByPriority(maxValueMarginSelector);
+                    controlValuesByVisibleBounds(minSelector, minVisibleSelector, otherLessThan);
+                    controlValuesByVisibleBounds(minSelector, maxVisibleSelector, otherLessThan);
+                    controlValuesByVisibleBounds(maxSelector, maxVisibleSelector, otherGreaterThan);
+                    controlValuesByVisibleBounds(maxSelector, minVisibleSelector, otherGreaterThan);
+                    if (categories === undefined)
+                        _this[categoriesSelector] = otherCategories;
+                    else {
+                        length = categories.length;
+                        if (otherCategories && otherCategories.length)
+                            for (i = 0; i < otherCategories.length; i++) {
+                                for (j = 0, found = false; j < length; j++)
+                                    if (categories[j].valueOf() === otherCategories[i].valueOf()) {
+                                        found = true;
+                                        break
+                                    }
+                                !found && categories.push(otherCategories[i])
+                            }
+                    }
+                    return this
+                };
+                rangeExtension['isDefined' + specificator] = function() {
+                    return isDefinedUtils(this[minSelector]) && isDefinedUtils(this[maxSelector]) || isDefinedUtils(this[categoriesSelector])
+                };
+                rangeExtension['setStubData' + specificator] = function(dataType) {
+                    var _this = this,
+                        year = (new Date).getYear() - 1,
+                        isDate = dataType === 'datetime';
+                    _this[minSelector] = isDate ? new Date(year, 0, 1) : 0;
+                    _this[maxSelector] = isDate ? new Date(year, 11, 31) : 10;
+                    _this[stubDataSelector] = true;
+                    return _this
+                };
+                rangeExtension['_applyValueMargins' + specificator] = function() {
+                    var _this = this,
+                        base = _this[baseSelector],
+                        isDateTime = isDateUtils(_this[maxSelector]) || isDateUtils(_this[minSelector]),
+                        intermediateValue;
+                    var applyMarginWithZeroCorrection = function(minSelector, maxSelector, rangeLength) {
+                            var minValue = _this[minSelector],
+                                maxValue = _this[maxSelector],
+                                minMargin = _this[minValueMarginSelector],
+                                maxMargin = _this[maxValueMarginSelector],
+                                minCorrected = false,
+                                maxCorrected = false;
+                            if (rangeLength && !isDateTime && !_this[keepValueMarginsSelector]) {
+                                if (minValue <= 0 && maxValue <= 0 && maxMargin > maxValue / (minValue - maxValue)) {
+                                    _this[maxSelector] = 0;
+                                    maxCorrected = true
                                 }
-                            };
-                        var compareAndReplaceByField = function(field, compare) {
-                                compareAndReplace(self[field], otherRange[field], function(value) {
-                                    self[field] = value
-                                }, compare)
-                            };
-                        self[invertSelector] = self[invertSelector] || otherRange[invertSelector];
-                        self[stickSelector] = self[stickSelector] || otherRange[stickSelector];
-                        self[axisTypeSelector] = self[axisTypeSelector] || otherRange[axisTypeSelector];
-                        if (self[axisTypeSelector] === 'logarithmic')
-                            self[baseSelector] = self[baseSelector] || otherRange[baseSelector];
-                        else
-                            self[baseSelector] = undefined;
-                        self[keepValueMarginsSelector] = self[keepValueMarginsSelector] || otherRange[keepValueMarginsSelector];
-                        compareAndReplaceByField('min' + specificator, otherLessThan);
-                        compareAndReplaceByField('interval' + specificator, otherLessThan);
-                        compareAndReplaceByField('max' + specificator, otherGreaterThan);
-                        compareAndReplaceByField('minVisible' + specificator, otherLessThan);
-                        compareAndReplaceByField('maxVisible' + specificator, otherGreaterThan);
-                        setIndentByPriority('minValueMargin' + specificator);
-                        setIndentByPriority('maxValueMargin' + specificator);
-                        if (categories === undefined)
-                            self[categoriesSelector] = otherCategories;
-                        else {
-                            length = categories.length;
-                            if (otherCategories && otherCategories.length)
-                                for (i = 0; i < otherCategories.length; i++) {
-                                    for (j = 0, found = false; j < length; j++)
-                                        if (categories[j].valueOf() === otherCategories[i].valueOf()) {
-                                            found = true;
-                                            break
-                                        }
-                                    !found && categories.push(otherCategories[i])
+                                if (minValue >= 0 && maxValue >= 0 && minMargin > minValue / (maxValue - minValue)) {
+                                    _this[minSelector] = 0;
+                                    minCorrected = true
                                 }
+                            }
+                            if (isDefinedUtils(maxValue) && !maxCorrected && maxMargin)
+                                _this[maxSelector] = applyMargin(maxValue, maxMargin, rangeLength, 1, isDateTime);
+                            if (isDefinedUtils(minValue) && !minCorrected && minMargin)
+                                _this[minSelector] = applyMargin(minValue, minMargin, rangeLength, -1, isDateTime)
+                        };
+                    var applyValueVisibleLogMargin = function(visibleValue, valueSelector) {
+                            return !isDefinedUtils(visibleValue) ? _this[valueSelector] : raiseToUtils(visibleValue, base)
+                        };
+                    var correctValueByBoundaries = function(visibleSelector, valueSelector) {
+                            _this[visibleSelector] = isDefinedUtils(_this[visibleSelector]) ? _this[visibleSelector] : _this[valueSelector]
+                        };
+                    if (_this[axisTypeSelector] === 'logarithmic') {
+                        if (isDefinedUtils(_this[minSelector])) {
+                            intermediateValue = raiseToFlooredLog(_this[minSelector], base);
+                            if (getLogUtils(_this[minSelector] / intermediateValue, base) < getLogUtils(1 + base / 10, base) && (_this.keepValueMarginsX || _this.keepValueMarginsY) && !_this[keepValueMarginsSelector])
+                                intermediateValue = raiseToFlooredLog(_this[minSelector], base, -1);
+                            _this[minSelector] = intermediateValue
                         }
-                        return this
+                        if (!isDefinedUtils(_this[minVisibleSelector]))
+                            _this[minVisibleSelector] = _this[minSelector];
+                        else
+                            _this[minVisibleSelector] = raiseToFlooredLog(_this[minVisibleSelector], base);
+                        if (isDefinedUtils(_this[maxSelector]))
+                            _this[maxSelector] = raiseToCeiledLog(_this[maxSelector], base);
+                        if (!isDefinedUtils(_this[maxVisibleSelector]))
+                            _this[maxVisibleSelector] = _this[maxSelector];
+                        else
+                            _this[maxVisibleSelector] = raiseToCeiledLog(_this[maxVisibleSelector], base)
                     }
-            };
-        var createSpecific_SetStubData_Function = function(specificator) {
-                specificator = (specificator || '').toUpperCase();
-                return function(dataType) {
-                        var year = (new Date).getYear() - 1;
-                        this['min' + specificator] = dataType === 'datetime' ? new Date(year, 0, 1) : 0;
-                        this['max' + specificator] = dataType === 'datetime' ? new Date(year, 11, 31) : 10;
-                        this['stubData' + specificator] = true
+                    else {
+                        correctValueByBoundaries(minVisibleSelector, minSelector);
+                        correctValueByBoundaries(maxVisibleSelector, maxSelector);
+                        applyMarginWithZeroCorrection(minSelector, maxSelector, _this[maxSelector] - _this[minSelector]);
+                        applyMarginWithZeroCorrection(minVisibleSelector, maxVisibleSelector, _this[maxVisibleSelector] - _this[minVisibleSelector])
                     }
+                };
+                rangeExtension['_applyEqualLimitsMargins' + specificator] = function() {
+                    var _this = this,
+                        isDateTime = isDateUtils(_this[maxSelector]) || isDateUtils(_this[minSelector]),
+                        base = _this[baseSelector],
+                        isLogarithmic = _this[axisTypeSelector] === 'logarithmic',
+                        newMin,
+                        newMax,
+                        correction = isDateTime ? DATETIME_EQUALITY_CORRECTION : NUMBER_EQUALITY_CORRECTION;
+                    if (isDefinedUtils(_this[minSelector]) && isDefinedUtils(_this[maxSelector]) && _this[minSelector].valueOf() === _this[maxSelector].valueOf()) {
+                        newMin = _this[minSelector].valueOf() - correction;
+                        newMax = _this[maxSelector].valueOf() + correction;
+                        if (isLogarithmic) {
+                            _this[minSelector] = raiseToFlooredLog(_this[minSelector], base, -correction);
+                            _this[maxSelector] = raiseToFlooredLog(_this[maxSelector], base, correction)
+                        }
+                        else if (isDateTime) {
+                            _this[minSelector] = new Date(newMin);
+                            _this[maxSelector] = new Date(newMax)
+                        }
+                        else {
+                            _this[minSelector] = _this[minSelector] === 0 ? _this[minSelector] : newMin;
+                            _this[maxSelector] = newMax
+                        }
+                    }
+                    if (isDefinedUtils(_this[minVisibleSelector]) && isDefinedUtils(_this[maxVisibleSelector]) && _this[minVisibleSelector].valueOf() === _this[maxVisibleSelector].valueOf()) {
+                        newMin = _this[minVisibleSelector].valueOf() - correction;
+                        newMax = _this[maxVisibleSelector].valueOf() + correction;
+                        if (isLogarithmic) {
+                            newMin = raiseToFlooredLog(_this[minVisibleSelector], base, -correction);
+                            newMax = raiseToFlooredLog(_this[minVisibleSelector], base, correction);
+                            _this[minVisibleSelector] = newMin < _this[minSelector] ? _this[minSelector] : newMin;
+                            _this[maxVisibleSelector] = newMax > _this[maxSelector] ? _this[maxSelector] : newMax
+                        }
+                        else if (isDateTime) {
+                            _this[minVisibleSelector] = newMin < _this[minSelector].valueOf() ? _this[minSelector] : new Date(newMin);
+                            _this[maxVisibleSelector] = newMax > _this[maxSelector].valueOf() ? _this[maxSelector] : new Date(newMax)
+                        }
+                        else {
+                            if (_this[minVisibleSelector] !== 0)
+                                _this[minVisibleSelector] = newMin < _this[minSelector] ? _this[minSelector] : newMin;
+                            _this[maxVisibleSelector] = newMax > _this[maxSelector] ? _this[maxSelector] : newMax
+                        }
+                    }
+                };
+                rangeExtension['correctValueZeroLevel' + specificator] = function() {
+                    var _this = this;
+                    if (isDateUtils(_this[maxSelector]) || isDateUtils(_this[minSelector]))
+                        return _this;
+                    function setZeroLevel(min, max) {
+                        _this[min] < 0 && _this[max] < 0 && (_this[max] = 0);
+                        _this[min] > 0 && _this[max] > 0 && (_this[min] = 0)
+                    }
+                    setZeroLevel(minSelector, maxSelector);
+                    setZeroLevel(minVisibleSelector, maxVisibleSelector);
+                    return _this
+                };
+                return rangeExtension
             };
+        DX.viz.charts.__NUMBER_EQUALITY_CORRECTION = NUMBER_EQUALITY_CORRECTION;
+        DX.viz.charts.__DATETIME_EQUALITY_CORRECTION = DATETIME_EQUALITY_CORRECTION;
+        DX.viz.charts.__createSingleRange = createSingleRange;
+        DX.viz.charts.__replaceSingleRangeCreator = function(newCreator) {
+            createSingleRange = newCreator
+        };
         DX.viz.charts.Range = DX.Class.inherit({
             ctor: function(range) {
+                $.extend(this, createSingleRange('X'));
+                $.extend(this, createSingleRange('Y'));
                 range && $.extend(this, range)
             },
             dispose: function() {
                 this.categoriesY = null;
                 this.categoriesX = null
             },
-            getBoundRange: function(otherRange) {
-                this.getBoundRangeX(otherRange);
-                this.getBoundRangeY(otherRange);
+            addRange: function(otherRange) {
+                this.addRangeX(otherRange);
+                this.addRangeY(otherRange);
                 return this
             },
-            getBoundRangeX: createSpecific_GetBoundRange_Function('X'),
-            getBoundRangeY: createSpecific_GetBoundRange_Function('Y'),
             isDefined: function() {
                 return this.isDefinedX() || this.isDefinedY()
             },
-            isDefinedX: function() {
-                return isDefinedUtils(this.minX) && isDefinedUtils(this.maxX) || isDefinedUtils(this.categoriesX)
-            },
-            isDefinedY: function() {
-                return isDefinedUtils(this.minY) && isDefinedUtils(this.maxY) || isDefinedUtils(this.categoriesY)
-            },
             setStubData: function(dataType) {
                 this.setStubDataX(dataType);
-                this.setStubDataY(dataType)
-            },
-            setStubDataX: createSpecific_SetStubData_Function('X'),
-            setStubDataY: createSpecific_SetStubData_Function('Y'),
-            _correctValueMarginsToZeroIfNeeded: function(field) {
-                var self = this,
-                    length,
-                    min = isDefinedUtils(self['minVisible' + field]) ? self['minVisible' + field] : self['min' + field],
-                    max = isDefinedUtils(self['maxVisible' + field]) ? self['maxVisible' + field] : self['max' + field],
-                    minValueMargin = self['minValueMargin' + field],
-                    maxValueMargin = self['maxValueMargin' + field],
-                    isDateTime = isDateUtils(max) || isDateUtils(min);
-                if (isDefinedUtils(max) && isDefinedUtils(min))
-                    length = max - min;
-                if (length && !isDateTime && !self['keepValueMargins' + field]) {
-                    if (min <= 0 && max <= 0 && maxValueMargin && maxValueMargin > max / (min - max)) {
-                        self['maxValueMargin' + field] = 0;
-                        self['max' + field] = 0
-                    }
-                    if (min >= 0 && max >= 0 && minValueMargin && minValueMargin > min / (max - min)) {
-                        self['minValueMargin' + field] = 0;
-                        self['min' + field] = 0
-                    }
-                }
+                this.setStubDataY(dataType);
+                return this
             },
             applyValueMargins: function() {
-                this._applySpecificValueMargins('X');
-                this._applySpecificValueMargins('Y');
-                this.applyEqualLimitsMargins()
-            },
-            _applySpecificValueMargins: function(specificator) {
-                specificator = (specificator || '').toUpperCase();
-                var self = this,
-                    minSelector = 'min' + specificator,
-                    maxSelector = 'max' + specificator,
-                    minVisibleSelector = 'minVisible' + specificator,
-                    maxVisibleSelector = 'maxVisible' + specificator,
-                    minValueMarginSelector = 'minValueMargin' + specificator,
-                    maxValueMarginSelector = 'maxValueMargin' + specificator,
-                    base,
-                    length,
-                    lengthVisible,
-                    isDateTime = isDateUtils(self[maxSelector]) || isDateUtils(self[minSelector]),
-                    min,
-                    max,
-                    minValue,
-                    minVisible,
-                    maxVisible;
-                if (self['axisType' + specificator] === 'logarithmic') {
-                    base = self['base' + specificator];
-                    min = Math.floor(getLogUtils(self[minSelector], base));
-                    max = Math.ceil(getLogUtils(self[maxSelector], base));
-                    minVisible = Math.floor(getLogUtils(self[minVisibleSelector], base));
-                    maxVisible = Math.ceil(getLogUtils(self[maxVisibleSelector], base));
-                    if (isDefinedUtils(self[minSelector])) {
-                        minValue = self[minSelector];
-                        self[minSelector] = raiseToUtils(min, base);
-                        if (getLogUtils(minValue / self[minSelector], base) < getLogUtils(1 + base / 10, base) && (self.keepValueMarginsX || self.keepValueMarginsY) && !self['keepValueMargins' + specificator]) {
-                            min -= 1;
-                            self[minSelector] = raiseToUtils(min, base)
-                        }
-                    }
-                    if (!isDefinedUtils(self[minVisibleSelector]) || self[minVisibleSelector] < self[minSelector] || self[minVisibleSelector] > self[maxSelector])
-                        minVisible = min;
-                    self[minVisibleSelector] = raiseToUtils(minVisible, base);
-                    if (isDefinedUtils(self[maxSelector]))
-                        self[maxSelector] = raiseToUtils(max, base);
-                    if (!isDefinedUtils(self[maxVisibleSelector]) || self[maxVisibleSelector] < self[minSelector] || self[maxVisibleSelector] > self[maxSelector])
-                        maxVisible = max;
-                    self[maxVisibleSelector] = raiseToUtils(maxVisible, base)
-                }
-                else {
-                    this._correctValueMarginsToZeroIfNeeded(specificator);
-                    if (isDefinedUtils(self[maxSelector]) && isDefinedUtils(self[minSelector]))
-                        length = self[maxSelector] - self[minSelector];
-                    if (!isDefinedUtils(self[minVisibleSelector]) || self[minVisibleSelector] < self[minSelector] || self[minVisibleSelector] > self[maxSelector])
-                        self[minVisibleSelector] = self[minSelector];
-                    if (!isDefinedUtils(self[maxVisibleSelector]) || self[maxVisibleSelector] < self[minSelector] || self[maxVisibleSelector] > self[maxSelector])
-                        self[maxVisibleSelector] = self[maxSelector];
-                    lengthVisible = self[maxVisibleSelector] - self[minVisibleSelector];
-                    if (isDefinedUtils(self[minSelector]) && self[minValueMarginSelector])
-                        if (isDateTime)
-                            self[minSelector] = new Date(self[minSelector].valueOf() - length * self[minValueMarginSelector]);
-                        else
-                            self[minSelector] -= length * self[minValueMarginSelector];
-                    if (isDefinedUtils(self[minVisibleSelector]) && self[minValueMarginSelector])
-                        if (isDateTime)
-                            self[minVisibleSelector] = new Date(self[minVisibleSelector].valueOf() - lengthVisible * self[minValueMarginSelector]);
-                        else
-                            self[minVisibleSelector] -= lengthVisible * self[minValueMarginSelector];
-                    if (isDefinedUtils(self[maxSelector]) && self[maxValueMarginSelector])
-                        if (isDateTime)
-                            self[maxSelector] = new Date(self[maxSelector].valueOf() + length * self[maxValueMarginSelector]);
-                        else
-                            self[maxSelector] += length * self[maxValueMarginSelector];
-                    if (isDefinedUtils(self[maxVisibleSelector]) && self[maxValueMarginSelector])
-                        if (isDateTime)
-                            self[maxVisibleSelector] = new Date(self[maxVisibleSelector].valueOf() + lengthVisible * self[maxValueMarginSelector]);
-                        else
-                            self[maxVisibleSelector] += lengthVisible * self[maxValueMarginSelector]
-                }
+                this._applyValueMarginsX();
+                this._applyValueMarginsY();
+                this.applyEqualLimitsMargins();
+                return this
             },
             applyEqualLimitsMargins: function() {
-                this._applySpecificEqualLimitsMargins('X');
-                this._applySpecificEqualLimitsMargins('Y')
-            },
-            _applySpecificEqualLimitsMargins: function(specificator) {
-                specificator = (specificator || '').toUpperCase();
-                var self = this,
-                    minSelector = 'min' + specificator,
-                    maxSelector = 'max' + specificator,
-                    minVisibleSelector = 'minVisible' + specificator,
-                    maxVisibleSelector = 'maxVisible' + specificator,
-                    isDateTime = isDateUtils(self[maxSelector]) || isDateUtils(self[minSelector]);
-                if (isDefinedUtils(self[minSelector]) && isDefinedUtils(self[maxSelector]) && self[minSelector].valueOf() === self[maxSelector].valueOf())
-                    if (isDateTime) {
-                        self[minSelector] = new Date(self[minSelector].valueOf() - DATETIME_EQUALITY_CORRECTION);
-                        self[maxSelector] = new Date(self[maxSelector].valueOf() + DATETIME_EQUALITY_CORRECTION)
-                    }
-                    else {
-                        self[minSelector] = specificator === 'Y' && self[minSelector] === 0 ? self[minSelector] : self[minSelector] - NUMBER_EQUALITY_CORRECTION;
-                        self[maxSelector] = self[maxSelector] + NUMBER_EQUALITY_CORRECTION
-                    }
-                if (isDefinedUtils(self[minVisibleSelector]) && isDefinedUtils(self[maxVisibleSelector]) && self[minVisibleSelector].valueOf() === self[maxVisibleSelector].valueOf())
-                    if (isDateTime) {
-                        self[minVisibleSelector] = self[minVisibleSelector].valueOf() - DATETIME_EQUALITY_CORRECTION < self[minSelector].valueOf() ? self[minSelector] : new Date(self[minVisibleSelector].valueOf() - DATETIME_EQUALITY_CORRECTION);
-                        self[maxVisibleSelector] = self[maxVisibleSelector].valueOf() + DATETIME_EQUALITY_CORRECTION > self[maxSelector].valueOf() ? self[maxSelector] : new Date(self[maxVisibleSelector].valueOf() + DATETIME_EQUALITY_CORRECTION)
-                    }
-                    else {
-                        if (specificator !== 'Y' || self[minVisibleSelector] !== 0)
-                            self[minVisibleSelector] = self[minVisibleSelector] - NUMBER_EQUALITY_CORRECTION < self[minSelector] ? self[minSelector] : self[minVisibleSelector] - NUMBER_EQUALITY_CORRECTION;
-                        self[maxVisibleSelector] = self[maxVisibleSelector] + NUMBER_EQUALITY_CORRECTION > self[maxSelector] ? self[maxSelector] : self[maxVisibleSelector] + NUMBER_EQUALITY_CORRECTION
-                    }
+                this._applyEqualLimitsMarginsX();
+                this._applyEqualLimitsMarginsY();
+                return this
             },
             correctValueZeroLevel: function() {
-                var self = this;
-                if (isDateUtils(self.maxY) || isDateUtils(self.minY))
-                    return;
-                function setZeroLevel(min, max) {
-                    self[min] < 0 && self[max] < 0 && (self[max] = 0);
-                    self[min] > 0 && self[max] > 0 && (self[min] = 0)
-                }
-                setZeroLevel("minY", "maxY");
-                setZeroLevel("minVisibleY", "maxVisibleY")
+                this.correctValueZeroLevelX();
+                this.correctValueZeroLevelY();
+                return this
             }
         })
     })(jQuery, DevExpress);
@@ -6202,7 +6279,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     $.each(group, function(_, series) {
                         _this._parsers[series.getArgumentField()] = _this._createParserUnit(_this.groups.argumentType, _this.groups.argumentAxisType === axisTypes.LOGARITHMIC ? _this._filterForLogAxis : null);
                         $.each(series.getValueFields(), function(_, field) {
-                            _this._parsers[field] = _this._createParserUnit(group.valueType, series.options.valueAxisType === axisTypes.LOGARITHMIC ? _this._filterForLogAxis : null)
+                            _this._parsers[field] = _this._createParserUnit(group.valueType, series.options.valueAxisType === axisTypes.LOGARITHMIC ? _this._filterForLogAxis : null, series.styles.ignoreEmptyPoints)
                         });
                         if (series.getTagField())
                             _this._parsers[series.getTagField()] = null
@@ -6250,7 +6327,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 }
                 return val
             },
-            _createParserUnit: function _createParserUnit(type, filter) {
+            _createParserUnit: function _createParserUnit(type, filter, ignoreEmptyPoints) {
                 var _this = this,
                     parser = type ? parseUtils.getParser(type, undefined, true) : function(unit) {
                         return unit
@@ -6259,6 +6336,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         var parseUnit = parser(unit);
                         if (filter)
                             parseUnit = filter.call(_this, parseUnit, field);
+                        parseUnit === null && ignoreEmptyPoints && (parseUnit = undefined);
                         if (parseUnit === undefined) {
                             _this._addSkipFields(field);
                             _this._validUnit(unit, field, type)
@@ -6875,7 +6953,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 }
                 $.each(points, function(i, point) {
                     point.adjustSeriesLabels = self.adjustSeriesLabels;
-                    if (!point.isInVisibleArea(point.x, point.y, point.width || 0, point.height || 0))
+                    if (!point.isInVisibleArea())
                         return;
                     point.options.visible && point.drawMarker(self.renderer, group, animationEnabled);
                     if (self.styles.point.label && !self.styles.point.label.visible)
@@ -6888,7 +6966,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 var self = this,
                     trackersVisible = !self._suppressTrackers;
                 $.each(points, function drawPointTracker(i, point) {
-                    if (!point.isInVisibleArea(point.x, point.y, point.width || 0, point.height || 0))
+                    if (!point.isInVisibleArea())
                         return;
                     trackersVisible && point.drawTrackerMarker(self.renderer, self.options.markerTrackerGroup)
                 })
@@ -7222,8 +7300,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
     /*! Module viz-core, file seriesAdjustOptions.js */
     (function($, DX) {
         var series = DX.viz.charts.series;
-        series.LineSeriesAdjustOptionsMixin = {adjustOptions: function() {
-                var styles = this.styles,
+        series.LineSeriesAdjustOptionsMixin = {adjustOptions: function(styles) {
+                var styles = styles || this.styles,
                     attributes = styles.attributes,
                     hover = styles.states.hover,
                     selected = styles.states.selected,
@@ -7239,10 +7317,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 hover.strokeWidth = hover.lineWidth;
                 selected.stroke = selected.fill;
                 selected.fill = 'none';
-                selected.strokeWidth = selected.lineWidth
+                selected.strokeWidth = selected.lineWidth;
+                return styles
             }};
-        series.AreaSeriesAdjustOptionsMixin = {adjustOptions: function() {
-                var styles = this.styles,
+        series.AreaSeriesAdjustOptionsMixin = {adjustOptions: function(styles) {
+                var styles = styles || this.styles,
                     attributes = styles.attributes,
                     states = styles.states,
                     hover = states.hover,
@@ -7315,10 +7394,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         hover: stickHover,
                         selected: stickSelected
                     }
-                }
+                };
+                return styles
             }};
-        series.BarSeriesAdjustOptionsMixin = {adjustOptions: function() {
-                var styles = this.styles,
+        series.BarSeriesAdjustOptionsMixin = {adjustOptions: function(styles) {
+                var styles = styles || this.styles,
                     options = this.options,
                     attributes = styles.attributes,
                     hover = styles.states.hover,
@@ -7347,10 +7427,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 pointHover.r = pointSelected.r = pointNormal.r = pointAttributes.r;
                 styles.point.hoverMode = func(hoverMode) && hoverMode;
                 styles.point.selectionMode = func(selectionMode) && selectionMode;
-                styles.point.visible = true
+                styles.point.visible = true;
+                return styles
             }};
-        series.CandleStickSeriesAdjustOptionsMixin = {adjustOptions: function() {
-                var styles = this.styles,
+        series.CandleStickSeriesAdjustOptionsMixin = {adjustOptions: function(styles) {
+                var styles = styles || this.styles,
                     options = this.options,
                     attributes = styles.attributes,
                     hover = styles.states.hover,
@@ -7387,10 +7468,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 pointHover.r = pointSelected.r = pointNormal.r = pointAttributes.r = 0;
                 styles.point.hoverMode = func(hoverMode) && hoverMode;
                 styles.point.selectionMode = func(selectionMode) && selectionMode;
-                styles.point.visible = true
+                styles.point.visible = true;
+                return styles
             }};
-        series.BubleSeriesAdjustOptionsMixin = {adjustOptions: function() {
-                var styles = this.styles,
+        series.BubleSeriesAdjustOptionsMixin = {adjustOptions: function(styles) {
+                var styles = styles || this.styles,
                     options = this.options,
                     attributes = styles.attributes,
                     hover = styles.states.hover,
@@ -7421,7 +7503,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 delete pointNormal.r;
                 styles.point.hoverMode = func(hoverMode) && hoverMode;
                 styles.point.selectionMode = func(selectionMode) && selectionMode;
-                styles.point.visible = true
+                styles.point.visible = true;
+                return styles
             }}
     })(jQuery, DevExpress);
     /*! Module viz-core, file seriesAnimation.js */
@@ -7524,10 +7607,13 @@ if (!DevExpress.MOD_VIZ_CORE) {
     /*! Module viz-core, file seriesSpecialMethods.js */
     (function($, DX) {
         var series = DX.viz.charts.series,
-            isDefined = DX.utils.isDefined,
-            isFinite = window.isFinite,
             utils = DX.utils,
-            normalizeAngle = utils.normalizeAngle;
+            _isDefined = utils.isDefined,
+            _isFinite = window.isFinite,
+            _normalizeAngle = utils.normalizeAngle,
+            _each = $.each,
+            _map = $.map,
+            _extend = $.extend;
         series.specialAreaMethodsMixin = {resetLineColors: function() {
                 var styles = this.styles,
                     attributes = styles.attributes,
@@ -7549,37 +7635,47 @@ if (!DevExpress.MOD_VIZ_CORE) {
             }};
         series.specialCandleStickMethodsMixin = {
             getRangeData: function(visibleArea) {
-                var self = this,
-                    options = self.options,
+                var _this = this,
+                    options = _this.options,
+                    isArgumentAxisDiscrete = options.argumentAxisType === 'discrete',
                     rotated = options.rotated,
                     valAxis = rotated ? 'X' : 'Y',
                     argAxis = rotated ? 'Y' : 'X',
-                    points = self.points,
+                    points = _this.points,
+                    intervalArg = rotated ? 'intervalY' : 'intervalX',
                     vals = [],
+                    visibleVals = [],
                     args = [];
                 var compareNumeric = function(a, b) {
                         return a - b
                     };
-                $.each(this.points, function(i, val) {
-                    isDefined(val.argument) && args.push(val.argument);
+                _each(_this.points, function(i, val) {
+                    _isDefined(val.argument) && args.push(val.argument);
                     if (val.hasValue()) {
                         vals.push(val.highValue);
-                        vals.push(val.lowValue)
+                        vals.push(val.lowValue);
+                        if (!isArgumentAxisDiscrete && visibleArea && visibleArea.adjustOnZoom && val.argument >= visibleArea.minArg && val.argument <= visibleArea.maxArg) {
+                            visibleVals.push(val.highValue);
+                            visibleVals.push(val.lowValue)
+                        }
                     }
                 });
-                self.rangeData = {};
+                _this.rangeData = {};
                 var processArgument = function(arg, prevArg) {
                         var interval;
-                        if (utils.isDefined(prevArg))
+                        if (_isDefined(prevArg))
                             interval = Math.abs(arg - prevArg);
-                        if (utils.isDefined(interval) && (interval < self.rangeData.intervalX || !utils.isDefined(self.rangeData.intervalX)))
-                            self.rangeData.intervalX = interval
+                        if (_isDefined(interval) && (interval < _this.rangeData[intervalArg] || !_isDefined(_this.rangeData[intervalArg])))
+                            _this.rangeData[intervalArg] = interval
                     };
                 if (vals.length) {
                     vals.sort(compareNumeric);
-                    self.rangeData['max' + valAxis] = vals[vals.length - 1];
-                    self.rangeData['min' + valAxis] = vals[0];
-                    $.each(points, function(i, point) {
+                    visibleVals.sort(compareNumeric);
+                    _this.rangeData['max' + valAxis] = vals[vals.length - 1];
+                    _this.rangeData['min' + valAxis] = vals[0];
+                    _this.rangeData['maxVisible' + valAxis] = visibleVals[visibleVals.length - 1];
+                    _this.rangeData['minVisible' + valAxis] = visibleVals[0];
+                    _each(points, function(i, point) {
                         var prevPoint,
                             arg = point.argument,
                             prevArg;
@@ -7590,15 +7686,15 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         processArgument(arg, prevArg)
                     })
                 }
-                if (args.length && options.argumentAxisType !== 'discrete') {
+                if (args.length && !isArgumentAxisDiscrete) {
                     args.sort(compareNumeric);
-                    self.rangeData['min' + argAxis] = args[0];
-                    self.rangeData['max' + argAxis] = args[args.length - 1]
+                    _this.rangeData['min' + argAxis] = args[0];
+                    _this.rangeData['max' + argAxis] = args[args.length - 1]
                 }
                 else
-                    self.rangeData['categories' + argAxis] = args;
-                this._zoomAxis(visibleArea);
-                return this.rangeData
+                    _this.rangeData['categories' + argAxis] = args;
+                _this._zoomAxis(visibleArea);
+                return _this.rangeData
             },
             _setPointStylesReduct: function(i, reductionLevel, valueFields, pointStylesReduct) {
                 var innerColor = pointStylesReduct.customState && pointStylesReduct.customState.innerColor || this.styles.reduction.innerColor,
@@ -7617,29 +7713,32 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     pointStylesReduct.attributes.fill = pointStylesReduct.states.normal.fill = pointStylesReduct.states.hover.fill = pointStylesReduct.states.selected.fill = innerColor;
                     className = (className ? className : '') + ' dx-candle-positive'
                 }
+                if (pointStylesReduct.label.background.fill === this.styles.point.attributes.fill)
+                    pointStylesReduct.label.background.fill = pointStylesReduct.attributes.stroke;
                 pointStylesReduct.attributes['class'] = className;
                 return className
             },
             reinitData: function(data) {
-                var self = this,
+                var _this = this,
+                    options = _this.options,
                     level,
                     pointFactory = series.pointFactory,
-                    argumentField = this.options.argumentField || 'date',
-                    openValueField = this.options.openValueField || 'open',
-                    highValueField = this.options.highValueField || 'high',
-                    lowValueField = this.options.lowValueField || 'low',
-                    closeValueField = this.options.closeValueField || 'close',
-                    tagField = this.options.tagField,
+                    argumentField = options.argumentField || 'date',
+                    openValueField = options.openValueField || 'open',
+                    highValueField = options.highValueField || 'high',
+                    lowValueField = options.lowValueField || 'low',
+                    closeValueField = options.closeValueField || 'close',
+                    tagField = options.tagField,
                     pointStyle,
                     pointStylesReduct,
                     className;
-                this.segments = [];
+                _this.segments = [];
                 if (!data.length) {
-                    this.points = [];
+                    _this.points = [];
                     return
                 }
-                self.level = this.styles.reduction.level;
-                switch ((self.level || '').toLowerCase()) {
+                _this.level = _this.styles.reduction.level;
+                switch ((_this.level || '').toLowerCase()) {
                     case'open':
                         level = openValueField;
                         break;
@@ -7651,30 +7750,31 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         break;
                     default:
                         level = closeValueField;
-                        self.level = 'close';
+                        _this.level = 'close';
                         break
                 }
-                self.styles.pointStyles = [];
-                self.pointsByArgument = {};
-                self.className = 'dx-candle-default';
-                this.points = $.map(data, function(val, i) {
+                _this.styles.pointStyles = [];
+                _this.styles.labelStyles = [];
+                _this.pointsByArgument = {};
+                _this.className = 'dx-candle-default';
+                _this.points = _map(data, function(val, i) {
                     var point;
                     if (val[argumentField] === undefined || val[argumentField] === null || val[openValueField] === undefined || val[highValueField] === undefined || val[lowValueField] === undefined || val[closeValueField] === undefined)
                         return;
-                    pointStylesReduct = $.extend(true, {}, self.styles.point || {});
-                    pointStyle = self._getPointStyle(pointStylesReduct, i, val[argumentField], val[level], undefined, val[tagField], {
+                    pointStylesReduct = _extend(true, {}, _this.styles.point || {});
+                    pointStyle = _this._getPointStyle(pointStylesReduct, i, val[argumentField], val[level], undefined, val[tagField], {
                         highValue: val[highValueField],
                         lowValue: val[lowValueField],
                         closeValue: val[closeValueField],
                         openValue: val[openValueField]
                     });
-                    className = self._setPointStylesReduct(i, val[level], {
+                    className = _this._setPointStylesReduct(i, val[level], {
                         open: val[openValueField],
                         high: val[highValueField],
                         close: val[closeValueField],
                         low: val[lowValueField]
                     }, pointStyle);
-                    point = pointFactory.createPoint(self.type, {
+                    point = pointFactory.createPoint(_this.type, {
                         openValue: val[openValueField],
                         pointClassName: className,
                         highValue: val[highValueField],
@@ -7689,24 +7789,25 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         options: pointStyle,
                         tag: val[tagField],
                         reductionValue: val[level],
-                        series: self
+                        series: _this
                     });
-                    self.pointsByArgument[point.argument.valueOf()] = self.pointsByArgument[point.argument.valueOf()] || point;
+                    _this.pointsByArgument[point.argument.valueOf()] = _this.pointsByArgument[point.argument.valueOf()] || point;
                     return point
                 });
-                delete this.prevLevelValue;
-                self.originalPoints = self.points;
-                this._segmentPoints()
+                delete _this.prevLevelValue;
+                _this.originalPoints = _this.points;
+                _this._segmentPoints()
             },
             createPatterns: function() {
-                var self = this,
-                    hover = self.styles.states.hover,
-                    selected = self.styles.states.selected,
-                    normal = self.styles.states.normal,
-                    reductionColor = self.styles.reduction.color,
-                    renderer = self.renderer;
-                self.styles.pointStyles = self.styles.pointStyles || [];
-                $.each(self.styles.pointStyles, function(_, style) {
+                var _this = this,
+                    styles = _this.styles,
+                    hover = styles.states.hover,
+                    selected = styles.states.selected,
+                    normal = styles.states.normal,
+                    reductionColor = styles.reduction.color,
+                    renderer = _this.renderer;
+                _this.styles.pointStyles = styles.pointStyles || [];
+                _each(_this.styles.pointStyles, function(_, style) {
                     if (style) {
                         var pointHover = style.states.hover,
                             pointSelected = style.states.selected,
@@ -7716,41 +7817,43 @@ if (!DevExpress.MOD_VIZ_CORE) {
                             style.selectedPatternColor = customState.selectedColor
                         }
                         if (!style.hoverPattern) {
-                            style.hoverPattern = self.renderer.createPattern(style.hoverPatternColor, pointHover.hatching);
-                            style.selectedPattern = self.renderer.createPattern(style.selectedPatternColor, pointSelected.hatching)
+                            style.hoverPattern = _this.renderer.createPattern(style.hoverPatternColor, pointHover.hatching);
+                            style.selectedPattern = _this.renderer.createPattern(style.selectedPatternColor, pointSelected.hatching)
                         }
                         style.hoverPattern.append();
                         style.selectedPattern.append()
                     }
                 });
-                self.callBase();
-                if (!self.patternColorReduction)
-                    self.patternColorReduction = reductionColor;
-                if (!self.hoverPatternReduction) {
-                    self.hoverPatternReduction = renderer.createPattern(normal.fill === hover.fill ? self.patternColorReduction : hover.fill, hover.hatching);
-                    self.selectedPatternReduction = renderer.createPattern(normal.fill === selected.fill ? self.patternColorReduction : selected.fill, selected.hatching)
+                _this.callBase.apply(_this, arguments);
+                if (!_this.patternColorReduction)
+                    _this.patternColorReduction = reductionColor;
+                if (!_this.hoverPatternReduction) {
+                    _this.hoverPatternReduction = renderer.createPattern(normal.fill === hover.fill ? _this.patternColorReduction : hover.fill, hover.hatching);
+                    _this.selectedPatternReduction = renderer.createPattern(normal.fill === selected.fill ? _this.patternColorReduction : selected.fill, selected.hatching)
                 }
-                self.hoverPatternReduction.append();
-                self.selectedPatternReduction.append()
+                _this.hoverPatternReduction.append();
+                _this.selectedPatternReduction.append()
             },
             createMarkerGroups: function(seriesMarkersGroup) {
-                var styles = this.styles,
+                var _this = this,
+                    renderer = _this.renderer,
+                    styles = _this.styles,
                     reduction = styles.reduction,
-                    defaultMarkersOptions = $.extend({'class': 'default-markers'}, styles.point.states.normal),
-                    reductionMarkersOptions = $.extend({'class': 'reduction-markers'}, styles.point.states.normal, {
+                    defaultMarkersOptions = _extend({'class': 'default-markers'}, styles.point.states.normal),
+                    reductionMarkersOptions = _extend({'class': 'reduction-markers'}, styles.point.states.normal, {
                         fill: reduction.color,
                         stroke: reduction.color
                     }),
-                    defaultPositiveMarkersOptions = $.extend({'class': 'default-positive-markers'}, styles.point.states.normal, {fill: reduction.innerColor}),
-                    reductionPositiveMarkersOptions = $.extend({'class': 'reduction-positive-markers'}, styles.point.states.normal, {
+                    defaultPositiveMarkersOptions = _extend({'class': 'default-positive-markers'}, styles.point.states.normal, {fill: reduction.innerColor}),
+                    reductionPositiveMarkersOptions = _extend({'class': 'reduction-positive-markers'}, styles.point.states.normal, {
                         fill: reduction.innerColor,
                         stroke: reduction.color
                     });
                 return {
-                        defaultMarkersGroup: this.renderer.createGroup(defaultMarkersOptions).append(seriesMarkersGroup),
-                        reductionMarkersGroup: this.renderer.createGroup(reductionMarkersOptions).append(seriesMarkersGroup),
-                        defaultPositiveMarkersGroup: this.renderer.createGroup(defaultPositiveMarkersOptions).append(seriesMarkersGroup),
-                        reductionPositiveMarkersGroup: this.renderer.createGroup(reductionPositiveMarkersOptions).append(seriesMarkersGroup)
+                        defaultMarkersGroup: renderer.createGroup(defaultMarkersOptions).append(seriesMarkersGroup),
+                        reductionMarkersGroup: renderer.createGroup(reductionMarkersOptions).append(seriesMarkersGroup),
+                        defaultPositiveMarkersGroup: renderer.createGroup(defaultPositiveMarkersOptions).append(seriesMarkersGroup),
+                        reductionPositiveMarkersGroup: renderer.createGroup(reductionPositiveMarkersOptions).append(seriesMarkersGroup)
                     }
             },
             getValueFields: function() {
@@ -7768,19 +7871,15 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 return 10
             },
             _preparePointStyle: function(options) {
-                var style = this.callBase(options),
+                var style = this.callBase.apply(this, arguments),
                     attributes = style.attributes,
                     normal = style.states.normal,
                     hover = style.states.hover,
                     selected = style.states.selected;
                 style.customState = {};
-                options.width && (attributes.strokeWidth = options.width);
                 attributes.stroke = attributes.fill;
-                options.width && (normal.strokeWidth = options.width);
                 normal.stroke = normal.fill;
-                options.hoverStyle.width && (hover.strokeWidth = options.hoverStyle.width);
                 style.customState.hoverColor = hover.stroke = hover.fill;
-                options.selectionStyle.width && (selected.strokeWidth = options.selectionStyle.width);
                 style.customState.selectedColor = selected.stroke = selected.fill;
                 style.customState.color = options.color;
                 style.customState.innerColor = options.innerColor;
@@ -7789,37 +7888,34 @@ if (!DevExpress.MOD_VIZ_CORE) {
         };
         series.specialPieMethodsMixin = {
             arrangePoints: function() {
-                var series = this,
-                    minSegmentSize = series.styles.minSegmentSize,
-                    shiftedAngle = series.options.startAngle,
+                var _this = this,
+                    minSegmentSize = _this.styles.minSegmentSize,
+                    shiftedAngle = _this.options.startAngle,
                     points,
                     pointsLength,
                     correction = 0,
-                    translator = this.translator,
+                    translator = _this.translator,
                     total = 0,
                     percent,
                     i,
                     totalNotMinValues = 0,
                     totalMinSegmentSize = 0,
                     minShownValue,
-                    isClockWise = series.options.segmentsDirection !== 'anticlockwise';
-                series.points = $.map(series.points, function(point) {
-                    if (point.value === null || point.value < 0 || point.value === 0 && !minSegmentSize)
-                        return null;
-                    return point
+                    isClockWise = _this.options.segmentsDirection !== 'anticlockwise';
+                _this.points = points = _map(_this.points, function(point) {
+                    return point.value === null || point.value < 0 || point.value === 0 && !minSegmentSize ? null : point
                 });
-                points = series.points;
                 pointsLength = points.length;
                 for (i = 0; i < pointsLength; i++)
                     total += points[i].value;
                 if (total === 0) {
                     total = pointsLength;
-                    $.each(series.points, function(i, point) {
+                    _each(_this.points, function(i, point) {
                         point.value = 1
                     })
                 }
                 if (minSegmentSize) {
-                    $.each(points, function(i, point) {
+                    _each(points, function(i, point) {
                         if (point.value < minSegmentSize * total / 360)
                             totalMinSegmentSize += minSegmentSize;
                         else
@@ -7827,7 +7923,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     });
                     minShownValue = totalMinSegmentSize < 360 ? minSegmentSize * totalNotMinValues / (360 - totalMinSegmentSize) : 0
                 }
-                $.each(isClockWise ? points : points.concat([]).reverse(), function(i, point) {
+                _each(isClockWise ? points : points.concat([]).reverse(), function(i, point) {
                     var val = point.value,
                         updatedZeroValue;
                     if (minSegmentSize && val < minShownValue) {
@@ -7847,7 +7943,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 debug.assertParam(correction.centerY, 'correction.centerY was not passed');
                 debug.assertParam(correction.radiusInner, 'correction.radiusInner was not passed');
                 debug.assertParam(correction.radiusOuter, 'correction.radiusOuter was not passed');
-                $.each(this.points, function(_, point) {
+                _each(this.points, function(_, point) {
                     point.correctPosition(correction)
                 })
             },
@@ -7867,40 +7963,43 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 if (options.label.position && options.label.position === 'columns')
                     options.label.connector.visible = true;
                 this.options.segmentsDirection = options.segmentsDirection || 'clockwise';
-                this.options.startAngle = isFinite(options.startAngle) ? normalizeAngle(options.startAngle) : 0;
+                this.options.startAngle = _isFinite(options.startAngle) ? _normalizeAngle(options.startAngle) : 0;
                 var pointStyles = this.styles && this.styles.pointStyles || {};
+                var labelStyles = this.styles && this.styles.labelStyles || {};
                 this.styles = this.callBase(options);
                 this.styles.pointStyles = pointStyles;
+                this.styles.labelStyles = labelStyles;
                 this.adjustOptions();
                 return this.styles
             }
         };
         series.specialBubbleMethodsMixin = {
             reinitData: function(data) {
-                var self = this,
+                var _this = this,
+                    options = _this.options,
                     createPoint = series.pointFactory.createPoint,
-                    rotated = self.options.rotated,
+                    rotated = options.rotated,
                     pointStyle,
                     i,
                     curPoint,
                     point,
-                    options = self.options,
                     argumentField = options.argumentField,
                     valueField = options.valueField,
                     sizeField = options.sizeField,
                     tagField = options.tagField;
                 if (data && data.length)
-                    this._canRenderCompleteHandle = true;
-                self.styles.pointStyles = [];
-                self.points = [];
-                self.pointsByArgument = {};
-                self.segments = [];
+                    _this._canRenderCompleteHandle = true;
+                _this.styles.pointStyles = [];
+                _this.styles.labelStyles = [];
+                _this.points = [];
+                _this.pointsByArgument = {};
+                _this.segments = [];
                 for (i = 0; i < data.length; i++) {
                     curPoint = data[i];
-                    if (!utils.isDefined(curPoint[valueField]) || !utils.isDefined(curPoint[argumentField]) || !utils.isDefined(curPoint[sizeField]))
+                    if (!_isDefined(curPoint[valueField]) || !_isDefined(curPoint[argumentField]) || !_isDefined(curPoint[sizeField]))
                         continue;
-                    pointStyle = self._getPointStyle(self.styles.point, i, curPoint[argumentField], curPoint[valueField], undefined, curPoint[tagField], {size: curPoint[sizeField]});
-                    point = createPoint(self.type, {
+                    pointStyle = _this._getPointStyle(_this.styles.point, i, curPoint[argumentField], curPoint[valueField], undefined, curPoint[tagField], {size: curPoint[sizeField]});
+                    point = createPoint(_this.type, {
                         value: curPoint[valueField],
                         argument: curPoint[argumentField],
                         size: curPoint[sizeField],
@@ -7909,13 +8008,13 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         rotated: rotated,
                         options: pointStyle,
                         tag: curPoint[tagField],
-                        series: self
+                        series: _this
                     });
-                    self.points.push(point);
-                    self.pointsByArgument[point.argument.valueOf()] = self.pointsByArgument[point.argument.valueOf()] || point
+                    _this.points.push(point);
+                    _this.pointsByArgument[point.argument.valueOf()] = _this.pointsByArgument[point.argument.valueOf()] || point
                 }
-                self.originalPoints = self.points;
-                self._segmentPoints()
+                _this.originalPoints = _this.points;
+                _this._segmentPoints()
             },
             getValueFields: function() {
                 return [this.options.valueField, this.options.sizeField]
@@ -7927,8 +8026,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.options.tagField = _this.options.tagField + _this.name
             },
             _preparePointStyle: function(options) {
-                var style = this.callBase(options);
-                options.opacity && (style.attributes.opacity = style.states.normal.opacity = options.opacity);
+                var style = this.callBase.apply(this, arguments);
                 delete style.attributes.r;
                 delete style.states.normal.r;
                 delete style.states.hover.r;
@@ -7976,7 +8074,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 if (this.options.argumentAxisType === 'discrete' || this.options.valueAxisType === 'discrete') {
                     ticksInterval = this.getOriginalPoints().length / ticks;
                     arrayFusPoints = $.map(this.getOriginalPoints(), function(point, index) {
-                        if (Math.floor(nowIndexTicks) === index) {
+                        if (Math.floor(nowIndexTicks) <= index) {
                             nowIndexTicks += ticksInterval;
                             return point
                         }
@@ -8145,28 +8243,30 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 var debug = DX.utils.debug;
                 debug.assertParam(data, 'data was not passed');
                 debug.assertParam(data.options, 'options were not passed');
-                this.LABEL_BACKGROUND_PADDING_X = 8;
-                this.LABEL_BACKGROUND_PADDING_Y = 4;
-                this.LABEL_OFFSET = 10;
-                this.rotated = !!data.rotated;
+                var _this = this;
+                _this.LABEL_BACKGROUND_PADDING_X = 8;
+                _this.LABEL_BACKGROUND_PADDING_Y = 4;
+                _this.LABEL_OFFSET = 10;
+                _this.rotated = !!data.rotated;
                 if (data.options.label && data.options.label.position && data.options.label.position !== 'outside' && data.options.label.position !== 'inside')
                     data.options.label.position = 'outside';
-                this.options = data.options;
-                this.series = data.series;
-                this.value = this.initialValue = data.value;
-                this.argument = this.initialArgument = data.argument;
-                this.originalValue = data.originalValue;
-                this.originalArgument = data.originalArgument;
-                this.minValue = CANVAS_POSITION_DEFAULT;
-                this.labelFormatObject = {
-                    argument: this.initialArgument,
-                    value: this.initialValue,
-                    seriesName: this.series.name,
-                    originalValue: this.originalValue,
-                    originalArgument: this.originalArgument
+                _this.options = data.options;
+                _this.series = data.series;
+                _this.value = _this.initialValue = data.value;
+                _this.argument = _this.initialArgument = data.argument;
+                _this.originalValue = data.originalValue;
+                _this.originalArgument = data.originalArgument;
+                _this.minValue = CANVAS_POSITION_DEFAULT;
+                _this._labelFormatObject = {
+                    argument: _this.initialArgument,
+                    value: _this.initialValue,
+                    seriesName: _this.series.name,
+                    originalValue: _this.originalValue,
+                    originalArgument: _this.originalArgument,
+                    point: _this
                 };
-                this.tag = data.tag;
-                this.pointClassName = data.pointClassName || ''
+                _this.tag = data.tag;
+                _this.pointClassName = data.pointClassName || ''
             },
             dispose: function() {
                 var _this = this;
@@ -8186,7 +8286,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.options = null;
                 _this.series = null;
                 _this.tag = null;
-                _this.labelFormatObject = null;
+                _this._labelFormatObject = null;
                 _this.stackPoints = null
             },
             formatLabel: function(options) {
@@ -8217,14 +8317,18 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     this.minX = translator.translateX(this.minValue);
                     this.defaultX = translator.translateX(CANVAS_POSITION_DEFAULT)
                 }
-                this._calculateVisibility(this.x, this.y, 0, 0);
+                this._calculateVisibility(this.x, this.y);
                 this.prepareStatesOptions()
             },
             _calculateVisibility: function(x, y, width, height) {
-                var visibleArea;
+                var visibleArea,
+                    rotated = this.rotated,
+                    axis = rotated ? "X" : "Y",
+                    val = rotated ? x : y,
+                    size = rotated ? width : height;
                 if (this.translator && this.translator.getCanvasVisibleArea) {
                     visibleArea = this.translator.getCanvasVisibleArea() || {};
-                    if (visibleArea.minX > x + (width || 0) || visibleArea.maxX < x || visibleArea.minY > y + (height || 0) || visibleArea.maxY < y)
+                    if (visibleArea.minX > x + (width || 0) || visibleArea.maxX < x || visibleArea.minY > y + (height || 0) || visibleArea.maxY < y || utils.isDefined(size) && size !== 0 && (visibleArea["min" + axis] === val + size || visibleArea["max" + axis] === val))
                         this.visible = false;
                     else
                         this.visible = true
@@ -8243,11 +8347,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     minValuePercent;
                 if (utils.isNumber(this.minValue)) {
                     minValuePercent = this.minValue / total || 0;
-                    this.labelFormatObject.percent = valuePercent - minValuePercent
+                    this._labelFormatObject.percent = valuePercent - minValuePercent
                 }
                 else
-                    this.labelFormatObject.percent = valuePercent;
-                this.labelFormatObject.total = total;
+                    this._labelFormatObject.percent = valuePercent;
+                this._labelFormatObject.total = total;
                 if (fullStacked) {
                     this.value = valuePercent;
                     this.minValue = !minValuePercent ? this.minValue : minValuePercent;
@@ -8362,9 +8466,10 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 inh: true
             },
             storeTrackerR: function() {
-                var navigator = window.navigator,
-                    touchSupport = 'ontouchstart' in window || navigator.msPointerEnabled && navigator.msMaxTouchPoints || navigator.pointerEnabled && navigator.maxTouchPoints,
-                    minTrackerSize = touchSupport ? 20 : 6;
+                var navigator = window.navigator;
+                navigator = this.__debug_navigator || navigator;
+                this.__debug_browserNavigator = navigator;
+                var minTrackerSize = 'ontouchstart' in window || navigator.msPointerEnabled && navigator.msMaxTouchPoints || navigator.pointerEnabled && navigator.maxTouchPoints ? 20 : 6;
                 this.options.trackerR = this.options.attributes.r < minTrackerSize ? minTrackerSize : this.options.attributes.r;
                 return this.options.trackerR
             },
@@ -8549,12 +8654,12 @@ if (!DevExpress.MOD_VIZ_CORE) {
             },
             drawLabel: function(renderer, group) {
                 var _this = this,
-                    formatObject = _this.labelFormatObject,
+                    formatObject = _this._labelFormatObject,
                     options = _this.options.label,
                     background = options.background,
                     text = _this.hasValue() && utils.isDefined(formatObject.value) ? _this.formatLabel.call(formatObject, options) : null,
                     insideGroup;
-                if (utils.isDefined(text)) {
+                if (utils.isDefined(text) && text !== '') {
                     _this.labelGroup = renderer.createGroup().append(group);
                     if (options.connector && options.connector.strokeWidth)
                         _this.connector = renderer.createPath([], options.connector).append(_this.labelGroup);
@@ -8688,6 +8793,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     x2,
                     y1,
                     y2,
+                    floor = Math.floor,
                     centerLabelY,
                     centerLabelX;
                 if (!this.connector)
@@ -8703,43 +8809,29 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 bbox.y = bbox.y + (this.insideLabelGroup.settings.translateY || 0);
                 centerLabelY = this.labelBackground ? bbox.y + bbox.height / 2 : null;
                 centerLabelX = this.labelBackground ? bbox.x + bbox.width / 2 : null;
-                if (!this.rotated) {
-                    if ((centerLabelY || bbox.y + bbox.height) < bboxgraphic.y) {
-                        y1 = centerLabelY || bbox.y + bbox.height;
-                        y2 = bboxgraphic.y
-                    }
-                    else if ((centerLabelY || bbox.y) > bboxgraphic.y + bboxgraphic.height) {
-                        y1 = centerLabelY || bbox.y;
-                        y2 = bboxgraphic.y + bboxgraphic.height
-                    }
-                    else
-                        return;
-                    x1 = Math.round(bbox.x + bbox.width / 2);
-                    if (x1 > bboxgraphic.x + bboxgraphic.width)
-                        x2 = bboxgraphic.x + bboxgraphic.width;
-                    else if (x1 < bboxgraphic.x)
-                        x2 = bboxgraphic.x;
-                    else
-                        x2 = x1
+                x1 = floor(bbox.x + bbox.width / 2);
+                x2 = floor(bboxgraphic.x + bboxgraphic.width / 2);
+                if (bbox.y + bbox.height < bboxgraphic.y) {
+                    y1 = centerLabelY || bbox.y + bbox.height;
+                    y2 = bboxgraphic.y
+                }
+                else if (bbox.y > bboxgraphic.y + bboxgraphic.height) {
+                    y1 = centerLabelY || bbox.y;
+                    y2 = bboxgraphic.y + bboxgraphic.height
                 }
                 else {
-                    if ((centerLabelX || bbox.x) > bboxgraphic.x + bboxgraphic.width) {
+                    if (bbox.x > bboxgraphic.x + bboxgraphic.width) {
                         x1 = centerLabelX || bbox.x;
                         x2 = bboxgraphic.x + bboxgraphic.width
                     }
-                    else if ((centerLabelX || bbox.x + bbox.width) < bboxgraphic.x) {
+                    else if (bbox.x + bbox.width < bboxgraphic.x) {
                         x1 = centerLabelX || bbox.x + bbox.width;
                         x2 = bboxgraphic.x
                     }
                     else
                         return;
-                    y1 = Math.round(bbox.y + bbox.height / 2);
-                    if (y1 > bboxgraphic.y + bboxgraphic.height)
-                        y2 = bboxgraphic.y + bboxgraphic.height;
-                    else if (y1 < bboxgraphic.y)
-                        y2 = bboxgraphic.y;
-                    else
-                        y2 = y1
+                    y1 = floor(bbox.y + bbox.height / 2);
+                    y2 = floor(bboxgraphic.y + bboxgraphic.height / 2)
                 }
                 this.connector.applySettings({points: [x1, y1, x2, y2]})
             },
@@ -8772,10 +8864,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
             },
             _getFormatObject: function(tooltip) {
                 var value = tooltip.formatValueTooltip.call({value: this.initialValue}, tooltip.options);
-                return $.extend({}, this.labelFormatObject, {
-                        point: this,
-                        valueText: value
-                    })
+                return $.extend({}, this._labelFormatObject, {valueText: value})
             },
             animate: function(complete) {
                 var self = this,
@@ -8801,7 +8890,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
     (function($, DX) {
         var series = DX.viz.charts.series,
             statesConsts = series.consts.states,
-            isDefined = DX.utils.isDefined,
+            utils = DX.utils,
+            isDefined = utils.isDefined,
             CANVAS_POSITION_DEFAULT = 'canvas_position_default';
         var truncateCoord = function(coord, minBounce, maxBounce) {
                 if (coord < minBounce)
@@ -8931,10 +9021,39 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 this.trackerGraphic.data({point: _this})
             },
             correctConnectorPosition: function() {
-                this.callBase(this.getBboxGraphic())
+                var bbox = this.insideLabelGroup.getBBox(),
+                    bboxgraphic = this.getBboxGraphic(),
+                    points,
+                    centerLabelY,
+                    centerLabelX;
+                if (!this.connector)
+                    return;
+                if (bboxgraphic.isEmpty)
+                    bboxgraphic = {
+                        x: this.x,
+                        y: this.y,
+                        height: 0,
+                        width: 0
+                    };
+                bbox.x = bbox.x + (this.insideLabelGroup.settings.translateX || 0);
+                bbox.y = bbox.y + (this.insideLabelGroup.settings.translateY || 0);
+                centerLabelY = this.labelBackground ? bbox.y + bbox.height / 2 : null;
+                centerLabelX = this.labelBackground ? bbox.x + bbox.width / 2 : null;
+                points = !this.rotated ? utils.getLabelConnectorCoord(bbox, bboxgraphic, centerLabelY) : utils.getLabelConnectorCoord({
+                    x: bbox.y,
+                    y: bbox.x,
+                    width: bbox.height,
+                    height: bbox.width
+                }, {
+                    x: bboxgraphic.y,
+                    y: bboxgraphic.x,
+                    width: bboxgraphic.height,
+                    height: bboxgraphic.width
+                }, centerLabelX, this.rotated);
+                this.connector.applySettings({points: points})
             },
             drawLabel: function(renderer, group) {
-                if (!this.hasValue() || !this.options.label.showForZeroValues && !this.labelFormatObject.value)
+                if (!this.hasValue() || !this.options.label.showForZeroValues && !this._labelFormatObject.value)
                     return;
                 else
                     this.callBase(renderer, group)
@@ -9081,40 +9200,42 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 var debug = DX.utils.debug;
                 debug.assertParam(data, 'data was not passed');
                 debug.assertParam(data.options, 'options were not passed');
-                this.LABEL_BACKGROUND_PADDING_X = 8;
-                this.LABEL_BACKGROUND_PADDING_Y = 4;
-                this.LABEL_OFFSET = 10;
-                this.argument = this.initialArgument = data.argument;
-                this.openValue = data.openValue;
-                this.highValue = data.highValue;
-                this.lowValue = data.lowValue;
-                this.closeValue = data.closeValue;
-                this.value = this.initialValue = data.reductionValue;
-                this.originalOpenValue = data.originalOpenValue;
-                this.originalCloseValue = data.originalCloseValue;
-                this.originalLowValue = data.originalLowValue;
-                this.originalHighValue = data.originalHighValue;
-                this.originalArgument = data.originalArgument;
-                this.tag = data.tag;
-                this.options = data.options;
-                this.series = data.series;
-                this.rotated = !!(this.series && this.series.options && this.series.options.rotated || false);
-                this.labelFormatObject = {
-                    openValue: this.openValue,
-                    highValue: this.highValue,
-                    lowValue: this.lowValue,
-                    closeValue: this.closeValue,
-                    reductionValue: this.initialValue,
-                    argument: this.initialArgument,
-                    value: this.initialValue,
-                    seriesName: this.series.name,
-                    originalOpenValue: this.originalOpenValue,
-                    originalCloseValue: this.originalCloseValue,
-                    originalLowValue: this.originalLowValue,
-                    originalHighValue: this.originalHighValue,
-                    originalArgument: this.originalArgument
+                var _this = this;
+                _this.LABEL_BACKGROUND_PADDING_X = 8;
+                _this.LABEL_BACKGROUND_PADDING_Y = 4;
+                _this.LABEL_OFFSET = 10;
+                _this.argument = _this.initialArgument = data.argument;
+                _this.openValue = data.openValue;
+                _this.highValue = data.highValue;
+                _this.lowValue = data.lowValue;
+                _this.closeValue = data.closeValue;
+                _this.value = _this.initialValue = data.reductionValue;
+                _this.originalOpenValue = data.originalOpenValue;
+                _this.originalCloseValue = data.originalCloseValue;
+                _this.originalLowValue = data.originalLowValue;
+                _this.originalHighValue = data.originalHighValue;
+                _this.originalArgument = data.originalArgument;
+                _this.tag = data.tag;
+                _this.options = data.options;
+                _this.series = data.series;
+                _this.rotated = !!(_this.series && _this.series.options && _this.series.options.rotated || false);
+                _this._labelFormatObject = {
+                    openValue: _this.openValue,
+                    highValue: _this.highValue,
+                    lowValue: _this.lowValue,
+                    closeValue: _this.closeValue,
+                    reductionValue: _this.initialValue,
+                    argument: _this.initialArgument,
+                    value: _this.initialValue,
+                    seriesName: _this.series.name,
+                    originalOpenValue: _this.originalOpenValue,
+                    originalCloseValue: _this.originalCloseValue,
+                    originalLowValue: _this.originalLowValue,
+                    originalHighValue: _this.originalHighValue,
+                    originalArgument: _this.originalArgument,
+                    point: _this
                 };
-                this.pointClassName = data.pointClassName || ''
+                _this.pointClassName = data.pointClassName || ''
             },
             formatLabel: function(options) {
                 this.openValueText = formatHelper.format(this.openValue, options.format, options.precision);
@@ -9143,9 +9264,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.closeY = _this.closeValue !== null ? translator[translateVal](_this.closeValue) : null;
                 height = math.abs(_this.lowY - _this.highY);
                 if (!_this.rotated)
-                    _this._calculateVisibility(_this.x, math.min(_this.lowY, _this.highY) + math.abs(_this.lowY - _this.highY) / 2, 0, 0);
+                    _this._calculateVisibility(_this.x, math.min(_this.lowY, _this.highY) + math.abs(_this.lowY - _this.highY) / 2);
                 else
-                    _this._calculateVisibility(math.min(_this.lowY, _this.highY) + math.abs(_this.lowY - _this.highY) / 2, _this.x, 0, 0)
+                    _this._calculateVisibility(math.min(_this.lowY, _this.highY) + math.abs(_this.lowY - _this.highY) / 2, _this.x)
             },
             correctCoordinates: function(correctOptions) {
                 var minWidth = 1 + 2 * this.options.attributes.lineWidth,
@@ -9258,20 +9379,18 @@ if (!DevExpress.MOD_VIZ_CORE) {
             drawLabel: function(renderer, group) {
                 if (!this.hasValue())
                     return;
-                if (!utils.isDefined(this.labelFormatObject.value))
+                if (!utils.isDefined(this._labelFormatObject.value))
                     return;
                 var labelOptions = this.options.label,
-                    labelText = this.formatLabel.call(this.labelFormatObject, labelOptions),
+                    labelText = this.formatLabel.call(this._labelFormatObject, labelOptions),
                     rotated = this.rotated;
                 if (!utils.isDefined(labelText))
                     return;
                 this.labelGroup = renderer.createGroup().append(group);
                 this.insideLabelGroup = renderer.createGroup().append(this.labelGroup);
                 labelOptions.background['class'] = this.pointClassName;
-                if (labelOptions.background.fill && labelOptions.background.fill !== 'none' || labelOptions.background.strokeWidth && labelOptions.background.stroke && labelOptions.background.stroke !== 'none') {
-                    labelOptions.background.fill = this.options.attributes.stroke;
-                    this.labelBackground = rotated ? renderer.createRect(this.highY, this.x, 0, 0, 0, labelOptions.background).append(this.insideLabelGroup) : renderer.createRect(this.x, this.highY, 0, 0, 0, labelOptions.background).append(this.insideLabelGroup)
-                }
+                if (labelOptions.background.fill && labelOptions.background.fill !== 'none' || labelOptions.background.strokeWidth && labelOptions.background.stroke && labelOptions.background.stroke !== 'none')
+                    this.labelBackground = rotated ? renderer.createRect(this.highY, this.x, 0, 0, 0, labelOptions.background).append(this.insideLabelGroup) : renderer.createRect(this.x, this.highY, 0, 0, 0, labelOptions.background).append(this.insideLabelGroup);
                 this.label = rotated ? renderer.createText(labelText, this.highY, this.x, labelOptions.attributes).append(this.insideLabelGroup) : renderer.createText(labelText, this.x, this.highY, labelOptions.attributes).append(this.insideLabelGroup);
                 this.correctBackgroundPosition();
                 this.rotateLabel();
@@ -9345,7 +9464,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     openValue = tooltip.formatValueTooltip.call({value: this.openValue}, tooltip.options),
                     closeValue = tooltip.formatValueTooltip.call({value: this.closeValue}, tooltip.options),
                     lowValue = tooltip.formatValueTooltip.call({value: this.lowValue}, tooltip.options);
-                return $.extend({}, this.labelFormatObject, {
+                return $.extend({}, this._labelFormatObject, {
                         valueText: 'h: ' + highValue + (openValue !== '' ? ' o: ' + openValue : '') + (closeValue !== '' ? ' c: ' + closeValue : '') + ' l: ' + lowValue,
                         highValueText: highValue,
                         openValueText: openValue,
@@ -9401,15 +9520,17 @@ if (!DevExpress.MOD_VIZ_CORE) {
             statesConsts = series.consts.states;
         series.RangePoint = series.BasePoint.inherit({
             ctor: function(data) {
-                this.callBase(data);
-                this.minValue = this.initialMinValue = data.minValue !== undefined ? data.minValue : 'default';
-                this.originalMinValue = data.originalMinValue;
-                this.minLabelFormatObject = {
-                    argument: this.initialArgument,
-                    value: this.initialMinValue,
-                    seriesName: this.series.name,
-                    originalMinValue: this.originalMinValue,
-                    originalArgument: this.originalArgument
+                var _this = this;
+                _this.callBase(data);
+                _this.minValue = _this.initialMinValue = data.minValue !== undefined ? data.minValue : 'default';
+                _this.originalMinValue = data.originalMinValue;
+                _this._minLabelFormatObject = {
+                    argument: _this.initialArgument,
+                    value: _this.initialMinValue,
+                    seriesName: _this.series.name,
+                    originalMinValue: _this.originalMinValue,
+                    originalArgument: _this.originalArgument,
+                    point: _this
                 }
             },
             dispose: function() {
@@ -9426,7 +9547,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.maxLabelGroup = null;
                 _this.topPoints = null;
                 _this.bottomPoints = null;
-                _this.minLabelFormatObject = null;
+                _this._minLabelFormatObject = null;
                 _this.callBase()
             },
             getTooltipCoords: function() {
@@ -9457,8 +9578,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     }
             },
             translate: function(translator) {
-                this.minX = this.minY = translator.translateY(this.minValue);
-                this.callBase(translator);
+                this.translator = translator || this.translator;
+                if (!this.translator || !this.hasValue())
+                    return;
+                this.minX = this.minY = this.translator.translateY(this.minValue);
+                this.callBase(this.translator);
                 if (!this.rotated) {
                     this.height = Math.abs(this.minY - this.y);
                     this.width = 0
@@ -9780,11 +9904,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
             drawLabel: function(renderer, group) {
                 if (!this.hasValue())
                     return;
-                if (!utils.isDefined(this.labelFormatObject.value) || !utils.isDefined(this.minLabelFormatObject.value))
+                if (!utils.isDefined(this._labelFormatObject.value) || !utils.isDefined(this._minLabelFormatObject.value))
                     return;
                 var labelOptions = this.options.label,
-                    maxLabelText = this.formatLabel.call(this.labelFormatObject, labelOptions),
-                    minLabelText = this.formatLabel.call(this.minLabelFormatObject, labelOptions),
+                    maxLabelText = this.formatLabel.call(this._labelFormatObject, labelOptions),
+                    minLabelText = this.formatLabel.call(this._minLabelFormatObject, labelOptions),
                     businessRange = this.translator.getBusinessRange(),
                     isDiscreteValue = this.series.options.valueAxisType === 'discrete',
                     notInverted = isDiscreteValue && (!businessRange.invertY && !this.rotated || businessRange.invertX && this.rotated) || !isDiscreteValue && this.value > this.minValue && (!businessRange.invertY && !this.rotated || !businessRange.invertX && this.rotated);
@@ -9995,49 +10119,23 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     },
                     centerLabelY = this.maxLabelBackground || this.minLabelBackground ? bbox.y + bbox.height / 2 : null,
                     centerLabelX = this.maxLabelBackground || this.minLabelBackground ? bbox.x + bbox.width / 2 : null,
+                    points,
                     x1,
                     x2,
                     y1,
                     y2;
-                if (!this.rotated) {
-                    if ((centerLabelY || bbox.y + bbox.height) < bboxgraphic.y) {
-                        y1 = centerLabelY || bbox.y + bbox.height;
-                        y2 = bboxgraphic.y
-                    }
-                    else if ((centerLabelY || bbox.y) > bboxgraphic.y + bboxgraphic.height) {
-                        y1 = centerLabelY || bbox.y;
-                        y2 = bboxgraphic.y + bboxgraphic.height
-                    }
-                    else
-                        return false;
-                    x1 = Math.round(bbox.x + bbox.width / 2);
-                    if (x1 > bboxgraphic.x + bboxgraphic.width)
-                        x2 = bboxgraphic.x + bboxgraphic.width;
-                    else if (x1 < bboxgraphic.x)
-                        x2 = bboxgraphic.x;
-                    else
-                        x2 = x1
-                }
-                else {
-                    if ((centerLabelX || bbox.x) > bboxgraphic.x + bboxgraphic.width) {
-                        x1 = centerLabelX || bbox.x;
-                        x2 = bboxgraphic.x + bboxgraphic.width
-                    }
-                    else if ((centerLabelX || bbox.x + bbox.width) < bboxgraphic.x) {
-                        x1 = centerLabelX || bbox.x + bbox.width;
-                        x2 = bboxgraphic.x
-                    }
-                    else
-                        return false;
-                    y1 = Math.round(bbox.y + bbox.height / 2);
-                    if (y1 > bboxgraphic.y + bboxgraphic.height)
-                        y2 = bboxgraphic.y + bboxgraphic.height;
-                    else if (y1 < bboxgraphic.y)
-                        y2 = bboxgraphic.y;
-                    else
-                        y2 = y1
-                }
-                connector.applySettings({points: [x1, y1, x2, y2]})
+                points = !this.rotated ? utils.getLabelConnectorCoord(bbox, bboxgraphic, centerLabelY) : utils.getLabelConnectorCoord({
+                    x: bbox.y,
+                    y: bbox.x,
+                    width: bbox.height,
+                    height: bbox.width
+                }, {
+                    x: bboxgraphic.y,
+                    y: bboxgraphic.x,
+                    width: bboxgraphic.height,
+                    height: bboxgraphic.width
+                }, centerLabelX, this.rotated);
+                connector.applySettings({points: points})
             },
             _getFormatObject: function(tooltip) {
                 var minValue = tooltip.formatValueTooltip.call({value: this.initialMinValue}, tooltip.options),
@@ -10090,15 +10188,17 @@ if (!DevExpress.MOD_VIZ_CORE) {
             utils = DX.utils;
         series.RangeBarPoint = series.BarPoint.inherit({
             ctor: function(data) {
-                this.callBase(data);
-                this.minValue = this.initialMinValue = data.minValue !== undefined ? data.minValue : 'default';
-                this.originalMinValue = data.originalMinValue;
-                this.minLabelFormatObject = {
-                    argument: this.initialArgument,
-                    value: this.initialMinValue,
-                    seriesName: this.series.name,
-                    originalMinValue: this.originalMinValue,
-                    originalArgument: this.originalArgument
+                var _this = this;
+                _this.callBase(data);
+                _this.minValue = _this.initialMinValue = data.minValue !== undefined ? data.minValue : 'default';
+                _this.originalMinValue = data.originalMinValue;
+                _this._minLabelFormatObject = {
+                    argument: _this.initialArgument,
+                    value: _this.initialMinValue,
+                    seriesName: _this.series.name,
+                    originalMinValue: _this.originalMinValue,
+                    originalArgument: _this.originalArgument,
+                    point: _this
                 }
             },
             dispose: function() {
@@ -10113,7 +10213,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.maxConnector = null;
                 _this.insideMaxLabelGroup = null;
                 _this.maxLabelGroup = null;
-                _this.minLabelFormatObject = null;
+                _this._minLabelFormatObject = null;
                 _this.callBase()
             },
             translate: function(translator) {
@@ -10126,11 +10226,11 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     this.height = this.height || 1
             },
             drawLabel: function(renderer, group) {
-                if (!this.hasValue() && (!utils.isDefined(this.labelFormatObject.value) || !utils.isDefined(this.minLabelFormatObject.value)))
+                if (!this.hasValue() && (!utils.isDefined(this._labelFormatObject.value) || !utils.isDefined(this._minLabelFormatObject.value)))
                     return;
                 var labelOptions = this.options.label,
-                    maxLabelText = this.formatLabel.call(this.labelFormatObject, labelOptions),
-                    minLabelText = this.formatLabel.call(this.minLabelFormatObject, labelOptions),
+                    maxLabelText = this.formatLabel.call(this._labelFormatObject, labelOptions),
+                    minLabelText = this.formatLabel.call(this._minLabelFormatObject, labelOptions),
                     businessRange = this.translator.getBusinessRange(),
                     isDiscreteValue = this.series.options.valueAxisType === 'discrete',
                     notInverted = isDiscreteValue && (!businessRange.invertY && !this.rotated || businessRange.invertX && this.rotated) || !isDiscreteValue && this.value > this.minValue && (!businessRange.invertY && !this.rotated || !businessRange.invertX && this.rotated);
@@ -10318,49 +10418,23 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     x2,
                     y1,
                     y2,
+                    points,
                     centerLabelY = this.maxLabelBackground || this.minLabelBackground ? bbox.y + bbox.height / 2 : null,
                     centerLabelX = this.maxLabelBackground || this.minLabelBackground ? bbox.x + bbox.width / 2 : null;
                 if (bboxgraphic.isEmpty)
                     bboxgraphic = this.getGraphicSettings();
-                if (!this.rotated) {
-                    if ((centerLabelY || bbox.y + bbox.height) < bboxgraphic.y) {
-                        y1 = centerLabelY || bbox.y + bbox.height;
-                        y2 = bboxgraphic.y
-                    }
-                    else if ((centerLabelY || bbox.y) > bboxgraphic.y + bboxgraphic.height) {
-                        y1 = centerLabelY || bbox.y;
-                        y2 = bboxgraphic.y + bboxgraphic.height
-                    }
-                    else
-                        return false;
-                    x1 = Math.round(bbox.x + bbox.width / 2);
-                    if (x1 > bboxgraphic.x + bboxgraphic.width)
-                        x2 = bboxgraphic.x + bboxgraphic.width;
-                    else if (x1 < bboxgraphic.x)
-                        x2 = bboxgraphic.x;
-                    else
-                        x2 = x1
-                }
-                else {
-                    if ((centerLabelX || bbox.x) > bboxgraphic.x + bboxgraphic.width) {
-                        x1 = centerLabelX || bbox.x;
-                        x2 = bboxgraphic.x + bboxgraphic.width
-                    }
-                    else if ((centerLabelX || bbox.x + bbox.width) < bboxgraphic.x) {
-                        x1 = centerLabelX || bbox.x + bbox.width;
-                        x2 = bboxgraphic.x
-                    }
-                    else
-                        return false;
-                    y1 = Math.round(bbox.y + bbox.height / 2);
-                    if (y1 > bboxgraphic.y + bboxgraphic.height)
-                        y2 = bboxgraphic.y + bboxgraphic.height;
-                    else if (y1 < bboxgraphic.y)
-                        y2 = bboxgraphic.y;
-                    else
-                        y2 = y1
-                }
-                connector.applySettings({points: [x1, y1, x2, y2]})
+                points = !this.rotated ? utils.getLabelConnectorCoord(bbox, bboxgraphic, centerLabelY) : utils.getLabelConnectorCoord({
+                    x: bbox.y,
+                    y: bbox.x,
+                    width: bbox.height,
+                    height: bbox.width
+                }, {
+                    x: bboxgraphic.y,
+                    y: bboxgraphic.x,
+                    width: bboxgraphic.height,
+                    height: bboxgraphic.width
+                }, centerLabelX, this.rotated);
+                connector.applySettings({points: points})
             },
             _getFormatObject: function(tooltip) {
                 var minValue = tooltip.formatValueTooltip.call({value: this.initialMinValue}, tooltip.options),
@@ -10389,12 +10463,13 @@ if (!DevExpress.MOD_VIZ_CORE) {
         var series = DX.viz.charts.series,
             statesConsts = series.consts.states,
             formatHelper = DX.formatHelper,
-            BasePoint = series.BasePoint;
+            BasePoint = series.BasePoint,
+            MIN_BUBBLE_HEIGHT = 20;
         var BubblePoint = BasePoint.inherit({
                 ctor: function(data) {
                     this.callBase(data);
                     this.size = this.initialSize = data.size;
-                    this.labelFormatObject.size = this.initialSize
+                    this._labelFormatObject.size = this.initialSize
                 },
                 correctCoordinates: function(radius) {
                     this.bubbleSize = radius
@@ -10403,6 +10478,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     if (!this.hasValue())
                         return;
                     var marker = renderer.createCircle(this.x, this.y, this.bubbleSize, this.options.attributes).append(group);
+                    marker.applySettings({opacity: this.options.attributes.opacity});
                     this.graphic = marker;
                     this._checkState();
                     if (animationEnabled)
@@ -10425,12 +10501,14 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     trackerCircle.data({point: this})
                 },
                 getTooltipCoords: function() {
-                    if (this.graphic)
+                    if (this.graphic) {
+                        var height = this.graphic.getBBox().height;
                         return {
                                 x: this.x,
                                 y: this.y,
-                                offset: 0
+                                offset: height < MIN_BUBBLE_HEIGHT ? height / 2 : 0
                             }
+                    }
                 },
                 correctLabelPosition: function() {
                     if (this.options.label.position === 'outside')
@@ -10464,14 +10542,6 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     }
                 },
                 _populatePointShape: function(){},
-                applyNormalStyle: function() {
-                    if (this.graphic) {
-                        var normal = $.extend(true, {}, this.options.states.normal);
-                        delete normal.opacity;
-                        this.graphic.applySettings(normal)
-                    }
-                    return this
-                },
                 animate: function(complete) {
                     if (!this.graphic) {
                         complete && complete();
@@ -10632,17 +10702,12 @@ if (!DevExpress.MOD_VIZ_CORE) {
             _addToVisibleVal: function(value) {
                 var _this = this,
                     data = _this.rangeData,
-                    isBarOrArea = _this._isBarOrArea(),
-                    isDiscrete = _this.options.valueAxisType === 'discrete';
-                if (isDiscrete) {
+                    isBarOrArea = _this._isBarOrArea();
+                if (_this.options.valueAxisType === 'discrete') {
                     if (_inArray(value, data.visibleValCategories) === -1)
                         data.visibleValCategories.push(value)
                 }
                 else {
-                    if (isBarOrArea) {
-                        data.minVisibleVal = _isDefined(data.minVisibleVal) ? data.minVisibleVal : 0;
-                        data.maxVisibleVal = _isDefined(data.maxVisibleVal) ? data.maxVisibleVal : 0
-                    }
                     if (value < data.minVisibleVal || !_isDefined(data.minVisibleVal))
                         data.minVisibleVal = value;
                     if (value > data.maxVisibleVal || !_isDefined(data.maxVisibleVal))
@@ -10816,21 +10881,29 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 var _this = this,
                     options = _this.options,
                     axis = _this._getMainAxisName(),
-                    min = data['min' + axis],
-                    max = data['max' + axis],
+                    minSelector = 'min' + axis,
+                    maxSelector = 'max' + axis,
+                    minVisibleSelector = "minVisible" + axis,
+                    maxVisibleSelector = "maxVisible" + axis,
+                    minValueMarginSelector = 'minValueMargin' + axis,
+                    maxValueMarginSelector = 'maxValueMargin' + axis,
+                    min = data[minSelector],
+                    max = data[maxSelector],
                     isRotated = options.rotated;
                 if (_this._isBarOrArea() && data && !_this.isRangeSeries) {
                     data.keepValueMarginsX = isRotated ? data.keepValueMarginsX : true;
                     data.keepValueMarginsY = isRotated ? true : data.keepValueMarginsY;
-                    if (options.valueAxisType !== 'logarithmic' && options.showZero !== false && _isDefined(min)) {
-                        data['min' + axis] = min = min > 0 ? 0 : min;
-                        _this.setZeroPadding(data, min, 'minValueMargin' + axis);
-                        data['max' + axis] = max = max < 0 ? 0 : max;
+                    if (options.valueAxisType !== 'logarithmic' && options.valueType !== 'datetime' && options.showZero !== false) {
+                        data[minVisibleSelector] = _isDefined(data[minVisibleSelector]) && data[minVisibleSelector] > 0 ? 0 : data[minVisibleSelector];
+                        data[maxVisibleSelector] = _isDefined(data[maxVisibleSelector]) && data[maxVisibleSelector] < 0 ? 0 : data[maxVisibleSelector];
+                        data[minSelector] = min = min > 0 ? 0 : min;
+                        _this.setZeroPadding(data, min, minValueMarginSelector);
+                        data[maxSelector] = max = max < 0 ? 0 : max;
                         if (max === 0 || max > 0 && min < 0) {
-                            data['minValueMargin' + axis] = data['maxValueMargin' + axis];
-                            data['minValueMargin' + axis + 'Priority'] = data['maxValueMargin' + axis + 'Priority']
+                            data[minValueMarginSelector] = data[maxValueMarginSelector];
+                            data[minValueMarginSelector + 'Priority'] = data[maxValueMarginSelector + 'Priority']
                         }
-                        _this.setZeroPadding(data, max, 'maxValueMargin' + axis)
+                        _this.setZeroPadding(data, max, maxValueMarginSelector)
                     }
                 }
                 return data
@@ -10860,6 +10933,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
             },
             isStackedSeries: function() {
                 return this.type.indexOf('stacked') === 0
+            },
+            isFinancialSeries: function() {
+                return this.type === 'stock' || this.type === 'candlestick'
             },
             processRangeForFullStackedSeries: function(data) {
                 var _this = this,
@@ -10919,6 +10995,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 }
                 _this.translator = translator;
                 _this._translateCoors();
+                delete seriesMarkersOptions.opacity;
                 _this._applyClippings(seriesElementsOptions, seriesMarkersOptions, labelsGroupOptions);
                 if (_this.seriesGroup)
                     _this.seriesGroup.clear();
@@ -11213,6 +11290,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     argumentField = options.argumentField,
                     tagField = options.tagField;
                 _this.styles.pointStyles = [];
+                _this.styles.labelStyles = [];
                 if (data && data.length)
                     _this._canRenderCompleteHandle = true;
                 _this.pointsByArgument = {};
@@ -11271,50 +11349,18 @@ if (!DevExpress.MOD_VIZ_CORE) {
             },
             _preparePointStyle: function(options) {
                 var _this = this,
-                    type = _this.type,
-                    isPie = ~type.indexOf('pie') || ~type.indexOf('doughnut'),
-                    defaultPointOptions = isPie ? _this.userOptions.pie : _this.userOptions.point,
-                    defaultPointStyle = _this.styles.point,
-                    isBar = ~type.indexOf('bar'),
-                    isNotLineSeries = isPie || isBar || ~type.indexOf('bubble') || ~type.indexOf('stock') || ~type.indexOf('stick'),
-                    style,
-                    mainColor = options.color && new DX.Color(options.color),
-                    func;
-                options.border = options.border || {};
-                options.border.color = options.border.color || options.color;
-                options.hoverStyle = options.hoverStyle || {};
-                options.hoverStyle.color = options.hoverStyle.color || _this.isIE8 && isBar && mainColor && mainColor.highlight(20) || isNotLineSeries && options.color || undefined;
-                options.hoverStyle.border = options.hoverStyle.border || {};
-                options.hoverStyle.border.color = options.hoverStyle.border.color || options.color;
-                options.selectionStyle = options.selectionStyle || {};
-                options.selectionStyle.color = options.selectionStyle.color || _this.isIE8 && isBar && mainColor && mainColor.highlight(20) || isNotLineSeries && options.color || undefined;
-                options.selectionStyle.border = options.selectionStyle.border || {};
-                options.selectionStyle.border.color = options.selectionStyle.border.color || options.color;
-                options = _extend(true, {}, defaultPointOptions, options);
-                style = _this._parsePointStyleOptions(options, type);
-                style.attributes.inh = false;
-                style.label = _extend(true, {}, _this.styles.point.label);
-                if (isNotLineSeries) {
-                    func = function(mode) {
-                        if (!mode)
-                            return false;
-                        switch (mode.toLowerCase()) {
-                            case"allseriespoints":
-                            case"allargumentpoints":
-                            case"none":
-                                return true
-                        }
-                    };
-                    style.attributes = _extend(true, {}, defaultPointStyle.attributes, style.attributes);
-                    style.states.normal = _extend(true, {}, defaultPointStyle.states.normal, style.states.normal);
-                    style.states.hover = _extend(true, {}, defaultPointStyle.states.hover, style.states.hover);
-                    style.states.selected = _extend(true, {}, defaultPointStyle.states.selected, style.states.selected);
-                    style.attributes.r = style.states.normal.r = style.states.hover.r = style.states.selected.r = defaultPointStyle.attributes.r;
-                    style.hoverMode = func(_this.options.hoverMode) && _this.options.hoverMode;
-                    style.selectionMode = func(_this.options.selectionMode) && _this.options.selectionMode;
-                    style.visible = true
-                }
-                return style
+                    pointStyle,
+                    parseStyle;
+                options = _this._mergeCustomizeOptions(options);
+                parseStyle = _this.parseStyleOptions(options);
+                parseStyle = _this.adjustOptions && _this.adjustOptions(parseStyle) || parseStyle;
+                pointStyle = parseStyle.point;
+                pointStyle.attributes.inh = false;
+                pointStyle.label = _extend(true, {}, _this.styles.point.label);
+                return pointStyle
+            },
+            _mergeCustomizeOptions: function(options) {
+                return $.extend(true, {}, this.userOptions, {point: options})
             },
             _prepareLabelStyle: function(labelOptions) {
                 var _this = this,
@@ -11360,7 +11406,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                     currentLabelStyle = _this._prepareLabelStyle(currentLabelOptions);
                     if (!resultStyle) {
                         resultStyle = _extend(true, {}, seriesPointStyle);
-                        _this.styles.pointStyles.push(resultStyle)
+                        _this.styles.labelStyles.push(resultStyle.label)
                     }
                     resultStyle.label = currentLabelStyle
                 }
@@ -11560,7 +11606,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         attributes: attributes,
                         maxLabelCount: combinedOptions.maxLabelCount,
                         minSegmentSize: combinedOptions.minSegmentSize,
-                        minBarSize: combinedOptions.minBarSize,
+                        ignoreEmptyPoints: combinedOptions.ignoreEmptyPoints,
+                        minBarSize: combinedOptions.minBarSize > 0 ? combinedOptions.minBarSize : undefined,
                         reduction: {
                             color: combinedOptions.reduction.color,
                             level: combinedOptions.reduction.level,
@@ -11601,6 +11648,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         maxLabelCount: undefined,
                         minSegmentSize: undefined,
                         minBarSize: undefined,
+                        ignoreEmptyPoints: false,
                         point: {
                             visible: true,
                             symbol: 'circle',
@@ -11852,6 +11900,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 if (this.paneClipRectID)
                     this.options.markerTrackerGroup.applySettings({clipId: this.paneClipRectID})
             },
+            _mergeCustomizeOptions: function(options) {
+                return $.extend(true, {}, this.userOptions, options)
+            },
             drawSeriesData: function(seriesElementsGroup, seriesMarkersGroup, labelsGroup, animationEnabled) {
                 var self = this;
                 if (self.points.length && self.hoverPattern) {
@@ -11933,6 +11984,20 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 _this.selectedPatternReduction = null;
                 _this.callBase()
             },
+            _applyClippings: function(seriesElementsOptions, seriesMarkersOptions, labelsGroupOptions) {
+                if (this.paneClipRectID) {
+                    seriesElementsOptions.clipId = this.paneClipRectID;
+                    labelsGroupOptions.clipId = this.paneClipRectID;
+                    seriesMarkersOptions.clipId = this.paneClipRectID
+                }
+            },
+            _applyTrackersClippings: function() {
+                if (this.paneClipRectID)
+                    this.options.markerTrackerGroup.applySettings({clipId: this.paneClipRectID})
+            },
+            _mergeCustomizeOptions: function(options) {
+                return $.extend(true, {}, this.userOptions, options)
+            },
             drawSeriesData: function(seriesElementsGroup, seriesMarkersGroup, labelsGroup) {
                 var self = this,
                     markerGroups = self.createMarkerGroups(seriesMarkersGroup);
@@ -11995,6 +12060,17 @@ if (!DevExpress.MOD_VIZ_CORE) {
             ctor: function(renderer, options) {
                 options.specificType = options.specificType || 'stock';
                 this.callBase(renderer, options)
+            },
+            _applyClippings: function(seriesElementsOptions, seriesMarkersOptions, labelsGroupOptions) {
+                if (this.paneClipRectID) {
+                    seriesElementsOptions.clipId = this.paneClipRectID;
+                    labelsGroupOptions.clipId = this.paneClipRectID;
+                    seriesMarkersOptions.clipId = this.paneClipRectID
+                }
+            },
+            _applyTrackersClippings: function() {
+                if (this.paneClipRectID)
+                    this.options.markerTrackerGroup.applySettings({clipId: this.paneClipRectID})
             },
             drawSeriesData: function(seriesElementsGroup, seriesMarkersGroup, labelsGroup) {
                 var self = this,
@@ -12286,6 +12362,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 if (this.paneClipRectID)
                     this.options.markerTrackerGroup.applySettings({clipId: this.paneClipRectID})
             },
+            _mergeCustomizeOptions: function(options) {
+                return $.extend(true, {}, this.userOptions, options)
+            },
             drawSeriesData: function(seriesElementsGroup, seriesMarkersGroup, labelsGroup, animationEnabled) {
                 var self = this;
                 if (self.points.length && self.hoverPattern) {
@@ -12388,7 +12467,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 self.value += correction;
                 self.minValue += correction;
                 self.percent = percent;
-                self.labelFormatObject.percent = percent
+                self._labelFormatObject.percent = percent
             },
             getTooltipCoords: function() {
                 var angleFunctions = getCosAndSin(this.middleAngle);
@@ -12456,7 +12535,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         break;
                     case'columns':
                         rad += CONNECTOR_LENGTH;
-                        if (angleFunctions.cos > 0) {
+                        if (angleFunctions.cos >= 0) {
                             align = 'right';
                             x = maxLabelLength ? _this.centerX + rad + maxLabelLength : rightBorderX;
                             x = x > rightBorderX ? rightBorderX : x
@@ -12703,6 +12782,13 @@ if (!DevExpress.MOD_VIZ_CORE) {
                 this.innerRadius = this.type === 'pie' ? 0 : options.innerRadius;
                 this.outerRadius = options.radius;
                 this.redraw = false
+            },
+            _mergeCustomizeOptions: function(options) {
+                options.hoverStyle = options.hoverStyle || {};
+                options.hoverStyle.color = options.hoverStyle.color || options.color;
+                options.selectionStyle = options.selectionStyle || {};
+                options.selectionStyle.color = options.selectionStyle.color || options.color;
+                return $.extend(true, {}, this.userOptions, options)
             },
             createPatterns: function() {
                 var renderer = this.renderer;
@@ -12957,6 +13043,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
                         seriesMarkersOptions.clipId = this.paneClipRectID
                     }
                 },
+                _mergeCustomizeOptions: function(options) {
+                    return $.extend(true, {}, this.userOptions, options)
+                },
                 drawSeriesData: function(seriesElementsGroup, seriesMarkersGroup, labelsGroup, animationEnabled) {
                     if (this.points.length && this.hoverPattern) {
                         this.styles.point.states.hover.fill = this.hoverPattern.id;
@@ -13002,6 +13091,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
     })(jQuery, DevExpress);
     /*! Module viz-core, file seriesFamily.js */
     (function($, DX, undefined) {
+        var utils = DX.utils;
         DX.viz.charts.series.SeriesFamily = DX.Class.inherit(function() {
             var ctor = function(options) {
                     var debug = DX.utils.debug;
@@ -13302,8 +13392,9 @@ if (!DevExpress.MOD_VIZ_CORE) {
                             minShownBusinessValue = getMinShownBusinessValue(self, translator, minBarSize);
                             currentStack = stackKeepers[valueType][stackName] = stackKeepers[valueType][stackName] || {};
                             if (currentStack[argument.valueOf()]) {
+                                minValue = utils.isNumber(minValue) ? minValue : 0,
                                 pointSize = Math.abs(minValue - value);
-                                if (minShownBusinessValue && pointSize < minShownBusinessValue && pointSize !== 0)
+                                if (minShownBusinessValue && pointSize < minShownBusinessValue)
                                     updateValue = minShownBusinessValue;
                                 else
                                     updateValue = value - minValue;
@@ -13313,7 +13404,7 @@ if (!DevExpress.MOD_VIZ_CORE) {
                             }
                             else {
                                 pointSize = value;
-                                if (minShownBusinessValue && pointSize < minShownBusinessValue && pointSize !== 0)
+                                if (minShownBusinessValue && pointSize < minShownBusinessValue)
                                     updateValue = minShownBusinessValue;
                                 else
                                     updateValue = value;
@@ -13357,8 +13448,8 @@ if (!DevExpress.MOD_VIZ_CORE) {
                                 minShownBusinessValue;
                             minShownBusinessValue = getMinShownBusinessValue(self, translator, minBarSize);
                             pointSize = Math.abs(value);
-                            if (minShownBusinessValue && pointSize < minShownBusinessValue && pointSize !== 0)
-                                updateValue = value > 0 ? minShownBusinessValue : -minShownBusinessValue;
+                            if (minShownBusinessValue && pointSize < minShownBusinessValue)
+                                updateValue = value >= 0 ? minShownBusinessValue : -minShownBusinessValue;
                             else
                                 updateValue = value;
                             points[index].value = updateValue
@@ -13431,63 +13522,71 @@ if (!DevExpress.MOD_VIZ_CORE) {
             series = charts.series;
         charts.factory = function() {
             var createSeries = function(seriesType, renderer, options) {
+                    var widgetType = seriesType && seriesType.widgetType || 'chart';
+                    seriesType = seriesType && seriesType.seriesType || seriesType;
                     options = options || {};
                     options.specificType = null;
                     seriesType = (String(seriesType) || '').toLowerCase();
-                    switch (seriesType.toLowerCase()) {
-                        case'line':
-                            return new series.LineSeries(renderer, options);
-                        case'fullstackedline':
-                            options.specificType = 'fullstackedline';
-                            return new series.LineSeries(renderer, options);
-                        case'stackedline':
-                            options.specificType = 'stackedline';
-                            return new series.LineSeries(renderer, options);
-                        case'area':
-                            return new series.AreaSeries(renderer, options);
-                        case'fullstackedarea':
-                            options.specificType = 'fullstackedarea';
-                            return new series.AreaSeries(renderer, options);
-                        case'stackedarea':
-                            options.specificType = 'stackedarea';
-                            return new series.AreaSeries(renderer, options);
-                        case'bar':
-                            return new series.BarSeries(renderer, options);
-                        case'fullstackedbar':
-                            options.specificType = 'fullstackedbar';
-                            return new series.BarSeries(renderer, options);
-                        case'stackedbar':
-                            options.specificType = 'stackedbar';
-                            return new series.BarSeries(renderer, options);
-                        case'spline':
-                            return new series.SplineSeries(renderer, options);
-                        case'splinearea':
-                            return new series.SplineAreaSeries(renderer, options);
-                        case'scatter':
-                            return new series.ScatterSeries(renderer, options);
-                        case'candlestick':
-                            return new series.CandleStickSeries(renderer, options);
-                        case'stock':
-                            return new series.StockSeries(renderer, options);
-                        case'rangearea':
-                            return new series.RangeAreaSeries(renderer, options);
-                        case'rangebar':
-                            return new series.RangeBarSeries(renderer, options);
-                        case'pie':
-                            return new series.PieSeries(renderer, options);
-                        case'doughnut':
-                        case'donut':
-                            options.specificType = 'doughnut';
-                            return new series.PieSeries(renderer, options);
-                        case'stepline':
-                            return new series.StepLineSeries(renderer, options);
-                        case'steparea':
-                            return new series.StepAreaSeries(renderer, options);
-                        case'bubble':
-                            return new series.BubbleSeries(renderer, options);
-                        default:
-                            return null
-                    }
+                    if (widgetType === 'chart')
+                        switch (seriesType.toLowerCase()) {
+                            case'line':
+                                return new series.LineSeries(renderer, options);
+                            case'fullstackedline':
+                                options.specificType = 'fullstackedline';
+                                return new series.LineSeries(renderer, options);
+                            case'stackedline':
+                                options.specificType = 'stackedline';
+                                return new series.LineSeries(renderer, options);
+                            case'area':
+                                return new series.AreaSeries(renderer, options);
+                            case'fullstackedarea':
+                                options.specificType = 'fullstackedarea';
+                                return new series.AreaSeries(renderer, options);
+                            case'stackedarea':
+                                options.specificType = 'stackedarea';
+                                return new series.AreaSeries(renderer, options);
+                            case'bar':
+                                return new series.BarSeries(renderer, options);
+                            case'fullstackedbar':
+                                options.specificType = 'fullstackedbar';
+                                return new series.BarSeries(renderer, options);
+                            case'stackedbar':
+                                options.specificType = 'stackedbar';
+                                return new series.BarSeries(renderer, options);
+                            case'spline':
+                                return new series.SplineSeries(renderer, options);
+                            case'splinearea':
+                                return new series.SplineAreaSeries(renderer, options);
+                            case'scatter':
+                                return new series.ScatterSeries(renderer, options);
+                            case'candlestick':
+                                return new series.CandleStickSeries(renderer, options);
+                            case'stock':
+                                return new series.StockSeries(renderer, options);
+                            case'rangearea':
+                                return new series.RangeAreaSeries(renderer, options);
+                            case'rangebar':
+                                return new series.RangeBarSeries(renderer, options);
+                            case'stepline':
+                                return new series.StepLineSeries(renderer, options);
+                            case'steparea':
+                                return new series.StepAreaSeries(renderer, options);
+                            case'bubble':
+                                return new series.BubbleSeries(renderer, options);
+                            default:
+                                return null
+                        }
+                    else
+                        switch (seriesType.toLowerCase()) {
+                            case'pie':
+                                return new series.PieSeries(renderer, options);
+                            case'doughnut':
+                            case'donut':
+                                options.specificType = 'doughnut';
+                                return new series.PieSeries(renderer, options);
+                            default:
+                                return null
+                        }
                 };
             var createSeriesFamily = function(options) {
                     return new series.SeriesFamily(options)

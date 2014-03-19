@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization VectorMap (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -26,7 +26,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
             _createResizeHandler = DX.utils.createResizeHandler,
             _getRootOffset = DX.utils.getRootOffset,
             _ajax = $.ajax,
-            _extend = $.extend;
+            _extend = $.extend,
+            _noop = $.noop;
         var DEFAULT_WIDTH = 800,
             DEFAULT_HEIGHT = 400;
         var SELECTION_MODE_NONE = 'none',
@@ -77,6 +78,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     renderer: self._renderer,
                     context: self,
                     resetCallback: controlResetCallback,
+                    beginMoveCallback: controlBeginMoveCallback,
+                    endMoveCallback: controlEndMoveCallback,
                     moveCallback: controlMoveCallback,
                     zoomCallback: controlZoomCallback
                 });
@@ -238,6 +241,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     maxZoom: self._projection.getMaxZoom()
                 }).setZoom(self._projection.getZoom()).setOptions(self._themeManager.getControlBarSettings(self.option('controlBar')));
                 _isFunction(self._readyCallback = self.option('ready')) || (self._readyCallback = null);
+                _isFunction(self._centerChangedCallback = self.option('centerChanged')) || (self._centerChangedCallback = _noop);
+                _isFunction(self._zoomFactorChangedCallback = self.option('zoomFactorChanged')) || (self._zoomFactorChangedCallback = _noop);
                 self._background.applySettings(self._themeManager.getBackgroundSettings(self.option('background')));
                 self._background.append(self._root);
                 self._renderAreas();
@@ -794,7 +799,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
             clearSelection: function() {
                 return this.clearAreaSelection().clearMarkerSelection()
             }
-        }).include(DX.viz.core.widgetMarkupMixin).include(DX.viz.core.loadIndicatorMixin.base).redefine(DX.viz.core.loadIndicatorMixin.map);
+        }).include(DX.viz.core.widgetMarkupMixin).inherit(DX.viz.core.loadIndicatorMixin.base).redefine(DX.viz.core.loadIndicatorMixin.map);
         function setElementData($element, index) {
             $element.data('index', index)
         }
@@ -814,7 +819,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     coordinates = dataItem.geometry.coordinates;
                 if (coordinates && (type === 'Polygon' || type === 'MultiPolygon')) {
                     type === 'MultiPolygon' && (coordinates = [].concat.apply([], coordinates));
-                    return this._projection.parseAreaGeoJsonData(coordinates)
+                    return this._projection.parseAreaData(coordinates)
                 }
             }
             return []
@@ -822,7 +827,13 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
         function controlResetCallback() {
             var zoom = this._projection.getZoom();
             this._projection.setCenter(null).setZoom(null);
-            this._applyTransform(zoom !== this._projection.getZoom())
+            this._applyTransform(zoom !== this._projection.getZoom());
+            this._centerChangedCallback(this._projection.getCenter());
+            this._zoomFactorChangedCallback(this._projection.getZoom())
+        }
+        function controlBeginMoveCallback(){}
+        function controlEndMoveCallback() {
+            this._centerChangedCallback(this._projection.getCenter())
         }
         function controlMoveCallback(dx, dy) {
             this._projection.moveCenter(dx, dy);
@@ -830,7 +841,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
         }
         function controlZoomCallback(zoom) {
             this._projection.setZoom(zoom);
-            this._applyTransform(true)
+            this._applyTransform(true);
+            this._zoomFactorChangedCallback(this._projection.getZoom())
         }
         function startCallback(arg) {
             arg.data = getElementData(arg.$target);
@@ -981,8 +993,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     self._maxy = self._y0 + size / 2;
                     if (self._maxlon - self._minlon >= 360 && self._maxlat - self._minlat >= 180)
                         return;
-                    var coords1 = self._project(self._minlon, self._maxlat),
-                        coords2 = self._project(self._maxlon, self._minlat),
+                    var coords1 = self._project([self._minlon, self._maxlat]),
+                        coords2 = self._project([self._maxlon, self._minlat]),
                         xratio = width / (coords2.x - coords1.x),
                         yratio = height / (coords2.y - coords1.y),
                         ratio = xratio;
@@ -1007,19 +1019,19 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     self._miny = self._y0 - size / 2;
                     self._maxy = self._y0 + size / 2
                 },
-                _project: function(lon, lat, noTruncate) {
+                _project: function(coords, noTruncate) {
                     var self = this,
-                        lon_ = lon * PI_TO_180,
-                        lat_,
-                        x = self._radius * lon_ + self._x0,
+                        lon = coords[0] * PI_TO_180,
+                        lat,
+                        x = self._radius * lon + self._x0,
                         y;
                     if (lat <= MIN_LAT)
                         y = self._maxy;
                     else if (lat >= MAX_LAT)
                         y = self._miny;
                     else {
-                        lat_ = lat * PI_TO_180;
-                        y = self._radius * -_ln(_tan(QUARTER_PI + lat_ / 2)) + self._y0
+                        lat = coords[1] * PI_TO_180;
+                        y = self._radius * -_ln(_tan(QUARTER_PI + lat / 2)) + self._y0
                     }
                     if (!noTruncate) {
                         y <= self._miny && (y = self._miny);
@@ -1043,31 +1055,6 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     var self = this,
                         i = 0,
                         ii = _isArray(coordinates) ? coordinates.length : 0,
-                        area,
-                        j,
-                        jj,
-                        points,
-                        coords,
-                        list = [];
-                    for (; i < ii; ++i) {
-                        area = coordinates[i];
-                        j = 0;
-                        jj = _isArray(area) ? area.length : 0;
-                        if (jj) {
-                            points = [];
-                            for (; j < jj; ) {
-                                coords = self._project(area[j++], area[j++]);
-                                points.push(coords.x, coords.y)
-                            }
-                            list.push(points)
-                        }
-                    }
-                    return list
-                },
-                parseAreaGeoJsonData: function(coordinates) {
-                    var self = this,
-                        i = 0,
-                        ii = coordinates ? coordinates.length : 0,
                         subcoords,
                         j,
                         jj,
@@ -1077,9 +1064,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     for (; i < ii; ++i) {
                         subcoords = coordinates[i];
                         subresult = [];
-                        for (j = 0, jj = subcoords ? subcoords.length : 0; j < jj; ++j) {
-                            item = subcoords[j];
-                            item = self._project(item[0], item[1]);
+                        for (j = 0, jj = _isArray(subcoords) ? subcoords.length : 0; j < jj; ++j) {
+                            item = self._project(subcoords[j]);
                             subresult.push(item.x, item.y)
                         }
                         result.push(subresult)
@@ -1087,7 +1073,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     return result
                 },
                 parsePointData: function(coordinates) {
-                    return coordinates ? this._project(coordinates[0], coordinates[1]) : {}
+                    return coordinates ? this._project(coordinates) : {}
                 },
                 projectArea: function(data) {
                     var k = 0,
@@ -1122,7 +1108,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                 },
                 _adjustCenter: function() {
                     var self = this,
-                        center = self._project(self._loncenter, self._latcenter, true);
+                        center = self._project([self._loncenter, self._latcenter], true);
                     self._dxcenter = (self._x0 - (self._xcenter = center.x)) * self._zoom;
                     self._dycenter = (self._y0 - (self._ycenter = center.y)) * self._zoom
                 },
@@ -1150,10 +1136,13 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                 getMaxZoom: function() {
                     return this._maxZoom
                 },
+                getCenter: function() {
+                    return [this._loncenter, this._latcenter]
+                },
                 setCenter: function(center) {
-                    center = center || {};
-                    this._latcenter = _Number(center.lat) || 0;
-                    this._loncenter = _Number(center.lon) || 0;
+                    center = center || [];
+                    this._loncenter = _Number(center[0]) || _Number(center.lon) || 0;
+                    this._latcenter = _Number(center[1]) || _Number(center.lat) || 0;
                     this._adjustCenter();
                     return this
                 },
@@ -1204,10 +1193,18 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     self._createElements(parameters.renderer);
                     var context = parameters.context,
                         resetCallback = parameters.resetCallback,
+                        beginMoveCallback = parameters.beginMoveCallback,
+                        endMoveCallback = parameters.endMoveCallback,
                         moveCallback = parameters.moveCallback,
                         zoomCallback = parameters.zoomCallback;
                     self._reset = function() {
                         resetCallback.call(context)
+                    };
+                    self._beginMove = function() {
+                        beginMoveCallback.call(context)
+                    };
+                    self._endMove = function() {
+                        endMoveCallback.call(context)
                     };
                     self._move = function(dx, dy) {
                         moveCallback.call(context, dx, dy)
@@ -1376,7 +1373,8 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
         function MoveScreenCommand(owner, arg) {
             this._owner = owner;
             this._x = arg.x;
-            this._y = arg.y
+            this._y = arg.y;
+            this._owner._beginMove()
         }
         MoveScreenCommand.prototype.update = function(arg) {
             var self = this;
@@ -1385,6 +1383,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
             self._y = arg.y
         };
         MoveScreenCommand.prototype.finish = function() {
+            this._owner._endMove();
             disposeCommand(this)
         };
         function ResetCommand(owner, arg) {
@@ -1425,10 +1424,12 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
             }
             this._stop = function() {
                 _clearTimeout(timeout);
+                owner._endMove();
                 this._stop = owner = callback = null;
                 return this
             };
             arg = null;
+            owner._beginMove();
             callback()
         }
         MoveCommand.prototype.update = function(arg) {
@@ -1851,18 +1852,18 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                         self._tooltip_x = coords.x;
                         self._tooltip_y = coords.y;
                         event.data.container.off(self._groupTooltipEventsMouseMove).on(self._groupTooltipEventsMouseMove, event.data);
-                        self._showTooltip(event, self._tooltip_target ? null : TOOLTIP_SHOW_DELAY)
+                        self._showTooltip(self._tooltip_target ? null : TOOLTIP_SHOW_DELAY)
                     }
                 },
                 _processTooltipMouseMove: function(event) {
                     var self = this;
                     if (self._isTooltipAvailable(event))
                         if (self._tooltip_target)
-                            self._showTooltip(event);
+                            self._showTooltip();
                         else {
                             var coords = getEventCoords(event);
                             if (_abs(self._tooltip_x - coords.x) > 3 || _abs(self._tooltip_y - coords.y) > 3)
-                                self._showTooltip(event, TOOLTIP_SHOW_DELAY)
+                                self._showTooltip(TOOLTIP_SHOW_DELAY)
                         }
                     else {
                         event.data.container.off(self._groupTooltipEventsMouseMove);
@@ -1878,7 +1879,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                 _processTooltipTouchStart: function(event) {
                     var self = this;
                     if (self._tooltipEnabled && self._isTooltipAvailable(event)) {
-                        self._showTooltip(event, TOOLTIP_TOUCH_SHOW_DELAY);
+                        self._showTooltip(TOOLTIP_TOUCH_SHOW_DELAY);
                         event.data.container.off(self._groupTooltipEventsTouchMoveEnd).on(self._groupTooltipEventsTouchMoveEnd, event.data);
                         self._skipTouchStart = true
                     }
@@ -1907,14 +1908,14 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                             $target: $(event.target),
                             category: event.data.category
                         });
+                    self._tooltip_event = event;
                     return result
                 },
-                _showTooltip: function(event, delay) {
+                _showTooltip: function(delay) {
                     var self = this;
                     _clearTimeout(self._tooltip_hideTimeout);
                     self._tooltip_hideTimeout = null;
                     _clearTimeout(self._tooltip_showTimeout);
-                    self._tooltip_event = event;
                     if (delay > 0)
                         self._tooltip_showTimeout = _setTimeout(self._showTooltipCallback, delay);
                     else
@@ -2183,7 +2184,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     var theme = this._theme.background,
                         merged = _extend({}, theme, options);
                     return {
-                            strokeWidth: theme.borderWidth,
+                            strokeWidth: merged.borderWidth,
                             stroke: merged.borderColor,
                             fill: merged.color
                         }
@@ -2193,7 +2194,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                         merged = _extend({}, theme, options);
                     this._commonAreaSettings = {
                         common: {
-                            strokeWidth: theme.borderWidth,
+                            strokeWidth: merged.borderWidth,
                             stroke: merged.borderColor,
                             fill: merged.color
                         },
@@ -2205,13 +2206,13 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                         },
                         hovered: {
                             'class': merged.hoveredClass,
-                            strokeWidth: theme.hoveredBorderWidth,
+                            strokeWidth: merged.hoveredBorderWidth,
                             stroke: merged.hoveredBorderColor,
                             fill: merged.hoveredColor
                         },
                         selected: {
                             'class': merged.selectedClass,
-                            strokeWidth: theme.selectedBorderWidth,
+                            strokeWidth: merged.selectedBorderWidth,
                             stroke: merged.selectedBorderColor,
                             fill: merged.selectedColor
                         }
@@ -2261,33 +2262,33 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                         },
                         normal: {
                             'class': merged['class'],
-                            strokeWidth: theme.borderWidth,
+                            strokeWidth: merged.borderWidth,
                             stroke: merged.borderColor,
                             fill: merged.color
                         },
                         hovered: {
                             'class': merged.hoveredClass,
-                            strokeWidth: theme.borderWidth,
+                            strokeWidth: merged.borderWidth,
                             stroke: merged.hoveredBorderColor || merged.borderColor,
                             fill: merged.hoveredColor || merged.color
                         },
                         selected: {
                             'class': merged.selectedClass,
-                            strokeWidth: theme.borderWidth,
+                            strokeWidth: merged.borderWidth,
                             stroke: merged.selectedBorderColor || merged.borderColor,
                             fill: merged.selectedColor || merged.color
                         },
                         extraHovered: {
                             strokeWidth: 0,
                             stroke: 'none',
-                            fill: theme.extraColor,
-                            opacity: theme.extraOpacity
+                            fill: merged.extraColor,
+                            opacity: merged.extraOpacity
                         },
                         extraSelected: {
                             strokeWidth: 0,
                             stroke: 'none',
-                            fill: theme.extraColor,
-                            opacity: theme.extraOpacity
+                            fill: merged.extraColor,
+                            opacity: merged.extraOpacity
                         }
                     };
                     return this
@@ -2328,7 +2329,7 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                     var theme = this._theme.controlBar,
                         merged = _extend({}, theme, options);
                     return _extend({}, options, {shape: {
-                                strokeWidth: theme.borderWidth,
+                                strokeWidth: merged.borderWidth,
                                 stroke: merged.borderColor,
                                 fill: merged.color
                             }})
@@ -2359,10 +2360,10 @@ if (!DevExpress.MOD_VIZ_VECTORMAP) {
                         merged = _extend({}, theme, options);
                     return _extend({}, options, {
                             background: {
-                                strokeWidth: theme.borderWidth,
+                                strokeWidth: merged.borderWidth,
                                 stroke: merged.borderColor,
                                 fill: merged.color,
-                                opacity: theme.opacity
+                                opacity: merged.opacity
                             },
                             text: {
                                 strokeWidth: 0,

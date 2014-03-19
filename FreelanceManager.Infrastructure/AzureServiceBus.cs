@@ -6,6 +6,7 @@ using MassTransit.NLogIntegration;
 using MassTransit.Transports.AzureServiceBus;
 using NLog;
 
+using MassTransit.Transports.AzureServiceBus.Configuration;
 namespace FreelanceManager.Infrastructure
 {
     public class AzureServiceBus : ServiceBusBase
@@ -25,24 +26,20 @@ namespace FreelanceManager.Infrastructure
 
             _logger.Info("Starting service bus, enpoint name " + name);
 
+            var credentials = new Credentials(ConfigurationManager.AppSettings["azure:serviceBusIssuerName"],
+                ConfigurationManager.AppSettings["azure:serviceBusIssuerKey"], 
+                ConfigurationManager.AppSettings["azure:serviceBusNamespace"], 
+                name);
+
             _bus = ServiceBusFactory.New(sbc =>
             {
                 sbc.UseNLog();
 
-                sbc.SetCreateTransactionalQueues(true);
+                var uri = credentials.BuildUri(name);
+                Console.WriteLine(uri);
 
-                sbc.ReceiveFrom("azure-sb://" + ConfigurationManager.AppSettings["azure:serviceBusIssuerName"] +
-                                ":" + ConfigurationManager.AppSettings["azure:serviceBusIssuerKey"] +
-                                "@" + ConfigurationManager.AppSettings["azure:serviceBusNamespace"] + 
-                                "/" + name);
-                
-                
+                sbc.ReceiveFrom(uri);
 
-                sbc.UseAzureServiceBus();
-                sbc.UseAzureServiceBusRouting();
-
-                sbc.UseJsonSerializer();
-          
                 sbc.Subscribe(c =>
                 {
                     if (BusHasHandlers)
@@ -50,6 +47,16 @@ namespace FreelanceManager.Infrastructure
                         c.Handler<BusMessage>(HandleBusMessage);
                     }
                 });
+
+                sbc.UseAzureServiceBus(x =>
+                {
+                    x.ConfigureNamespace(uri.Host, h =>
+                    {
+                        h.SetKeyName(ConfigurationManager.AppSettings["azure:serviceBusIssuerName"]);
+                        h.SetKey(ConfigurationManager.AppSettings["azure:serviceBusIssuerKey"]);
+                    });
+                });
+                sbc.UseAzureServiceBusRouting();
             });
         }
 

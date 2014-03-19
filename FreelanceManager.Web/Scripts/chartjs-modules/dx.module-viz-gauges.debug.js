@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization Gauges (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -1375,12 +1375,21 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
             _renderPointer: function() {
                 var self = this,
                     options = self._options,
-                    x1 = options.x - options.width / 2 || options.x,
-                    x2 = options.x + options.width / 2 || options.x,
+                    x1 = options.x - options.width / 2,
+                    x2 = options.x + options.width / 2,
                     y4 = options.y - options.radius,
-                    y1 = options.y - options.indentFromCenter || options.y,
-                    y3 = y4 + (y1 - y4) * options.secondFraction || y4,
-                    y2 = y3 + options.space || y3;
+                    y1 = options.y - options.indentFromCenter,
+                    fraction = Number(options.secondFraction) || 0,
+                    y2,
+                    y3;
+                if (fraction >= 1)
+                    y2 = y3 = y1;
+                else if (fraction <= 0)
+                    y2 = y3 = y2;
+                else {
+                    y3 = y4 + (y1 - y4) * fraction;
+                    y2 = y3 + options.space
+                }
                 self._firstElement = self._firstElement || self._renderer.createArea().append(self._rootElement);
                 self._spaceElement = self._spaceElement || self._renderer.createArea().append(self._rootElement);
                 self._secondElement = self._secondElement || self._renderer.createArea().append(self._rootElement);
@@ -3666,7 +3675,7 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
             _getApproximateScreenRange: function() {
                 throw new Error('_getApproximateScreenRange - not implemented');
             }
-        }).include(core.widgetMarkupMixin).include(core.loadIndicatorMixin.base).redefine(core.loadIndicatorMixin.gauge);
+        }).include(core.widgetMarkupMixin).inherit(core.loadIndicatorMixin.base).redefine(core.loadIndicatorMixin.gauge);
         function prepareValueIndicatorsInHardMode(self) {
             var valueIndicators = self._valueIndicators || [],
                 userOptions = self.option('valueIndicators'),
@@ -4487,6 +4496,8 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
             _isFinite = window.isFinite,
             _round = Math.round,
             _floor = Math.floor,
+            _min = Math.min,
+            _max = Math.max,
             _isArray = DX.utils.isArray,
             _convertAngleToRendererSpace = DX.utils.convertAngleToRendererSpace,
             _getCosAndSin = DX.utils.getCosAndSin,
@@ -4606,7 +4617,6 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                 self._palette = self._bars = null;
                 self.callBase.apply(self, arguments)
             },
-            _prepareMainElements: _noop,
             _measureMainElements: function() {
                 var self = this,
                     measurements = {maxRadius: self._area.radius},
@@ -4630,7 +4640,6 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                         bbox = text.getBBox();
                     text.detach();
                     self._context.textVerticalOffset = -bbox.y - bbox.height / 2;
-                    measurements.maxRadius += self._textIndent;
                     measurements.horizontalMargin = self._context.textWidth = bbox.width;
                     measurements.verticalMargin = self._context.textHeight = bbox.height
                 }
@@ -4644,9 +4653,14 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                     stepHighlight: 50,
                     theme: self._themeManager.themeName()
                 });
-                var relativeInnerRadius = options.relativeInnerRadius > 0 && options.relativeInnerRadius < 1 ? _Number(options.relativeInnerRadius) : 0.1;
-                self._outerRadius = _round(self._area.radius);
-                self._innerRadius = _round(self._outerRadius * relativeInnerRadius);
+                var relativeInnerRadius = options.relativeInnerRadius > 0 && options.relativeInnerRadius < 1 ? _Number(options.relativeInnerRadius) : 0.1,
+                    radius = self._area.radius;
+                if (self._context.textEnabled) {
+                    self._textIndent = _round(_min(self._textIndent, radius / 2));
+                    radius -= self._textIndent
+                }
+                self._outerRadius = _round(radius);
+                self._innerRadius = _round(radius * relativeInnerRadius);
                 self._barSpacing = options.barSpacing > 0 ? _Number(options.barSpacing) : 0;
                 _extend(self._context, {
                     backgroundColor: options.backgroundColor,
@@ -4680,8 +4694,9 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                         self._dummyBackground = null
                     }
                 }
-                else if (!self._dummyBackground) {
-                    self._dummyBackground = self._renderer.createArc().append(self._barsGroup);
+                else {
+                    if (!self._dummyBackground)
+                        self._dummyBackground = self._renderer.createArc().append(self._barsGroup);
                     self._dummyBackground.applySettings({
                         x: self._context.x,
                         y: self._context.y,
@@ -4697,18 +4712,17 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                 var self = this,
                     i = 0,
                     ii = self._bars.length,
-                    unitOffset = _floor((self._outerRadius - self._innerRadius + self._barSpacing) / ii),
-                    radius = self._outerRadius;
-                self._context.barSize = unitOffset - self._barSpacing;
+                    radius = self._outerRadius - self._innerRadius;
+                self._context.barSize = _max(_floor((radius - (ii - 1) * self._barSpacing) / ii), 1);
+                var unitOffset = self._context.barSize + _round(_min((radius - ii * self._context.barSize) / (ii - 1), self._barSpacing));
+                radius = self._outerRadius;
                 self._context.textRadius = radius + self._textIndent;
                 self._palette.reset();
-                for (; i < ii; ++i) {
+                for (; i < ii; ++i, radius -= unitOffset)
                     self._bars[i].arrange({
                         color: self._palette.getNextColor(),
                         radius: radius
-                    });
-                    radius -= unitOffset
-                }
+                    })
             },
             _updateBars: function() {
                 var self = this,
@@ -4744,8 +4758,10 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
                     self._animateBars();
                 else
                     self._updateBars();
-                self.option('values', self._values);
-                self.hideLoadingIndicator()
+                if (!self._resizing) {
+                    self.option('values', self._values);
+                    self.hideLoadingIndicator()
+                }
             },
             values: function(arg) {
                 if (arg !== undefined) {
@@ -4767,6 +4783,7 @@ if (!DevExpress.MOD_VIZ_GAUGES) {
             },
             _selectMode: _noop,
             _renderDeltaIndicator: _noop,
+            _prepareMainElements: _noop,
             _updateElementPosition: _noop,
             _disposeValueIndicators: _noop,
             _cleanValueIndicators: _noop,

@@ -50,7 +50,7 @@ namespace FreelanceManager.Web.Modules
                    .ForceRelease()
                    .AsCached("jquery", "~/bundles/js/jquery");
 
-                Bundle.JavaScript().Add(staticContentResolver.GetLocation("/scripts/modernizr-2.7.1.js"))
+                Bundle.JavaScript().Add(staticContentResolver.GetLocation("/scripts/modernizr-2.7.2.js"))
                                    .ForceRelease()
                                    .AsCached("modernizr", "~/bundles/js/modernizr");
 
@@ -58,7 +58,7 @@ namespace FreelanceManager.Web.Modules
                                    .Add(staticContentResolver.GetLocation("/Scripts/bootstrap-select.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/bootstrap-datepicker.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/respond.js"))
-                                   .Add(staticContentResolver.GetLocation("/Scripts/knockout-3.0.0.js"))
+                                   .Add(staticContentResolver.GetLocation("/Scripts/knockout-3.1.0.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/knockout.validation.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/moment.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/freelancemanager.js"))

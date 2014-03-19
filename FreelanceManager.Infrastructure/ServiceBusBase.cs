@@ -37,12 +37,12 @@ namespace FreelanceManager.Infrastructure
                 Headers = headers
             };
 
-            using (var scope = new TransactionScope(TransactionScopeOption.Required))
-            {
+            //using (var scope = new TransactionScope(TransactionScopeOption.Required))
+            //{
                 Publish(busMessage);
 
-                scope.Complete();
-            }
+            //  scope.Complete();
+            //}
         }
 
         public void RegisterHandlers(Assembly assembly)

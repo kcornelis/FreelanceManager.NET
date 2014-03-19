@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Core Library
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://phonejs.devexpress.com/EULA
@@ -104,12 +104,12 @@ if (!window.DevExpress) {
                 _busy = false;
             function exec() {
                 while (_tasks.length) {
+                    _busy = true;
                     var task = _tasks.shift(),
                         result = task();
                     if (result === undefined)
                         continue;
                     if (result.then) {
-                        _busy = true;
                         $.when(result).always(exec);
                         return
                     }
@@ -166,7 +166,9 @@ if (!window.DevExpress) {
                 var callbacks = [];
                 return {
                         add: function(callback) {
-                            callbacks.push(callback)
+                            var indexOfCallback = $.inArray(callback, callbacks);
+                            if (indexOfCallback === -1)
+                                callbacks.push(callback)
                         },
                         remove: function(callback) {
                             var indexOfCallback = $.inArray(callback, callbacks);
@@ -206,6 +208,7 @@ if (!window.DevExpress) {
             enqueueAsync: enqueueAsync,
             parseUrl: parseUrl,
             backButtonCallback: backButtonCallback,
+            hardwareBackButton: $.Callbacks(),
             overlayTargetContainer: overlayTargetContainer
         })
     })(jQuery, this);
@@ -379,8 +382,8 @@ if (!window.DevExpress) {
                 },
                 win8: function(userAgent) {
                     var isPhone = /windows phone/i.test(userAgent),
-                        isTablet = /msie(.*)arm(.*)tablet\spc/i.test(userAgent),
-                        isDesktop = !isTablet && /msapphost/i.test(userAgent);
+                        isTablet = !isPhone && /arm(.*)trident/i.test(userAgent),
+                        isDesktop = !isPhone && !isTablet && /msapphost/i.test(userAgent);
                     if (!(isPhone || isTablet || isDesktop))
                         return;
                     var matches = userAgent.match(/windows phone (\d+).(\d+)/i) || userAgent.match(/windows nt (\d+).(\d+)/i),
@@ -497,15 +500,14 @@ if (!window.DevExpress) {
         var supportProp = function(prop) {
                 return !!styleProp(prop)
             };
-        var isRetinaIPad = DX.devices.real.ios && DX.devices.real.deviceType === "tablet" && window.devicePixelRatio > 1,
-            isDesktopIE = (DX.devices.real.deviceType === "desktop" || DX.devices.isSimulator()) && DX.browser.msie;
+        var isDesktopIE = (DX.devices.real.deviceType === "desktop" || DX.devices.isSimulator()) && DX.browser.msie;
         DX.support = {
             touch: "ontouchstart" in window,
             pointer: window.navigator.pointerEnabled,
-            transform3d: !isDesktopIE && !isRetinaIPad && supportProp("perspective"),
-            transition: !isRetinaIPad && supportProp("transition"),
+            transform3d: !isDesktopIE && supportProp("perspective"),
+            transition: supportProp("transition"),
             transitionEndEventName: transitionEndEventNames[styleProp("transition")],
-            animation: !isRetinaIPad && supportProp("animation"),
+            animation: supportProp("animation"),
             winJS: "WinJS" in window,
             styleProp: styleProp,
             supportProp: supportProp,
@@ -959,6 +961,9 @@ if (!window.DevExpress) {
                     milliseconds = convertDateUnitToMilliseconds(tickInterval, 1);
                 return milliseconds
             };
+        var getPower = function(value) {
+                return value.toExponential().split("e")[1]
+            };
         var getDatesDifferences = function(date1, date2) {
                 var differences,
                     counter = 0;
@@ -1226,6 +1231,35 @@ if (!window.DevExpress) {
                 }
                 return null
             };
+        var getLabelConnectorCoord = function(labelBox, graphBox, centerLabel, rotated) {
+                var floor = Math.floor,
+                    x1,
+                    x2,
+                    y1,
+                    y2;
+                x1 = floor(labelBox.x + labelBox.width / 2);
+                x2 = floor(graphBox.x + graphBox.width / 2);
+                if (labelBox.y + labelBox.height < graphBox.y) {
+                    y1 = centerLabel || labelBox.y + labelBox.height;
+                    y2 = graphBox.y
+                }
+                else if (labelBox.y > graphBox.y + graphBox.height) {
+                    y1 = centerLabel || labelBox.y;
+                    y2 = graphBox.y + graphBox.height
+                }
+                else if (labelBox.x > graphBox.x + graphBox.width || labelBox.x + labelBox.width < graphBox.x)
+                    if (labelBox.y - graphBox.y < graphBox.y + graphBox.height - (labelBox.y + labelBox.height)) {
+                        y1 = centerLabel || labelBox.y;
+                        y2 = graphBox.y
+                    }
+                    else {
+                        y1 = centerLabel || labelBox.y + labelBox.height;
+                        y2 = graphBox.y + graphBox.height
+                    }
+                else
+                    return;
+                return !rotated ? [x1, y1, x2, y2] : [y1, x1, y2, x2]
+            };
         var createResizeHandler = function(callback) {
                 var $window = $(window),
                     timeout;
@@ -1284,7 +1318,10 @@ if (!window.DevExpress) {
         var windowResizeCallbacks = function() {
                 var prevSize,
                     callbacks = $.Callbacks(),
-                    jqWindow = $(window);
+                    jqWindow = $(window),
+                    resizeEventHandlerAttached = false,
+                    originalCallbacksAdd = callbacks.add,
+                    originalCallbacksRemove = callbacks.remove;
                 var formatSize = function() {
                         return [jqWindow.width(), jqWindow.height()].join()
                     };
@@ -1295,13 +1332,29 @@ if (!window.DevExpress) {
                         prevSize = now;
                         callbacks.fire()
                     };
-                jqWindow.on("resize", handleResize);
                 prevSize = formatSize();
+                callbacks.add = function() {
+                    var result = originalCallbacksAdd.apply(callbacks, arguments);
+                    if (!resizeEventHandlerAttached && callbacks.has()) {
+                        jqWindow.on("resize", handleResize);
+                        resizeEventHandlerAttached = true
+                    }
+                    return result
+                };
+                callbacks.remove = function() {
+                    var result = originalCallbacksRemove.apply(callbacks, arguments);
+                    if (!callbacks.has() && resizeEventHandlerAttached) {
+                        jqWindow.off("resize", handleResize);
+                        resizeEventHandlerAttached = false
+                    }
+                    return result
+                };
                 return callbacks
             }();
         var resetActiveElement = function() {
                 var android4nativeBrowser = DX.devices.real.platform === "android" && /^4\.0(\.\d)?/.test(DX.devices.real.version.join(".")) && navigator.userAgent.indexOf("Chrome") === -1;
-                function androidInputBlur() {
+                var activeElement = document.activeElement;
+                if (android4nativeBrowser) {
                     var $specInput = $("<input>").addClass("dx-hidden-input").appendTo("body");
                     setTimeout(function() {
                         $specInput.focus();
@@ -1311,15 +1364,8 @@ if (!window.DevExpress) {
                         }, 100)
                     }, 100)
                 }
-                function standardInputBlur() {
-                    var activeElement = document.activeElement;
-                    if (activeElement && activeElement !== document.body && activeElement.blur)
-                        activeElement.blur()
-                }
-                if (android4nativeBrowser)
-                    androidInputBlur();
-                else
-                    standardInputBlur()
+                if (activeElement && activeElement !== document.body && activeElement.blur)
+                    activeElement.blur()
             };
         var createMarkupFromString = function(str) {
                 var tempElement = $("<div />");
@@ -1500,8 +1546,10 @@ if (!window.DevExpress) {
             getDateIntervalByString: getDateIntervalByString,
             sameMonthAndYear: sameMonthAndYear,
             getFirstMonthDate: getFirstMonthDate,
+            getPower: getPower,
             logger: logger,
             debug: debug,
+            getLabelConnectorCoord: getLabelConnectorCoord,
             createResizeHandler: createResizeHandler,
             windowResizeCallbacks: windowResizeCallbacks,
             resetActiveElement: resetActiveElement,
@@ -1522,6 +1570,7 @@ if (!window.DevExpress) {
     /*! Module core, file translator.js */
     (function($, DX, undefined) {
         var support = DX.support,
+            TRANSLATOR_DATA_KEY = "dxTranslator",
             TRANSFORM_MATRIX_REGEX = /matrix(3d)?\((.+?)\)/,
             TRANSLATE_REGEX = /translate(?:3d)?\((.+?)\)/;
         var locate = function($element) {
@@ -1543,9 +1592,8 @@ if (!window.DevExpress) {
                 }
                 return result
             };
-        var move = function($element, position, config) {
-                config = config || {};
-                if (!support.transform3d && !config.cssTransform) {
+        var move = function($element, position) {
+                if (!support.transform3d) {
                     $element.css(position);
                     return
                 }
@@ -1553,34 +1601,48 @@ if (!window.DevExpress) {
                     left = position.left,
                     top = position.top;
                 if (left !== undefined)
-                    translate.x = left;
+                    translate.x = left || 0;
                 if (top !== undefined)
-                    translate.y = top;
+                    translate.y = top || 0;
                 $element.css({
                     transform: getTranslateCss(translate),
                     transformOrigin: "0% 0%"
                 })
             };
         var getTranslate = function($element) {
-                var transformValue = $element.css("transform") || "translate3d(0, 0, 0)",
-                    matrix = transformValue.match(TRANSFORM_MATRIX_REGEX),
-                    is3D = matrix && matrix[1];
-                if (matrix) {
-                    matrix = matrix[2].split(",");
-                    if (is3D === "3d")
-                        matrix = matrix.slice(12, 15);
-                    else {
-                        matrix.push(0);
-                        matrix = matrix.slice(4, 7)
+                var result = $element.data(TRANSLATOR_DATA_KEY);
+                if (!result) {
+                    var transformValue = $element.css("transform") || getTranslateCss({
+                            x: 0,
+                            y: 0
+                        }),
+                        matrix = transformValue.match(TRANSFORM_MATRIX_REGEX),
+                        is3D = matrix && matrix[1];
+                    if (matrix) {
+                        matrix = matrix[2].split(",");
+                        if (is3D === "3d")
+                            matrix = matrix.slice(12, 15);
+                        else {
+                            matrix.push(0);
+                            matrix = matrix.slice(4, 7)
+                        }
                     }
-                }
-                else
-                    matrix = [0, 0, 0];
-                return {
+                    else
+                        matrix = [0, 0, 0];
+                    result = {
                         x: parseFloat(matrix[0]),
                         y: parseFloat(matrix[1]),
                         z: parseFloat(matrix[2])
-                    }
+                    };
+                    cacheTranslate($element, result)
+                }
+                return result
+            };
+        var cacheTranslate = function($element, translate) {
+                $element.data(TRANSLATOR_DATA_KEY, translate)
+            };
+        var clearCache = function($element) {
+                $element.removeData(TRANSLATOR_DATA_KEY)
             };
         var parseTranslate = function(translateString) {
                 var result = translateString.match(TRANSLATE_REGEX);
@@ -1595,15 +1657,57 @@ if (!window.DevExpress) {
                 return result
             };
         var getTranslateCss = function(translate) {
-                return "translate3d(" + (translate.x || 0) + "px, " + (translate.y || 0) + "px, " + (translate.z || 0) + "px) scale(1)"
+                return "translate(" + (translate.x || 0) + "px, " + (translate.y || 0) + "px)"
             };
         DX.translator = {
             move: move,
             locate: locate,
+            clearCache: clearCache,
             parseTranslate: parseTranslate,
             getTranslate: getTranslate,
             getTranslateCss: getTranslateCss
         }
+    })(jQuery, DevExpress);
+    /*! Module core, file animationFrame.js */
+    (function($, DX, undefined) {
+        var FRAME_ANIMATION_STEP_TIME = 1000 / 60,
+            requestAnimationFrame = function(callback, element) {
+                return this.setTimeout(callback, FRAME_ANIMATION_STEP_TIME)
+            },
+            cancelAnimationFrame = function(requestID) {
+                return this.clearTimeout(requestID)
+            },
+            nativeRequestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame,
+            nativeCancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.oCancelAnimationFrame || window.msCancelAnimationFrame;
+        if (nativeRequestAnimationFrame && nativeCancelAnimationFrame) {
+            requestAnimationFrame = nativeRequestAnimationFrame;
+            cancelAnimationFrame = nativeCancelAnimationFrame
+        }
+        if (nativeRequestAnimationFrame && !nativeCancelAnimationFrame) {
+            var cancelledRequests = {};
+            requestAnimationFrame = function(callback) {
+                var requestId = nativeRequestAnimationFrame.call(window, function() {
+                        try {
+                            if (requestId in cancelledRequests)
+                                return;
+                            callback.apply(this, arguments)
+                        }
+                        finally {
+                            delete cancelledRequests[requestId]
+                        }
+                    });
+                return requestId
+            };
+            cancelAnimationFrame = function(requestId) {
+                cancelledRequests[requestId] = true
+            }
+        }
+        requestAnimationFrame = $.proxy(requestAnimationFrame, window);
+        cancelAnimationFrame = $.proxy(cancelAnimationFrame, window);
+        $.extend(DX, {
+            requestAnimationFrame: requestAnimationFrame,
+            cancelAnimationFrame: cancelAnimationFrame
+        })
     })(jQuery, DevExpress);
     /*! Module core, file animator.js */
     (function($, DX, undefined) {
@@ -1653,8 +1757,7 @@ if (!window.DevExpress) {
         var CSS_TRANSITION_EASING_REGEX = /cubic-bezier\((\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\)/,
             SIMULATED_TRANSITIONEND_TIMEOUT_DATA_KEY = "dxSimulatedTransitionTimeoutKey",
             ANIM_DATA_KEY = "dxAnimData",
-            TRANSFORM_PROP = "transform",
-            FRAME_ANIMATION_STEP_TIME = 1000 / 60;
+            TRANSFORM_PROP = "transform";
         var TransitionAnimationStrategy = {
                 animate: function($element, config) {
                     var deferred = $.Deferred(),
@@ -1670,7 +1773,7 @@ if (!window.DevExpress) {
                         this._cleanup($element);
                         deferred.resolveWith($element, [config, $element])
                     }, this));
-                    translator.getTranslate($element);
+                    $element.css("transform");
                     $element.css({
                         transitionProperty: "all",
                         transitionDelay: config.delay + "ms",
@@ -1702,11 +1805,6 @@ if (!window.DevExpress) {
                     }
                 }
             };
-        var requestAnimationFrame = DX.requestAnimationFrame = function() {
-                return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
-                        window.setTimeout(callback, FRAME_ANIMATION_STEP_TIME)
-                    }
-            }();
         var FrameAnimationStrategy = {
                 animate: function($element, config) {
                     var deferred = $.Deferred(),
@@ -1794,7 +1892,7 @@ if (!window.DevExpress) {
                     }
                     frameAnimation.currentValue = this._calcStepValue(frameAnimation, now - frameAnimation.startTime);
                     frameAnimation.draw();
-                    requestAnimationFrame($.proxy(function() {
+                    DX.requestAnimationFrame($.proxy(function() {
                         this._animationStep($element)
                     }, this))
                 },
@@ -1914,6 +2012,7 @@ if (!window.DevExpress) {
                     })
                 },
                 _locationToTranslate: function($element, config) {
+                    translator.clearCache($element);
                     var translate = translator.getTranslate($element),
                         left = config.left,
                         top = config.top;
@@ -2162,6 +2261,7 @@ if (!window.DevExpress) {
                     quarterFormat,
                     result = '',
                     index = 0;
+                regExp.lastIndex = 0;
                 while (index < format.length) {
                     quarterFormat = regExp.exec(format);
                     if (!quarterFormat || quarterFormat.index > index)
@@ -2905,6 +3005,7 @@ if (!window.DevExpress) {
             "dxList-refreshingText": "Refreshing...",
             "dxList-pageLoadingText": "Loading...",
             "dxListEditDecorator-delete": "Delete",
+            "dxList-nextButtonText": "More",
             "dxScrollView-pullingDownText": "Pull down to refresh...",
             "dxScrollView-pulledDownText": "Release to refresh...",
             "dxScrollView-refreshingText": "Refreshing...",
@@ -3318,13 +3419,9 @@ if (!window.DevExpress) {
                         value = toComparable(value);
                         switch (op.toLowerCase()) {
                             case"=":
-                                return function(obj) {
-                                        return toComparable(getter(obj)) == value
-                                    };
+                                return compileEquals(getter, value);
                             case"<>":
-                                return function(obj) {
-                                        return toComparable(getter(obj)) != value
-                                    };
+                                return compileEquals(getter, value, true);
                             case">":
                                 return function(obj) {
                                         return toComparable(getter(obj)) > value
@@ -3361,6 +3458,18 @@ if (!window.DevExpress) {
                         }
                         throw Error("Unknown filter operation: " + op);
                     };
+                function compileEquals(getter, value, negate) {
+                    return function(obj) {
+                            obj = toComparable(getter(obj));
+                            var result = useStrictComparison(value) ? obj === value : obj == value;
+                            if (negate)
+                                result = !result;
+                            return result
+                        }
+                }
+                function useStrictComparison(value) {
+                    return value === "" || value === 0 || value === null || value === false || value === undefined
+                }
                 return function(crit) {
                         if ($.isFunction(crit))
                             return crit;
@@ -4931,13 +5040,17 @@ if (!window.DevExpress) {
                 group: generateStoreLoadOptionAccessor("group"),
                 select: generateStoreLoadOptionAccessor("select"),
                 searchValue: function(value) {
-                    if (value !== undefined)
-                        this._searchValue = value;
+                    if (value !== undefined) {
+                        this.pageIndex(0);
+                        this._searchValue = value
+                    }
                     return this._searchValue
                 },
                 searchOperation: function(op) {
-                    if (op !== undefined)
-                        this._searchOperation = op;
+                    if (op !== undefined) {
+                        this.pageIndex(0);
+                        this._searchOperation = op
+                    }
                     return this._searchOperation
                 },
                 searchExpr: function(expr) {
@@ -4945,6 +5058,7 @@ if (!window.DevExpress) {
                     if (argc) {
                         if (argc > 1)
                             expr = $.makeArray(arguments);
+                        this.pageIndex(0);
                         this._searchExpr = expr
                     }
                     return this._searchExpr
@@ -5390,9 +5504,10 @@ if (!window.DevExpress) {
                         document.body.style.setProperty("min-height", actualHeight + "px", "important")
                     })
                 }
-                if (DX.devices.real.ios && DX.devices.real.version[0] > 6) {
+                var realDevice = DX.devices.real;
+                if (realDevice.ios) {
                     var isPhoneGap = document.location.protocol == "file:";
-                    if (isPhoneGap) {
+                    if (isPhoneGap && realDevice.version[0] > 6) {
                         $(".dx-viewport").css("position", "relative");
                         $("body").css({
                             "box-sizing": "border-box",
@@ -5405,6 +5520,13 @@ if (!window.DevExpress) {
                         $(window).on("orientationchange", setDeviceHeight);
                         setDeviceHeight()
                     }
+                    else
+                        $(window).on("resize", function(e) {
+                            var windowWidth = $(window).width();
+                            setTimeout(function() {
+                                $("body").width(windowWidth)
+                            }, 0)
+                        })
                 }
             };
         var TemplateProvider = DX.Class.inherit({
@@ -5469,7 +5591,7 @@ if (!window.DevExpress) {
             eventNS = $.event,
             specialNS = eventNS.special,
             EVENT_SOURCES_REGEX = {
-                mouse: /^mouse/i,
+                mouse: /mouse/i,
                 touch: /^touch/i,
                 keyboard: /^key/i,
                 pointer: /pointer/i
@@ -5544,10 +5666,12 @@ if (!window.DevExpress) {
                     return e.originalEvent.touches.length
             };
         var needSkipEvent = function(e) {
+                var $target = $(e.target),
+                    touchInInput = $target.is("input, textarea, select");
                 if (isMouseEvent(e))
-                    return $(e.target).is("input, textarea, select") || e.which > 1;
+                    return touchInInput || e.which > 1;
                 if (isTouchEvent(e))
-                    return (e.originalEvent.changedTouches || e.originalEvent.originalEvent.changedTouches).length !== 1
+                    return touchInInput && $target.is(":focus") || (e.originalEvent.changedTouches || e.originalEvent.originalEvent.changedTouches).length !== 1
             };
         var createEvent = function(sourceEvent, props) {
                 var event = $.Event(sourceEvent, props),
@@ -5577,7 +5701,23 @@ if (!window.DevExpress) {
                 return false
             };
         var registerEvent = function(eventName, eventObject) {
-                specialNS[eventName] = eventObject
+                var strategy = {};
+                if ("noBubble" in eventObject)
+                    strategy.noBubble = eventObject.noBubble;
+                if ("bindType" in eventObject)
+                    strategy.bindType = eventObject.bindType;
+                if ("delegateType" in eventObject)
+                    strategy.delegateType = eventObject.delegateType;
+                $.each(["setup", "teardown", "add", "remove", "trigger", "handle", "_default", "dispose"], function(_, methodName) {
+                    if (!eventObject[methodName])
+                        return;
+                    strategy[methodName] = function() {
+                        var args = $.makeArray(arguments);
+                        args.unshift(this);
+                        return eventObject[methodName].apply(eventObject, args)
+                    }
+                });
+                specialNS[eventName] = strategy
             };
         ui.events = {
             eventSource: eventSource,
@@ -5640,6 +5780,8 @@ if (!window.DevExpress) {
                 _optionValuesEqual: function(name, oldValue, newValue) {
                     oldValue = dataUtils.toComparable(oldValue, true);
                     newValue = dataUtils.toComparable(newValue, true);
+                    if (oldValue && newValue && oldValue.jquery && newValue.jquery)
+                        return newValue.is(oldValue);
                     if (oldValue === null || typeof oldValue !== "object")
                         return oldValue === newValue;
                     return false
@@ -5947,7 +6089,7 @@ if (!window.DevExpress) {
                 }
             });
         var KoTemplateProvider = ui.TemplateProvider.inherit({
-                getTemplateClass: function() {
+                getTemplateClass: function(widget) {
                     return KoTemplate
                 },
                 supportDefaultTemplate: function(widget) {
@@ -6221,17 +6363,17 @@ if (!window.DevExpress) {
                             })
                         });
                     self._component.optionChanged.add(function(optionName, optionValue) {
-                        if (self._scope.$root.$$phase || !optionDependencies || !optionDependencies[optionName])
+                        if (self._scope.$root.$$phase === "$digest" || !optionDependencies || !optionDependencies[optionName])
                             return;
-                        self._scope.$apply(function() {
+                        safeApply(function(scope) {
                             $.each(optionDependencies[optionName], function(optionPath, valuePath) {
                                 var setter = compileSetter(valuePath),
                                     getter = compileGetter(optionPath);
                                 var tmpData = {};
                                 tmpData[optionName] = optionValue;
-                                setter(self._scope, getter(tmpData))
+                                setter(scope, getter(tmpData))
                             })
-                        })
+                        }, self._scope)
                     })
                 },
                 _extractTemplates: function() {
@@ -6776,10 +6918,7 @@ if (!window.DevExpress) {
         var ui = DX.ui,
             support = DX.support,
             device = DX.devices.real,
-            events = ui.events,
-            MOUSE_EVENT_LOCK_TIMEOUT = 100,
-            mouseLocked = false,
-            unlockMouseTimer = null;
+            events = ui.events;
         var POINTER_EVENTS_NAMESPACE = "dxPointerEvents",
             MouseStrategyEventMap = {
                 dxpointerdown: "mousedown",
@@ -6812,65 +6951,93 @@ if (!window.DevExpress) {
                     return TouchStrategyEventMap;
                 return MouseStrategyEventMap
             }();
-        $.each(eventMap, function(pointerEvent, originalEvents) {
-            var SingleEventStrategy = {
-                    EVENT_NAMESPACE: [POINTER_EVENTS_NAMESPACE, ".", pointerEvent].join(""),
-                    _handlerCount: 0,
-                    _handler: function(e) {
-                        if (pointerEvent === "dxpointerdown")
-                            $(e.target).data("dxGestureEvent", null);
-                        return events.fireEvent({
-                                type: pointerEvent,
-                                pointerType: events.eventSource(e),
-                                originalEvent: e
-                            })
-                    },
-                    setup: function() {
-                        if (pointerEventNS._handlerCount > 0)
+        var skipTouchWithSameIdentifier = function(pointerEvent) {
+                return device.platform === "ios" && (pointerEvent === "dxpointerdown" || pointerEvent === "dxpointerup")
+            };
+        var SingleEventStrategy = DX.Class.inherit({
+                ctor: function(eventName, originalEvents) {
+                    this._eventName = eventName;
+                    this._eventNamespace = [POINTER_EVENTS_NAMESPACE, ".", this._eventName].join("");
+                    this._originalEvents = originalEvents;
+                    this._pointerId = 0;
+                    this._handlerCount = 0
+                },
+                _handler: function(e) {
+                    if (this._eventName === "dxpointerdown")
+                        $(e.target).data("dxGestureEvent", null);
+                    if (events.isTouchEvent(e) && skipTouchWithSameIdentifier(this._eventName)) {
+                        var touch = e.changedTouches[0];
+                        if (this._pointerId === touch.identifier)
                             return;
-                        $(document).on(events.addNamespace(originalEvents, SingleEventStrategy.EVENT_NAMESPACE), pointerEventNS._handler)
-                    },
-                    add: function() {
-                        pointerEventNS._handlerCount++
-                    },
-                    remove: function() {
-                        pointerEventNS._handlerCount--
-                    },
-                    teardown: function() {
-                        if (pointerEventNS._handlerCount)
-                            return;
-                        $(document).off("." + pointerEventNS.EVENT_NAMESPACE)
+                        this._pointerId = touch.identifier
                     }
-                };
-            var MultiEventStrategy = $.extend({}, SingleEventStrategy, {_handler: function(e) {
-                        if (events.isTouchEvent(e))
-                            pointerEventNS._skipNextEvents = true;
-                        if (events.isMouseEvent(e) && mouseLocked)
-                            return;
-                        if (events.isMouseEvent(e) && pointerEventNS._skipNextEvents) {
-                            pointerEventNS._skipNextEvents = false;
-                            mouseLocked = true;
-                            clearTimeout(unlockMouseTimer);
-                            unlockMouseTimer = setTimeout(function() {
-                                mouseLocked = false
-                            }, MOUSE_EVENT_LOCK_TIMEOUT);
-                            return
-                        }
-                        return SingleEventStrategy._handler(e)
-                    }});
-            var pointerEventNS = eventMap === MouseAndTouchStrategyEventMap ? MultiEventStrategy : SingleEventStrategy;
-            events.registerEvent(pointerEvent, pointerEventNS)
+                    return events.fireEvent({
+                            type: this._eventName,
+                            pointerType: events.eventSource(e),
+                            originalEvent: e
+                        })
+                },
+                setup: function() {
+                    if (this._handlerCount > 0)
+                        return;
+                    $(document).on(events.addNamespace(this._originalEvents, this._eventNamespace), $.proxy(this._handler, this))
+                },
+                add: function() {
+                    this._handlerCount++
+                },
+                remove: function() {
+                    this._handlerCount--
+                },
+                teardown: function() {
+                    if (this._handlerCount)
+                        return;
+                    $(document).off("." + this._eventNamespace)
+                },
+                dispose: function() {
+                    $(document).off("." + this._eventNamespace)
+                }
+            });
+        var MultiEventStrategy = SingleEventStrategy.inherit({
+                EVENT_LOCK_TIMEOUT: 100,
+                _handler: function(e) {
+                    if (events.isTouchEvent(e))
+                        this._skipNextEvents = true;
+                    if (events.isMouseEvent(e) && this._mouseLocked)
+                        return;
+                    if (events.isMouseEvent(e) && this._skipNextEvents) {
+                        this._skipNextEvents = false;
+                        this._mouseLocked = true;
+                        clearTimeout(this._unlockMouseTimer);
+                        this._unlockMouseTimer = setTimeout($.proxy(function() {
+                            this._mouseLocked = false
+                        }, this), this.EVENT_LOCK_TIMEOUT);
+                        return
+                    }
+                    return this.callBase(e)
+                },
+                dispose: function() {
+                    this.callBase();
+                    this._skipNextEvents = false;
+                    this._mouseLocked = false;
+                    clearTimeout(this._unlockMouseTimer)
+                }
+            });
+        var getStrategy = function() {
+                return eventMap === MouseAndTouchStrategyEventMap ? MultiEventStrategy : SingleEventStrategy
+            };
+        $.each(eventMap, function(pointerEvent, originalEvents) {
+            var Strategy = getStrategy();
+            events.registerEvent(pointerEvent, new Strategy(pointerEvent, originalEvents))
         });
         DX.ui.events.__internals = DX.ui.events.__internals || {};
         $.extend(DX.ui.events.__internals, {
-            mouseLocked: function(value) {
-                if (value === undefined)
-                    return mouseLocked;
-                mouseLocked = value
-            },
-            unlockMouseTimer: function() {
-                return unlockMouseTimer
-            }
+            SingleEventStrategy: SingleEventStrategy,
+            MultiEventStrategy: MultiEventStrategy,
+            MouseStrategyEventMap: MouseStrategyEventMap,
+            TouchStrategyEventMap: TouchStrategyEventMap,
+            PointerStrategyEventMap: PointerStrategyEventMap,
+            MouseAndTouchStrategyEventMap: MouseAndTouchStrategyEventMap,
+            eventMap: eventMap
         })
     })(jQuery, DevExpress);
     /*! Module core, file ui.events.click.js */
@@ -6893,9 +7060,6 @@ if (!window.DevExpress) {
                     IOS7AndNewer = device.platform === "ios" && device.version[0] > 6;
                 return IOS7AndNewer && (iPhone4SAndElder || iPad2AndElder)
             }(),
-            skipTouchWithSameIdentifier = function() {
-                return device.platform === "ios"
-            },
             useNativeClick = function() {
                 if (!support.touch)
                     return true;
@@ -6914,15 +7078,17 @@ if (!window.DevExpress) {
                         return true;
                 return false
             }();
-        var SimulatedStrategy = {
+        var SimulatedStrategy = DX.Class.inherit({
                 TOUCH_BOUNDARY: 10,
-                _startX: 0,
-                _startY: 0,
-                _handlerCount: 0,
-                _target: null,
+                ctor: function() {
+                    this._startX = 0;
+                    this._startY = 0;
+                    this._handlerCount = 0;
+                    this._target = null
+                },
                 _touchWasMoved: function(e) {
-                    var boundary = SimulatedStrategy.TOUCH_BOUNDARY;
-                    return Math.abs(e.pageX - SimulatedStrategy._startX) > boundary || Math.abs(e.pageY - SimulatedStrategy._startY) > boundary
+                    var boundary = this.TOUCH_BOUNDARY;
+                    return Math.abs(e.pageX - this._startX) > boundary || Math.abs(e.pageY - this._startY) > boundary
                 },
                 _getClosestScrollable: function($element) {
                     var $scrollParent = $();
@@ -6942,7 +7108,7 @@ if (!window.DevExpress) {
                     return $scrollParent
                 },
                 _saveClosestScrollableOffset: function($element) {
-                    var $scrollable = SimulatedStrategy._getClosestScrollable($element);
+                    var $scrollable = this._getClosestScrollable($element);
                     if ($scrollable.length)
                         $element.data(SCROLLABLE_PARENT_SCROLL_OFFSET_DATA_KEY, $scrollable.scrollTop())
                 },
@@ -6951,7 +7117,7 @@ if (!window.DevExpress) {
                     return $scrollable && $scrollable.scrollTop() !== $element.data(SCROLLABLE_PARENT_SCROLL_OFFSET_DATA_KEY)
                 },
                 _hasClosestScrollable: function($element) {
-                    var $scrollable = SimulatedStrategy._getClosestScrollable($element);
+                    var $scrollable = this._getClosestScrollable($element);
                     if (!$scrollable.length)
                         return false;
                     if ($scrollable.is("body"))
@@ -6965,86 +7131,84 @@ if (!window.DevExpress) {
                 _handleStart: function(e) {
                     if (events.isMouseEvent(e) && e.which !== 1)
                         return;
-                    if (events.isTouchEvent(e) && skipTouchWithSameIdentifier()) {
-                        var touchId = e.originalEvent.targetTouches[0].identifier;
-                        if (SimulatedStrategy._lastTouchId === touchId) {
-                            ui.feedback.reset();
-                            return
-                        }
-                        SimulatedStrategy._lastTouchId = touchId
-                    }
-                    SimulatedStrategy._saveClosestScrollableOffset($(e.target));
-                    SimulatedStrategy._target = e.target;
-                    SimulatedStrategy._startX = e.pageX;
-                    SimulatedStrategy._startY = e.pageY
+                    this._saveClosestScrollableOffset($(e.target));
+                    this._target = e.target;
+                    this._startX = e.pageX;
+                    this._startY = e.pageY
                 },
                 _handleEnd: function(e) {
                     var $target = $(e.target);
-                    if (!$target.is(SimulatedStrategy._target) || SimulatedStrategy._touchWasMoved(e) || SimulatedStrategy._closestScrollableWasMoved($target) || preferNativeClick && SimulatedStrategy._hasClosestScrollable($target))
+                    if (!$target.is(this._target) || this._touchWasMoved(e) || this._closestScrollableWasMoved($target) || preferNativeClick && this._hasClosestScrollable($target))
                         return;
-                    if (!$target.is(":focus") && !e.dxPreventBlur)
+                    if (!$target.is("input, textarea") && !e.dxPreventBlur)
                         utils.resetActiveElement();
                     if (events.handleGestureEvent(e, CLICK_EVENT_NAME))
                         events.fireEvent({
                             type: CLICK_EVENT_NAME,
                             originalEvent: e
                         });
-                    SimulatedStrategy._reset()
+                    this._reset()
                 },
                 _handleCancel: function(e) {
-                    SimulatedStrategy._reset()
+                    this._reset()
                 },
                 _reset: function() {
-                    SimulatedStrategy._target = null
+                    this._target = null
                 },
                 _handleClick: function(e) {
                     var $target = $(e.target);
-                    if ($target.is(SimulatedStrategy._target) && SimulatedStrategy._hasClosestScrollable($target))
+                    if ($target.is(this._target) && this._hasClosestScrollable($target))
                         if (events.handleGestureEvent(e, CLICK_EVENT_NAME))
                             events.fireEvent({
                                 type: CLICK_EVENT_NAME,
                                 originalEvent: e
                             });
-                    SimulatedStrategy._reset()
+                    this._reset()
                 },
                 _makeElementClickable: function($element) {
                     if (!$element.attr("onclick"))
                         $element.attr("onclick", "void(0)")
                 },
-                setup: function() {
-                    SimulatedStrategy._makeElementClickable($(this));
-                    if (SimulatedStrategy._handlerCount > 0)
+                setup: function(element) {
+                    this._makeElementClickable($(element));
+                    if (this._handlerCount > 0)
                         return;
-                    var $doc = $(document).on(events.addNamespace("dxpointerdown", CLICK_NAME_SPACE), $.proxy(SimulatedStrategy._handleStart, this)).on(events.addNamespace("dxpointerup", CLICK_NAME_SPACE), $.proxy(SimulatedStrategy._handleEnd, this)).on(events.addNamespace("dxpointercancel", CLICK_NAME_SPACE), $.proxy(SimulatedStrategy._handleCancel, this));
+                    var $doc = $(document).on(events.addNamespace("dxpointerdown", CLICK_NAME_SPACE), $.proxy(this._handleStart, this)).on(events.addNamespace("dxpointerup", CLICK_NAME_SPACE), $.proxy(this._handleEnd, this)).on(events.addNamespace("dxpointercancel", CLICK_NAME_SPACE), $.proxy(this._handleCancel, this));
                     if (preferNativeClick)
-                        $doc.on(events.addNamespace("click", CLICK_NAME_SPACE), $.proxy(SimulatedStrategy._handleClick, this))
+                        $doc.on(events.addNamespace("click", CLICK_NAME_SPACE), $.proxy(this._handleClick, this))
                 },
                 add: function() {
-                    SimulatedStrategy._handlerCount++
+                    this._handlerCount++
                 },
                 remove: function() {
-                    SimulatedStrategy._handlerCount--
+                    this._handlerCount--
                 },
                 teardown: function() {
-                    if (SimulatedStrategy._handlerCount)
+                    if (this._handlerCount)
                         return;
                     $(document).off("." + CLICK_NAME_SPACE)
+                },
+                dispose: function() {
+                    $(document).off("." + CLICK_NAME_SPACE)
                 }
-            };
-        var NativeStrategy = {
+            });
+        var NativeStrategy = DX.Class.inherit({
                 bindType: "click",
                 delegateType: "click",
-                handle: function(e) {
-                    if (events.handleGestureEvent(e, CLICK_EVENT_NAME))
-                        return e.handleObj.handler.apply(this, arguments)
+                handle: function(element, event) {
+                    if (events.handleGestureEvent(event, CLICK_EVENT_NAME))
+                        return event.handleObj.handler.call(element, event)
                 }
-            };
-        events.registerEvent(CLICK_EVENT_NAME, useNativeClick ? NativeStrategy : SimulatedStrategy);
+            });
+        events.registerEvent(CLICK_EVENT_NAME, new(useNativeClick ? NativeStrategy : SimulatedStrategy));
         DX.ui.events.__internals = DX.ui.events.__internals || {};
         $.extend(DX.ui.events.__internals, {
             NativeClickStrategy: NativeStrategy,
             SimulatedClickStrategy: SimulatedStrategy,
-            device: device
+            device: device,
+            preferNativeClickAccessor: function() {
+                return preferNativeClick
+            }
         })
     })(jQuery, DevExpress, window);
     /*! Module core, file ui.events.hold.js */
@@ -7056,50 +7220,49 @@ if (!window.DevExpress) {
             HOLD_NAME_SPACE = "dxHold",
             HOLD_EVENT_NAME = "dxhold",
             HOLD_TIMER_DATA_KEY = EVENTS_NAME_SPACE + "HoldTimer";
-        var hold = {
+        var Hold = DX.Class.inherit({
                 HOLD_TIMEOUT: 750,
                 TOUCH_BOUNDARY: 5,
                 _startX: 0,
                 _startY: 0,
                 _touchWasMoved: function(e) {
-                    var boundary = hold.TOUCH_BOUNDARY;
-                    return Math.abs(e.pageX - hold._startX) > boundary || Math.abs(e.pageY - hold._startY) > boundary
+                    var boundary = this.TOUCH_BOUNDARY;
+                    return Math.abs(e.pageX - this._startX) > boundary || Math.abs(e.pageY - this._startY) > boundary
                 },
-                setup: function(data) {
-                    var element = this,
-                        $element = $(element);
+                setup: function(element, data) {
+                    element = $(element);
                     var handleStart = function(e) {
-                            if ($element.data(HOLD_TIMER_DATA_KEY))
+                            if (element.data(HOLD_TIMER_DATA_KEY))
                                 return;
-                            hold._startX = e.pageX;
-                            hold._startY = e.pageY;
-                            $element.data(HOLD_TIMER_DATA_KEY, setTimeout(function() {
-                                $element.removeData(HOLD_TIMER_DATA_KEY);
+                            this._startX = e.pageX;
+                            this._startY = e.pageY;
+                            element.data(HOLD_TIMER_DATA_KEY, setTimeout(function() {
+                                element.removeData(HOLD_TIMER_DATA_KEY);
                                 if (events.handleGestureEvent(e, HOLD_EVENT_NAME))
                                     events.fireEvent({
                                         type: HOLD_EVENT_NAME,
                                         originalEvent: e
                                     })
-                            }, data && "timeout" in data ? data.timeout : hold.HOLD_TIMEOUT))
+                            }, data && "timeout" in data ? data.timeout : this.HOLD_TIMEOUT))
                         };
                     var handleMove = function(e) {
-                            if (!hold._touchWasMoved(e))
+                            if (!this._touchWasMoved(e))
                                 return;
                             handleEnd()
                         };
                     var handleEnd = function() {
-                            clearTimeout($element.data(HOLD_TIMER_DATA_KEY));
-                            $element.removeData(HOLD_TIMER_DATA_KEY)
+                            clearTimeout(element.data(HOLD_TIMER_DATA_KEY));
+                            element.removeData(HOLD_TIMER_DATA_KEY)
                         };
-                    $element.on(events.addNamespace("dxpointerdown", HOLD_NAME_SPACE), handleStart).on(events.addNamespace("dxpointermove", HOLD_NAME_SPACE), handleMove).on(events.addNamespace("dxpointerup", HOLD_NAME_SPACE), handleEnd)
+                    element.on(events.addNamespace("dxpointerdown", HOLD_NAME_SPACE), $.proxy(handleStart, this)).on(events.addNamespace("dxpointermove", HOLD_NAME_SPACE), $.proxy(handleMove, this)).on(events.addNamespace("dxpointerup", HOLD_NAME_SPACE), $.proxy(handleEnd, this))
                 },
-                teardown: function() {
-                    var $element = $(this);
-                    clearTimeout($element.data(HOLD_TIMER_DATA_KEY));
-                    $element.removeData(HOLD_TIMER_DATA_KEY).off("." + HOLD_NAME_SPACE)
+                teardown: function(element) {
+                    element = $(element);
+                    clearTimeout(element.data(HOLD_TIMER_DATA_KEY));
+                    element.removeData(HOLD_TIMER_DATA_KEY).off("." + HOLD_NAME_SPACE)
                 }
-            };
-        events.registerEvent(HOLD_EVENT_NAME, hold)
+            });
+        events.registerEvent(HOLD_EVENT_NAME, new Hold)
     })(jQuery, DevExpress);
     /*! Module core, file ui.events.swipe.js */
     (function($, DX, undefined) {
@@ -7330,7 +7493,8 @@ if (!window.DevExpress) {
                 _forgetGesture: function() {
                     var swipeable = this._activeSwipeable;
                     this._gestureEndTimer = setTimeout($.proxy(function() {
-                        swipeable.data(GESTURE_LOCK_KEY, false)
+                        if (swipeable)
+                            swipeable.data(GESTURE_LOCK_KEY, false)
                     }, this), 400)
                 },
                 _reset: function() {
@@ -7349,6 +7513,7 @@ if (!window.DevExpress) {
                     this._disposed = true;
                     if (this._activeSwipeable)
                         this._reset();
+                    $("body").off(".dxSwipe");
                     $(document).off(".dxSwipe")
                 }
             });
@@ -7357,8 +7522,8 @@ if (!window.DevExpress) {
         $.each([SWIPE_START_EVENT_NAME, SWIPE_EVENT_NAME, SWIPE_END_EVENT_NAME, SWIPE_CANCEL_EVENT_NAME], function(_, eventName) {
             events.registerEvent(eventName, {
                 noBubble: true,
-                setup: function(data) {
-                    $(this).data(SWIPEABLE_DATA_KEY, $.extend($(this).data(SWIPEABLE_DATA_KEY) || {
+                setup: function(element, data) {
+                    $(element).data(SWIPEABLE_DATA_KEY, $.extend($(element).data(SWIPEABLE_DATA_KEY) || {
                         elastic: true,
                         direction: "horizontal"
                     }, data));
@@ -7371,8 +7536,10 @@ if (!window.DevExpress) {
                 remove: function() {
                     handlerCount--
                 },
-                teardown: function() {
-                    var element = $(this);
+                teardown: function(element) {
+                    var element = $(element);
+                    if (element.is(swipeDispatcher._activeSwipeable))
+                        swipeDispatcher._reset();
                     if (element.data(SWIPEABLE_DATA_KEY))
                         element.removeData(SWIPEABLE_DATA_KEY);
                     if (handlerCount)
@@ -7384,6 +7551,37 @@ if (!window.DevExpress) {
                 }
             })
         })
+    })(jQuery, DevExpress);
+    /*! Module core, file ui.events.wheel.js */
+    (function($, DX, undefined) {
+        var ui = DX.ui,
+            events = ui.events;
+        var EVENT_NAME = "dxmousewheel",
+            EVENT_NAMESPACE = "dxWheel";
+        var WHEEL_DISTANCE = 10;
+        $.event.fixHooks["DOMMouseScroll"] = $.event.mouseHooks;
+        var wheel = {
+                setup: function(element, data) {
+                    var $element = $(element);
+                    $element.on(events.addNamespace("mousewheel DOMMouseScroll", EVENT_NAMESPACE), $.proxy(wheel._handleWheel, wheel))
+                },
+                teardown: function(element) {
+                    var $element = $(element);
+                    $element.off("." + EVENT_NAMESPACE)
+                },
+                _handleWheel: function(e) {
+                    var delta = this._getWheelDelta(e.originalEvent);
+                    events.fireEvent({
+                        type: EVENT_NAME,
+                        originalEvent: e,
+                        delta: delta
+                    })
+                },
+                _getWheelDelta: function(event) {
+                    return event.wheelDelta / 60 || -event.detail / 1.5
+                }
+            };
+        events.registerEvent(EVENT_NAME, wheel)
     })(jQuery, DevExpress);
     /*! Module core, file ui.widget.js */
     (function($, DX, undefined) {
@@ -7465,12 +7663,9 @@ if (!window.DevExpress) {
                 var self = this,
                     eventName = events.addNamespace("dxclick", this.NAME);
                 this._clickAction = this._createActionByOption("clickAction");
-                this._clickEventContainer().off(eventName).on(eventName, function(e) {
+                this._element().off(eventName).on(eventName, function(e) {
                     self._clickAction({jQueryEvent: e})
                 })
-            },
-            _clickEventContainer: function() {
-                return this._element()
             },
             _feedbackDisabled: function() {
                 return !this.option("activeStateEnabled") || this.option("disabled")
@@ -7890,7 +8085,6 @@ if (!window.DevExpress) {
                         case"items":
                             this._cleanRenderedItems();
                             this._invalidate();
-                            this.callBase.apply(this, arguments);
                             break;
                         case"dataSource":
                             this._refreshDataSource();
@@ -7912,6 +8106,8 @@ if (!window.DevExpress) {
                             this._itemRender = null;
                             this._invalidate();
                             break;
+                        case"itemClickAction":
+                            break;
                         default:
                             this.callBase(name, value, prevValue)
                     }
@@ -7929,7 +8125,8 @@ if (!window.DevExpress) {
                     var items = this.option("items");
                     if (this._initialized && items && this._shouldAppendItems()) {
                         this._renderedItemsCount = items.length;
-                        this.option().items = items.concat(newItems.slice(this._startIndexForAppendedItems));
+                        if (!this._dataSource.isLastPage() || this._startIndexForAppendedItems !== -1)
+                            this.option().items = items.concat(newItems.slice(this._startIndexForAppendedItems));
                         this._renderContent();
                         this._forgetNextPageLoading()
                     }
@@ -8076,9 +8273,6 @@ if (!window.DevExpress) {
                 _handleItemJQueryEvent: function(jQueryEvent, handlerOptionName, actionArgs, actionConfig) {
                     this._handleItemEvent(jQueryEvent.target, handlerOptionName, $.extend(actionArgs, {jQueryEvent: jQueryEvent}), actionConfig)
                 },
-                _closestItemElement: function($element) {
-                    return $($element).closest(this._itemSelector())
-                },
                 _handleItemEvent: function(initiator, handlerOptionName, actionArgs, actionConfig) {
                     var $itemElement = this._closestItemElement($(initiator)),
                         action = this._createActionByOption(handlerOptionName, actionConfig);
@@ -8087,6 +8281,9 @@ if (!window.DevExpress) {
                         itemData: this._getItemData($itemElement)
                     }, actionArgs);
                     return action(actionArgs)
+                },
+                _closestItemElement: function($element) {
+                    return $($element).closest(this._itemSelector())
                 },
                 _getItemData: function($itemElement) {
                     return $itemElement.data(this._itemDataKey())
@@ -8142,12 +8339,16 @@ if (!window.DevExpress) {
                 _renderEmptyMessage: $.noop,
                 _attachClickEvent: $.noop,
                 _optionChanged: function(name, value, prevValue) {
-                    if (name === "selectedIndex") {
-                        this._renderSelectedIndex(value, prevValue);
-                        this._handleItemEvent(this._selectedItemElement(value), "itemSelectAction", null, {excludeValidators: ["gesture"]})
+                    switch (name) {
+                        case"selectedIndex":
+                            this._renderSelectedIndex(value, prevValue);
+                            this._handleItemEvent(this._selectedItemElement(value), "itemSelectAction", null, {excludeValidators: ["gesture"]});
+                            break;
+                        case"itemSelectAction":
+                            break;
+                        default:
+                            this.callBase.apply(this, arguments)
                     }
-                    else
-                        this.callBase.apply(this, arguments)
                 },
                 _selectedItemElement: function(index) {
                     return this._itemElements().eq(index)
@@ -8157,17 +8358,16 @@ if (!window.DevExpress) {
     })(jQuery, DevExpress);
     /*! Module core, file ui.optionsByDevice.js */
     (function($, DX, undefined) {
-        var isSimulationMode = function(device) {
+        var isNativeSupported = function(device) {
                 var realDevice = DX.devices.real,
-                    isOldAndroid = realDevice.platform === "android" && realDevice.version.length && realDevice.version[0] < 4,
-                    isPlatformForced = realDevice.platform !== device.platform,
+                    realPlatform = realDevice.platform,
+                    realVersion = realDevice.version,
+                    isObsoleteAndroid = realVersion && realVersion[0] < 4 && realPlatform === "android",
+                    isNativeScrollDevice = !isObsoleteAndroid && $.inArray(realPlatform, ["ios", "android", "win8"]) > -1,
+                    isPlatformForced = realPlatform !== device.platform,
                     isForcedGeneric = device.platform === "generic",
-                    isForcedDesktop = device.platform === "desktop",
-                    isTizen = realDevice.platform === "tizen",
-                    isGeneric = realDevice.platform === "generic",
-                    isRippleEmulator = DX.devices.isRippleEmulator(),
-                    isSimulator = DX.devices.isSimulator();
-                return isOldAndroid || isTizen || isRippleEmulator || isSimulator || isPlatformForced && !isForcedGeneric && !(isGeneric && isForcedDesktop)
+                    isDesktop = realDevice.platform === "generic" && device.platform === "desktop";
+                return isNativeScrollDevice && (!isPlatformForced || isForcedGeneric) || isDesktop
             };
         var isChromeBrowser = /chrome/i.test(navigator.userAgent);
         var optionConfigurator = {};
@@ -8183,14 +8383,21 @@ if (!window.DevExpress) {
             if (device.android || device.win8)
                 return {useNativePicker: false}
         };
+        optionConfigurator.dxDatePickerRoller = function(device) {
+            if (device.platform === "win8")
+                return {clickableItems: true}
+        };
         optionConfigurator.dxDatePicker = function(device) {
             if (device.platform !== "win8")
                 return {
                         width: 333,
-                        height: 280
+                        height: 331
                     };
             else
-                return {showNames: true}
+                return {
+                        fullScreen: true,
+                        showNames: true
+                    }
         };
         optionConfigurator.dxDialog = function(device) {
             if (device.platform === "ios")
@@ -8221,7 +8428,7 @@ if (!window.DevExpress) {
         };
         optionConfigurator.dxLoadIndicator = function(device) {
             var realDevice = DevExpress.devices.real,
-                obsoleteAndroid = realDevice.platform === "android" && (realDevice.version[0] < 4 || realDevice.version[0] === 4 && realDevice.version[1] === 0);
+                obsoleteAndroid = realDevice.platform === "android" && !isChromeBrowser;
             if (DevExpress.browser.msie && DevExpress.browser.version[0] <= 10 || obsoleteAndroid)
                 return {viaImage: true}
         };
@@ -8229,14 +8436,49 @@ if (!window.DevExpress) {
             if (device.platform === "desktop")
                 return {width: 180}
         };
+        var iosPopupAnimation = {
+                show: {
+                    type: "slide",
+                    duration: 400,
+                    from: {position: {
+                            my: "top",
+                            at: "bottom",
+                            of: window
+                        }},
+                    to: {position: {
+                            my: "center",
+                            at: "center",
+                            of: window
+                        }}
+                },
+                hide: {
+                    type: "slide",
+                    duration: 400,
+                    from: {position: {
+                            my: "center",
+                            at: "center",
+                            of: window
+                        }},
+                    to: {position: {
+                            my: "top",
+                            at: "bottom",
+                            of: window
+                        }}
+                }
+            };
         optionConfigurator.dxLookup = function(device) {
             if (device.platform === "win8" && device.phone)
                 return {
                         showCancelButton: false,
                         fullScreen: true
                     };
+            if (device.platform === "win8" && !device.phone)
+                return {popupWidth: "60%"};
             if (device.platform === "ios" && device.phone)
-                return {fullScreen: true};
+                return {
+                        fullScreen: true,
+                        animation: iosPopupAnimation
+                    };
             if (device.platform === "ios" && device.tablet)
                 return {
                         popupWidth: function() {
@@ -8259,44 +8501,16 @@ if (!window.DevExpress) {
                             offset: "0 0"
                         }};
             if (device.platform === "ios")
-                return {animation: {
-                            show: {
-                                type: "slide",
-                                duration: 400,
-                                from: {position: {
-                                        my: "top",
-                                        at: "bottom",
-                                        of: window
-                                    }},
-                                to: {position: {
-                                        my: "center",
-                                        at: "center",
-                                        of: window
-                                    }}
-                            },
-                            hide: {
-                                type: "slide",
-                                duration: 400,
-                                from: {position: {
-                                        my: "center",
-                                        at: "center",
-                                        of: window
-                                    }},
-                                to: {position: {
-                                        my: "top",
-                                        at: "bottom",
-                                        of: window
-                                    }}
-                            }
-                        }}
+                return {animation: iosPopupAnimation}
         };
         optionConfigurator.dxScrollable = function(device) {
-            if (isSimulationMode(device))
+            var realDevice = DevExpress.devices.real;
+            if (!isNativeSupported(device))
                 return {
                         useNative: false,
                         useSimulatedScrollBar: true
                     };
-            else if (device.platform === "android" && !isChromeBrowser)
+            else if (realDevice.android)
                 return {useSimulatedScrollBar: true}
         };
         optionConfigurator.dxScrollView = function(device) {
@@ -8344,8 +8558,7 @@ if (!window.DevExpress) {
                         },
                         width: function() {
                             return $(window).width() - 20
-                        },
-                        height: "35px"
+                        }
                     }
         };
         optionConfigurator.dxToolbar = function(device) {
@@ -8360,5 +8573,74 @@ if (!window.DevExpress) {
             var configurator = optionConfigurator[componentName];
             return configurator && configurator(device)
         }
+    })(jQuery, DevExpress);
+    /*! Module core, file ui.tooltip.js */
+    (function($, DX, undefined) {
+        var ui = DX.ui;
+        var tooltip = {
+                _instance: null,
+                _positionAliases: [{top: {
+                            my: "bottom center",
+                            at: "top center"
+                        }}, {bottom: {
+                            my: "top center",
+                            at: "bottom center"
+                        }}, {right: {
+                            my: "left center",
+                            at: "right center"
+                        }}, {left: {
+                            my: "right center",
+                            at: "left center"
+                        }}],
+                _getPositionByAlias: function(alias) {
+                    var position = null;
+                    $.each(this._positionAliases, function(i, item) {
+                        if (item[alias]) {
+                            position = item[alias];
+                            return false
+                        }
+                    });
+                    return position
+                },
+                _normalizePosition: function(position) {
+                    if (DX.utils.isString(position))
+                        return $.extend(position, this._getPositionByAlias(position));
+                    return position
+                },
+                _createTooltip: function(options) {
+                    var _this = this;
+                    var defaultOptions = {
+                            position: {
+                                my: "bottom center",
+                                at: "top center"
+                            },
+                            visible: true,
+                            isTooltip: true,
+                            hiddenAction: function() {
+                                delete _this._instance
+                            }
+                        };
+                    var content = options.content;
+                    delete options.content;
+                    options = $.extend(true, defaultOptions, options);
+                    options.position = this._normalizePosition(options.position);
+                    options.position.of = options.target;
+                    var $tooltip = $("<div />").html(content).dxPopover(options);
+                    this._instance = $tooltip.dxPopover("instance")
+                },
+                show: function(options) {
+                    if (!this._instance)
+                        this._createTooltip(options);
+                    return this._instance
+                },
+                hide: function() {
+                    var d = $.Deferred();
+                    this._instance.hide().done(function() {
+                        d.resolve()
+                    });
+                    return d.promise()
+                }
+            };
+        $.extend(ui, {tooltip: tooltip})
     })(jQuery, DevExpress)
 }

@@ -98,7 +98,7 @@ namespace FreelanceManager.Web
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
-            var bus = new MsmqServiceBus(container);
+            var bus = new AzureServiceBus(container);
             bus.Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
 
             builder.RegisterInstance(bus).As<IServiceBus>();

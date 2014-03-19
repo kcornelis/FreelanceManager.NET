@@ -1,7 +1,7 @@
 /*! 
 * DevExpress Visualization Sparklines (part of ChartJS)
-* Version: 13.2.7
-* Build date: Feb 10, 2014
+* Version: 13.2.8
+* Build date: Mar 11, 2014
 *
 * Copyright (c) 2012 - 2014 Developer Express Inc. ALL RIGHTS RESERVED
 * EULA: http://chartjs.devexpress.com/EULA
@@ -23,8 +23,6 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
             TOUCH_EVENTS_DELAY = 1000,
             _math = Math,
             _extend = $.extend,
-            _setTimeout = setTimeout,
-            _clearTimeout = clearTimeout,
             _abs = _math.abs,
             _String = String,
             _Number = Number,
@@ -196,8 +194,8 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
                 _this._tooltipTracker.on(menuEvents)
             },
             _disposeTooltipEvents: function() {
-                _clearTimeout(this._showTooltipTimeout);
-                _clearTimeout(this._hideTooltipTimeout);
+                clearTimeout(this._showTooltipTimeout);
+                clearTimeout(this._hideTooltipTimeout);
                 this._showTooltipTimeout = this._showTooltipTimeout = null;
                 this._tooltipTracker.off();
                 this._disposeCallbacks()
@@ -303,22 +301,22 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
                 if (!_this._canShowTooltip)
                     return;
                 ++_this._DEBUG_clearHideTooltipTimeout;
-                _clearTimeout(_this._hideTooltipTimeout);
+                clearTimeout(_this._hideTooltipTimeout);
                 _this._hideTooltipTimeout = null;
-                _clearTimeout(_this._showTooltipTimeout);
+                clearTimeout(_this._showTooltipTimeout);
                 ++_this._DEBUG_showTooltipTimeoutSet;
-                _this._showTooltipTimeout = _setTimeout(_this._showTooltipCallback, delay)
+                _this._showTooltipTimeout = setTimeout(_this._showTooltipCallback, delay)
             },
             _doHideTooltip: function(delay) {
                 var _this = this;
                 if (!_this._canShowTooltip)
                     return;
                 ++_this._DEBUG_clearShowTooltipTimeout;
-                _clearTimeout(_this._showTooltipTimeout);
+                clearTimeout(_this._showTooltipTimeout);
                 _this._showTooltipTimeout = null;
-                _clearTimeout(_this._hideTooltipTimeout);
+                clearTimeout(_this._hideTooltipTimeout);
                 ++_this._DEBUG_hideTooltipTimeoutSet;
-                _this._hideTooltipTimeout = _setTimeout(_this._hideTooltipCallback, delay)
+                _this._hideTooltipTimeout = setTimeout(_this._hideTooltipCallback, delay)
             },
             _getNormalTooltipSize: function() {
                 var size = {};
@@ -388,7 +386,8 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
                 renderer.getRoot().applySettings({style: {
                         left: size.left,
                         top: size.top,
-                        position: 'absolute'
+                        position: 'absolute',
+                        overflow: 'hidden'
                     }});
                 _this._tooltipTracker.applySettings({
                     y: size.trackerY,
@@ -708,18 +707,20 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
                     color: options.lineColor,
                     width: options.lineWidth
                 };
-                _this._seriesOptions.type = options.type === 'winloss' ? 'bar' : options.type;
-                if (options.type === 'winloss' || options.type === 'bar')
-                    _this._seriesOptions.argumentAxisType = 'discrete';
-                _this._seriesOptions.seriesGroup = _this._seriesGroup;
-                _this._seriesOptions.seriesLabelsGroup = _this._seriesLabelGroup;
-                _this._seriesOptions.point = _extend(defaultPointOptions, customPointOptions);
-                _this._seriesOptions.point.visible = false;
                 _this._seriesOptions.border = {
                     color: _this._seriesOptions.color,
                     width: _this._seriesOptions.width,
                     visible: true
+                };
+                _this._seriesOptions.type = options.type === 'winloss' ? 'bar' : options.type;
+                if (options.type === 'winloss' || options.type === 'bar') {
+                    _this._seriesOptions.argumentAxisType = 'discrete';
+                    _this._seriesOptions.border.visible = false
                 }
+                _this._seriesOptions.seriesGroup = _this._seriesGroup;
+                _this._seriesOptions.seriesLabelsGroup = _this._seriesLabelGroup;
+                _this._seriesOptions.point = _extend(defaultPointOptions, customPointOptions);
+                _this._seriesOptions.point.visible = false
             },
             _createBarCustomizeFunction: function(pointIndexes) {
                 var _this = this,
@@ -835,7 +836,7 @@ if (!DevExpress.MOD_VIZ_SPARKLINES) {
                         maxValueMarginX: DEFAULT_ARGUMENT_RANGE_MARGIN
                     };
                 _this._range = new charts.Range(rangeData);
-                _this._range.getBoundRange(series.getRangeData());
+                _this._range.addRange(series.getRangeData());
                 _this._range.applyValueMargins()
             },
             _getBarWidth: function(pointsCount) {
