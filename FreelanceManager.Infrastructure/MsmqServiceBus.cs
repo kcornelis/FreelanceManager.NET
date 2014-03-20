@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Transactions;
 using Autofac;
 using MassTransit;
 using MassTransit.NLogIntegration;
@@ -27,15 +28,14 @@ namespace FreelanceManager.Infrastructure
             _bus = ServiceBusFactory.New(sbc =>
             {
                 sbc.UseNLog();
-                
-                sbc.UseMsmq(c =>
-                {
-                    c.UseMulticastSubscriptionClient();
-                    c.VerifyMsmqConfiguration();
-                });
-
                 sbc.UseJsonSerializer();
-          
+
+                sbc.ReceiveFrom(ConfigurationManager.AppSettings["msmq:host"] + name);
+
+                sbc.UseMsmq();
+                sbc.VerifyMsmqConfiguration();
+                sbc.UseMulticastSubscriptionClient();
+
                 sbc.Subscribe(c =>
                 {
                     if (BusHasHandlers)
@@ -43,8 +43,6 @@ namespace FreelanceManager.Infrastructure
                         c.Handler<BusMessage>(HandleBusMessage);
                     }
                 });
-
-                sbc.ReceiveFrom(ConfigurationManager.AppSettings["msmq:host"] + name);
             });
         }
 

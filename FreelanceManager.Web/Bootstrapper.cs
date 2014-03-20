@@ -128,7 +128,7 @@ namespace FreelanceManager.Web
                 .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())
                 .InitializeStorageEngine()
                 .HookIntoPipelineUsing(new[] { new AuthorizationPipelineHook(container) })
-                .UsingAsynchronousDispatchScheduler()
+                .UsingSynchronousDispatchScheduler()
                     .DispatchTo(new MessageDispatcher(container))
                 .Build();
 

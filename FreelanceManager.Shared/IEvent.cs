@@ -1,6 +1,9 @@
-﻿namespace FreelanceManager
+﻿using System;
+namespace FreelanceManager
 {
-    public class IEvent
+    public interface IEvent
     {
+        Guid Id { get; }
+        int Version { get; }
     }
 }
