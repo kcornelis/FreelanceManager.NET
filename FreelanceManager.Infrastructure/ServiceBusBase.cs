@@ -22,22 +22,20 @@ namespace FreelanceManager.Infrastructure
 
         public abstract void Start(string name);
         public abstract void Dispose();
-        protected abstract void Publish(BusMessage message);
+        protected abstract void Publish(DomainUpdateBusMessage message);
+
+        public void PublishDomainUpdate(object @event, DomainUpdateMetadate metadata)
+        {
+            _logger.Debug("Publishing a domain update for " + metadata.AggregateType + ", " + @event.GetType().Name);
+
+            Publish(new DomainUpdateBusMessage
+            {
+                Event = @event,
+                Metadata = metadata
+            });
+        }
 
         protected bool BusHasHandlers { get { return _eventTypesWithHandlers.Any(); } }
-
-        public void Publish(object[] messages, Dictionary<string, string> headers)
-        {
-            _logger.Debug("Publishing " + messages.Length + " messages.");
-
-            var busMessage = new BusMessage
-            {
-                Messages = messages.Select(m => JsonSerializer.Serialize(m)).ToArray(),
-                Headers = headers
-            };
-
-            Publish(busMessage);
-        }
 
         public void RegisterHandlers(Assembly assembly)
         {
@@ -64,55 +62,44 @@ namespace FreelanceManager.Infrastructure
             }
         }
 
-        protected void HandleBusMessage(BusMessage busMessage)
+        protected void HandleDomainUpdate(DomainUpdateBusMessage domainUpdate)
         {
             using (var scope = _container.BeginLifetimeScope())
             {
-                var hook = scope.ResolveOptional<IServiceBusMessageHandlerHook>();
+                var hook = scope.ResolveOptional<IDomainUpdateServiceBusHandlerHook>();
+
+                _logger.Debug("Received message contains event with type " + domainUpdate.Event.GetType().Name);
 
                 if (hook != null)
-                    hook.PreHandleBusMessage(busMessage);
+                    hook.PreHandle(domainUpdate.Event, domainUpdate.Metadata);
 
-                var messages = busMessage.Messages.Select(m => JsonSerializer.Deserialize((string)m));
-
-                foreach (var message in messages)
+                try
                 {
-                    _logger.Debug("Received message contains event with type " + message.GetType().Name);
+                    var eventType = domainUpdate.Event.GetType();
+                    List<Type> handlerTypes;
 
-                    if (hook != null)
-                        hook.PreHandleMessage(message, busMessage.Headers);
-
-                    try
+                    if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
                     {
-                        var eventType = message.GetType();
-                        List<Type> handlerTypes;
+                        _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
 
-                        if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
+                        foreach (var handlerType in handlerTypes)
                         {
-                            _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
+                            var handler = scope.Resolve(handlerType);
 
-                            foreach (var handlerType in handlerTypes)
-                            {
-                                var handler = scope.Resolve(handlerType);
-
-                                handler.AsDynamic().Handle(message);
-                            }
+                            handler.AsDynamic().Handle(domainUpdate.Event);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        if (hook != null)
-                            hook.Exception(ex, message, busMessage.Headers);
-
-                        throw;
-                    }
-
+                }
+                catch (Exception ex)
+                {
                     if (hook != null)
-                        hook.PostHandleMessage(message, busMessage.Headers);
+                        hook.Exception(ex, domainUpdate.Event, domainUpdate.Metadata);
+
+                    throw;
                 }
 
                 if (hook != null)
-                    hook.PostHandleBusMessage(busMessage);
+                    hook.PostHandle(domainUpdate.Event, domainUpdate.Metadata);
             }
         }
     }

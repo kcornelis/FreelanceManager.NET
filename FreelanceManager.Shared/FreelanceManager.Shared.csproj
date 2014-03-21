@@ -60,7 +60,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AggregateRoot.cs" />
-    <Compile Include="BusMessage.cs" />
+    <Compile Include="AggregateRootMetadata.cs" />
+    <Compile Include="DomainUpdateBusMessage.cs" />
     <Compile Include="Date.cs" />
     <Compile Include="Dtos\Task.cs" />
     <Compile Include="Events\Account\AccountMadeAdmin.cs" />
@@ -71,7 +72,7 @@
     <Compile Include="IEvent.cs" />
     <Compile Include="IHandleEvent.cs" />
     <Compile Include="IServiceBus.cs" />
-    <Compile Include="IServiceBusMessageHandlerHook.cs" />
+    <Compile Include="IDomainUpdateServiceBusHandlerHook.cs" />
     <Compile Include="Loggers.cs" />
     <Compile Include="Money.cs" />
     <Compile Include="Time.cs" />

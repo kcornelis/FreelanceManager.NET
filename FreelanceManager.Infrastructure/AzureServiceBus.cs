@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Configuration;
 using Autofac;
+using FreelanceManager.Infrastructure.ServiceBus;
 using MassTransit;
 using MassTransit.NLogIntegration;
 using MassTransit.Transports.AzureServiceBus;
+using MassTransit.Transports.AzureServiceBus.Configuration;
 using NLog;
 
-using MassTransit.Transports.AzureServiceBus.Configuration;
 namespace FreelanceManager.Infrastructure
 {
     public class AzureServiceBus : ServiceBusBase
@@ -35,8 +36,11 @@ namespace FreelanceManager.Infrastructure
             {
                 sbc.UseNLog();
 
+                sbc.UseJsonSerializer();
+                sbc.ConfigureJsonSerializer(c => JsonSerializer.Settings);
+                sbc.ConfigureJsonDeserializer(c => JsonSerializer.Settings);
+
                 var uri = credentials.BuildUri(name);
-                Console.WriteLine(uri);
 
                 sbc.ReceiveFrom(uri);
 
@@ -44,7 +48,7 @@ namespace FreelanceManager.Infrastructure
                 {
                     if (BusHasHandlers)
                     {
-                        c.Handler<BusMessage>(HandleBusMessage);
+                        c.Handler<DomainUpdateBusMessage>(HandleDomainUpdate);
                     }
                 });
 
@@ -60,7 +64,7 @@ namespace FreelanceManager.Infrastructure
             });
         }
 
-        protected override void Publish(BusMessage message)
+        protected override void Publish(DomainUpdateBusMessage message)
         {
             _bus.Publish(message);
         }

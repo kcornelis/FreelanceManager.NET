@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
-using System.Transactions;
 using Autofac;
+using FreelanceManager.Infrastructure.ServiceBus;
 using MassTransit;
 using MassTransit.NLogIntegration;
 using NLog;
@@ -29,6 +29,8 @@ namespace FreelanceManager.Infrastructure
             {
                 sbc.UseNLog();
                 sbc.UseJsonSerializer();
+                sbc.ConfigureJsonSerializer(c => JsonSerializer.Settings);
+                sbc.ConfigureJsonDeserializer(c => JsonSerializer.Settings);
 
                 sbc.UseRabbitMq();
 
@@ -36,7 +38,7 @@ namespace FreelanceManager.Infrastructure
                 {
                     if (BusHasHandlers)
                     {
-                        c.Handler<BusMessage>(HandleBusMessage);
+                        c.Handler<DomainUpdateBusMessage>(HandleDomainUpdate);
                     }
                 });
 
@@ -44,7 +46,7 @@ namespace FreelanceManager.Infrastructure
             });
         }
 
-        protected override void Publish(BusMessage message)
+        protected override void Publish(DomainUpdateBusMessage message)
         {
             _bus.Publish(message);
         }

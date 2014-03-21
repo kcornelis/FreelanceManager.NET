@@ -32,7 +32,7 @@ namespace FreelanceManager.ReadModel.Console
             var builder = new ContainerBuilder();
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
-            builder.RegisterType<ServiceBusMessageHandlerHook>().As<IServiceBusMessageHandlerHook>();
+            builder.RegisterType<DomainUpdateServiceBusHandlerHook>().As<IDomainUpdateServiceBusHandlerHook>();
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
 

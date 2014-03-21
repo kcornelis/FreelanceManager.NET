@@ -69,19 +69,14 @@ namespace FreelanceManager.Infrastructure.ServiceBus
         {
             // BUG fixed, the constructor should contain a money type and not a decimal type
             // (Guid id, decimal rate) => NOK     (Guid id, Money rate) => OK
-            var toTest = new BusMessage();
-            toTest.Headers = new Dictionary<string, string>();
-            toTest.Headers.Add("Tentant", Guid.NewGuid().ToString());
-            toTest.Messages = new object[]{
-                new TimeRegistrationDetailsChanged(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", "Description", new Date(2014, 10, 5), new Time(10, 0), new Time(11, 0)),
-                new TimeRegistrationRateRefreshed(Guid.NewGuid(), 10)
-            };
+            var toTest = new DomainUpdateBusMessage();
+            toTest.Event = new TimeRegistrationRateRefreshed(Guid.NewGuid(), 10);
 
             var result = Test(toTest);
 
             Assert.False(object.ReferenceEquals(toTest, result));
 
-            Assert.Equal(new Money(10), ((TimeRegistrationRateRefreshed)result.Messages.Last()).Rate);
+            Assert.Equal(new Money(10), ((TimeRegistrationRateRefreshed)result.Event).Rate);
         }
 
         private T Test<T>(T objectToTest)

@@ -11,10 +11,6 @@ namespace FreelanceManager.Infrastructure
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.EventStore);
 
-        private const string AggregateTypeHeader = "AggregateType";
-        private const string TenantHeader = "Tenant";
-        private const string AggregateIdHeader = "AggregateId";
-
         private readonly ITenantContext _tenantContext;
         private readonly IStoreEvents _eventStore;
         private readonly IIdGenerator _idGenerator;
@@ -120,9 +116,9 @@ namespace FreelanceManager.Infrastructure
 		{
 			var headers = new Dictionary<string, object>();
 
-			headers[AggregateTypeHeader] = aggregate.GetType().FullName;
-            headers[TenantHeader] = _tenantContext.GetTenantId();
-            headers[AggregateIdHeader] = aggregate.Id.ToString();
+            headers[AggregateRootMetadata.AggregateTypeHeader] = aggregate.GetType().FullName;
+            headers[AggregateRootMetadata.TenantHeader] = _tenantContext.GetTenantId();
+            headers[AggregateRootMetadata.AggregateIdHeader] = aggregate.Id.ToString();
 
 			return headers;
 		}

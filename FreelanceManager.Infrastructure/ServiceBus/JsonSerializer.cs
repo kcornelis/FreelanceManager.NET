@@ -5,7 +5,7 @@ namespace FreelanceManager.Infrastructure.ServiceBus
 {
     public class JsonSerializer
     {
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Objects,
             ContractResolver = new CustomJsonConverter()

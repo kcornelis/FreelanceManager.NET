@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Autofac;
+using FreelanceManager.Infrastructure.ServiceBus;
 using FreelanceManager.Tools;
 
 namespace FreelanceManager.Infrastructure
@@ -21,9 +22,9 @@ namespace FreelanceManager.Infrastructure
 
         }
 
-        protected override void Publish(BusMessage busMessage)
+        protected override void Publish(DomainUpdateBusMessage message)
         {
-            HandleBusMessage(busMessage);
+            HandleDomainUpdate((DomainUpdateBusMessage)JsonSerializer.Deserialize(JsonSerializer.Serialize(message)));
         }
 
         public override void Dispose()
