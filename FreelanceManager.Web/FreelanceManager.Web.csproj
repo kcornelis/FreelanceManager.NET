@@ -97,6 +97,9 @@
     <Reference Include="MassTransit.Transports.MSMQ">
       <HintPath>..\packages\MassTransit.MSMQ.2.9.5\lib\net40\MassTransit.Transports.MSMQ.dll</HintPath>
     </Reference>
+    <Reference Include="MassTransit.Transports.RabbitMq">
+      <HintPath>..\packages\MassTransit.RabbitMQ.2.9.5\lib\net40\MassTransit.Transports.RabbitMq.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.0.2\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
@@ -189,6 +192,9 @@
     </Reference>
     <Reference Include="NLog.MongoDB">
       <HintPath>..\packages\NLog.MongoDB.0.7.0\lib\net40\NLog.MongoDB.dll</HintPath>
+    </Reference>
+    <Reference Include="RabbitMQ.Client">
+      <HintPath>..\packages\RabbitMQ.Client.3.2.4\lib\net30\RabbitMQ.Client.dll</HintPath>
     </Reference>
     <Reference Include="SquishIt.Framework">
       <HintPath>..\packages\SquishIt.0.9.5\lib\SquishIt.Framework.dll</HintPath>

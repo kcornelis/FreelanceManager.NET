@@ -97,7 +97,7 @@ namespace FreelanceManager.Web
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
 #if DEBUG
-            var bus = new MsmqServiceBus(container);
+            var bus = new RabbitMqServiceBus(container);
 #else
             var bus = new AzureServiceBus(container);
 #endif

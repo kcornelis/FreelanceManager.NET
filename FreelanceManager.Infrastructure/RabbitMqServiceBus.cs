@@ -8,12 +8,12 @@ using NLog;
 
 namespace FreelanceManager.Infrastructure
 {
-    public class MsmqServiceBus : ServiceBusBase
+    public class RabbitMqServiceBus : ServiceBusBase
     {
         private static readonly Logger _logger = LogManager.GetLogger(Loggers.ServiceBus);
         private MassTransit.IServiceBus _bus;
 
-        public MsmqServiceBus(ILifetimeScope container)
+        public RabbitMqServiceBus(ILifetimeScope container)
             : base(container)
         {
         }
@@ -30,11 +30,7 @@ namespace FreelanceManager.Infrastructure
                 sbc.UseNLog();
                 sbc.UseJsonSerializer();
 
-                sbc.UseMsmq(c =>
-                {
-                    c.VerifyMsmqConfiguration();
-                    c.UseMulticastSubscriptionClient();
-                });
+                sbc.UseRabbitMq();
 
                 sbc.Subscribe(c =>
                 {
@@ -44,7 +40,7 @@ namespace FreelanceManager.Infrastructure
                     }
                 });
 
-                sbc.ReceiveFrom(ConfigurationManager.AppSettings["msmq:host"] + name);
+                sbc.ReceiveFrom(ConfigurationManager.AppSettings["rabbitmq:host"] + name);
             });
         }
 
