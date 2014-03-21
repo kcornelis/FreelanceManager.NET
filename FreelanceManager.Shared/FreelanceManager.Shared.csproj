@@ -71,6 +71,7 @@
     <Compile Include="IEvent.cs" />
     <Compile Include="IHandleEvent.cs" />
     <Compile Include="IServiceBus.cs" />
+    <Compile Include="IServiceBusMessageHandlerHook.cs" />
     <Compile Include="Loggers.cs" />
     <Compile Include="Money.cs" />
     <Compile Include="Time.cs" />

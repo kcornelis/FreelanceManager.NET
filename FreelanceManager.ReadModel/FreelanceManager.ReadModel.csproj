@@ -88,6 +88,8 @@
     <Compile Include="TimeRegistration.cs" />
     <Compile Include="TimeRegistrationPeriodInfo.cs" />
     <Compile Include="TimeRegistrationPeriodInfoPerTask.cs" />
+    <Compile Include="Tools\ReadModelInfo.cs" />
+    <Compile Include="Tools\ServiceBusMessageHandlerHook.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

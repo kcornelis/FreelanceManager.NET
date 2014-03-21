@@ -4,6 +4,6 @@
     {
         string GetTenantId();
         bool IsTenantAdmin();
-        void SetTenantId(string tenant, bool admin);
+        void SetTenantId(string tenant, bool admin = false);
     }
 }

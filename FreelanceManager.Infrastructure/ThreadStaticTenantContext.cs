@@ -20,7 +20,7 @@ namespace FreelanceManager.Infrastructure
             return _admin;
         }
 
-        public void SetTenantId(string tenant, bool isAdmin)
+        public void SetTenantId(string tenant, bool isAdmin = false)
         {
             _tenant = tenant;
             _admin = isAdmin;

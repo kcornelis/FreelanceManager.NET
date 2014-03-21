@@ -68,29 +68,51 @@ namespace FreelanceManager.Infrastructure
         {
             using (var scope = _container.BeginLifetimeScope())
             {
+                var hook = scope.ResolveOptional<IServiceBusMessageHandlerHook>();
+
+                if (hook != null)
+                    hook.PreHandleBusMessage(busMessage);
+
                 var messages = busMessage.Messages.Select(m => JsonSerializer.Deserialize((string)m));
+
                 foreach (var message in messages)
                 {
                     _logger.Debug("Received message contains event with type " + message.GetType().Name);
 
-                    // todo rethink about the admin parameter
-                    scope.Resolve<ITenantContext>().SetTenantId(busMessage.Headers["Tenant"], false);
+                    if (hook != null)
+                        hook.PreHandleMessage(message, busMessage.Headers);
 
-                    var eventType = message.GetType();
-                    List<Type> handlerTypes;
-
-                    if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
+                    try
                     {
-                        _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
+                        var eventType = message.GetType();
+                        List<Type> handlerTypes;
 
-                        foreach (var handlerType in handlerTypes)
+                        if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
                         {
-                            var handler = scope.Resolve(handlerType);
+                            _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
 
-                            handler.AsDynamic().Handle(message);
+                            foreach (var handlerType in handlerTypes)
+                            {
+                                var handler = scope.Resolve(handlerType);
+
+                                handler.AsDynamic().Handle(message);
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        if (hook != null)
+                            hook.Exception(ex, message, busMessage.Headers);
+
+                        throw;
+                    }
+
+                    if (hook != null)
+                        hook.PostHandleMessage(message, busMessage.Headers);
                 }
+
+                if (hook != null)
+                    hook.PostHandleBusMessage(busMessage);
             }
         }
     }

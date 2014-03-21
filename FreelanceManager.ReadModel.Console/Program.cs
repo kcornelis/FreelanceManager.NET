@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using Autofac;
 using FreelanceManager.Infrastructure;
+using FreelanceManager.ReadModel.Tools;
 using NLog;
 
 namespace FreelanceManager.ReadModel.Console
@@ -31,6 +32,7 @@ namespace FreelanceManager.ReadModel.Console
             var builder = new ContainerBuilder();
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
 
+            builder.RegisterType<ServiceBusMessageHandlerHook>().As<IServiceBusMessageHandlerHook>();
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
 
