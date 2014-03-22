@@ -32,13 +32,13 @@ namespace FreelanceManager.Web.Shared
                     }
                     
                     // TODO publish in one go with a transaction
-                    var currentRevision = commit.StreamRevision - commit.Events.Count;
+                    var currentRevision = commit.StreamRevision - commit.Events.Count + 1;
 
                     foreach (var e in commit.Events)
                     {
                         _bus.PublishDomainUpdate(e.Body, new DomainUpdateMetadate
                         {
-                            AggregateId = commit.Headers[AggregateRootMetadata.AggregateIdHeader] as string,
+                            AggregateId = Guid.Parse(commit.Headers[AggregateRootMetadata.AggregateIdHeader] as string),
                             AggregateType = commit.Headers[AggregateRootMetadata.AggregateTypeHeader] as string,
                             Tenant = commit.Headers[AggregateRootMetadata.TenantHeader] as string,
                             ApplicationService = _endpoint,

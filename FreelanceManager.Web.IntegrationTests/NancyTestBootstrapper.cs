@@ -5,6 +5,7 @@ using Autofac;
 using EventStore;
 using EventStore.Serialization;
 using FreelanceManager.Infrastructure;
+using FreelanceManager.ReadModel.Tools;
 using FreelanceManager.Web.Shared;
 using MongoDB.Bson.Serialization;
 using Nancy;
@@ -81,6 +82,7 @@ namespace FreelanceManager.Web
             builder.RegisterType<GuidGenerator>().As<IIdGenerator>();
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
+            builder.RegisterType<DomainUpdateServiceBusHandlerHook>().As<IDomainUpdateServiceBusHandlerHook>();
             builder.RegisterType<InMemoryServiceBus>().As<IServiceBus>().SingleInstance().WithParameter("container", container);
 
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();

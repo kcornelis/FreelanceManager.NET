@@ -20,7 +20,7 @@ namespace FreelanceManager.ReadModel.Tools
         {
             return new ReadModelInfo
             {
-                Id = Guid.Parse(metadata.AggregateId),
+                Id = metadata.AggregateId,
                 Tenant = metadata.Tenant,
                 Type = metadata.AggregateType
             };
@@ -30,7 +30,7 @@ namespace FreelanceManager.ReadModel.Tools
         {
             _tenantContext.SetTenantId(metadata.Tenant);
 
-            _info = _collection.FindOneByIdAs<ReadModelInfo>(new ObjectId(metadata.AggregateId as string));
+            _info = _collection.FindOneByIdAs<ReadModelInfo>(BsonValue.Create(metadata.AggregateId));
 
             if (_info == null)
             {
