@@ -29,9 +29,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
         public void Handle(TimeRegistrationCreated @event)
         {
-            if (_timeRegistrationRepository.GetById(@event.Id) != null)
-                throw new ModelDuplicateException(GetType().Name, @event.Id);
-
             var client = _clientRepository.GetById(@event.ClientId);
             var project = _projectRepository.GetById(@event.ProjectId);
             var totalMinutes = @event.From.TotalMinutes(@event.To);
@@ -53,8 +50,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 Income = (((decimal)totalMinutes * @event.Rate) / 60)
             };
 
-            timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
             _timeRegistrationRepository.Add(timeRegistration);
         }
 
@@ -64,8 +59,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
                 var client = _clientRepository.GetById(@event.ClientId);
                 var project = _projectRepository.GetById(@event.ProjectId);
                 var totalMinutes = @event.From.TotalMinutes(@event.To);
@@ -95,8 +88,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
                 var totalMinutes = timeRegistration.From.TotalMinutes(timeRegistration.To);
 
                 timeRegistration.CorrectedIncome = null;
@@ -117,8 +108,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
                 timeRegistration.CorrectedIncome = @event.Amount;
                 timeRegistration.CorrectedIncomeMessage = @event.Message;
                 timeRegistration.Income = @event.Amount;
@@ -137,8 +126,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
                 var totalMinutes = timeRegistration.From.TotalMinutes(timeRegistration.To);
 
                 timeRegistration.Rate = @event.Rate;
@@ -182,8 +169,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                timeRegistration.VerifyAndUpdateVersion(@event.Version);
-
                 _timeRegistrationRepository.Delete(timeRegistration);
             }
         }

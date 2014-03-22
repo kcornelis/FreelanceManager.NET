@@ -42,7 +42,7 @@ namespace FreelanceManager.Web.Shared
                             AggregateType = commit.Headers[AggregateRootMetadata.AggregateTypeHeader] as string,
                             Tenant = commit.Headers[AggregateRootMetadata.TenantHeader] as string,
                             ApplicationService = _endpoint,
-                            Revision = currentRevision
+                            Version = currentRevision
                         });
 
                         currentRevision += 1;

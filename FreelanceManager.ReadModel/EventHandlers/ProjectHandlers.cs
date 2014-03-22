@@ -23,9 +23,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
         public void Handle(ProjectCreated @event)
         {
-            if (_projectRepository.GetById(@event.Id) != null)
-                throw new ModelDuplicateException(GetType().Name, @event.Id);
-
             var client = _clientRepository.GetById(@event.ClientId);
 
             var project = new Project
@@ -38,8 +35,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 ClientName = client.Name
             };
 
-            project.VerifyAndUpdateVersion(@event.Version);
-
             _projectRepository.Add(project);
         }
 
@@ -49,8 +44,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (project != null)
             {
-                project.VerifyAndUpdateVersion(@event.Version);
-
                 project.Name = @event.Name;
                 project.Description = @event.Description;
 
@@ -68,8 +61,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (project != null)
             {
-                project.VerifyAndUpdateVersion(@event.Version);
-
                 project.Tasks = @event.Tasks.Select(p => new Task { Name = p.Name, Rate = p.Rate }).ToArray();
 
                 _projectRepository.Update(project);
@@ -86,8 +77,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (project != null)
             {
-                project.VerifyAndUpdateVersion(@event.Version);
-
                 project.Hidden = true;
 
                 _projectRepository.Update(project);
@@ -104,8 +93,6 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (project != null)
             {
-                project.VerifyAndUpdateVersion(@event.Version);
-
                 project.Hidden = false;
 
                 _projectRepository.Update(project);

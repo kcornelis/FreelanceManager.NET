@@ -16,6 +16,6 @@ namespace FreelanceManager
         public string Tenant { get; set; }
         public string AggregateId { get; set; }
         public string ApplicationService { get; set; }
-        public int Revision { get; set; }
+        public int Version { get; set; }
     }
 }

@@ -20,19 +20,19 @@ namespace FreelanceManager
 
     }
 
-    public class ModelInvalidVersionException : Exception
+    public class InvalidVersionException : Exception
     {
-        public ModelInvalidVersionException(string type, Guid id, int currentVersion, int eventVersion)
-            :base(string.Format("Changing {0} failed ({1}), current version = {2}, event version = {3}", type, id, currentVersion, eventVersion))
+        public InvalidVersionException(string type, string id, int currentVersion, int eventVersion)
+            :base(string.Format("Handling {0} failed ({1}), current version = {2}, event version = {3}", type, id, currentVersion, eventVersion))
         {
 
         }
     }
 
-    public class ModelDuplicateException : Exception
+    public class MessageAlreadyHandledException : Exception
     {
-        public ModelDuplicateException(string type, Guid id)
-            : base(string.Format("Creating {0} failed ({1}), key already found.", type, id))
+        public MessageAlreadyHandledException(string type, string id)
+            : base(string.Format("Message for {0} already handled ({1})", type, id))
         {
 
         }
