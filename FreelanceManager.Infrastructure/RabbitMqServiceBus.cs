@@ -29,17 +29,12 @@ namespace FreelanceManager.Infrastructure
             {
                 sbc.UseNLog();
                 sbc.UseJsonSerializer();
-                sbc.ConfigureJsonSerializer(c => JsonSerializer.Settings);
-                sbc.ConfigureJsonDeserializer(c => JsonSerializer.Settings);
 
                 sbc.UseRabbitMq();
 
                 sbc.Subscribe(c =>
                 {
-                    if (BusHasHandlers)
-                    {
-                        c.Handler<DomainUpdateBusMessage>(HandleDomainUpdate);
-                    }
+                    c.Handler<DomainUpdateBusMessage>(HandleDomainUpdate);
                 });
 
                 sbc.ReceiveFrom(ConfigurationManager.AppSettings["rabbitmq:host"] + name);

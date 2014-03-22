@@ -9,5 +9,6 @@ namespace FreelanceManager.ReadModel.Tools
         public string Tenant { get; set; }
         public int Version { get; set; }
         public int Errors { get; set; }
+        public DateTime? Locked { get; set; }
     }
 }

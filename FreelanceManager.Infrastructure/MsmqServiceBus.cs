@@ -30,8 +30,6 @@ namespace FreelanceManager.Infrastructure
             {
                 sbc.UseNLog();
                 sbc.UseJsonSerializer();
-                sbc.ConfigureJsonSerializer(c => JsonSerializer.Settings);
-                sbc.ConfigureJsonDeserializer(c => JsonSerializer.Settings);
 
                 sbc.UseMsmq(c =>
                 {

@@ -30,24 +30,16 @@ namespace FreelanceManager.Web.Shared
                     {
                         _logger.Debug("Dispatching commit, number of events: " + commit.Events.Count);
                     }
-                    
-                    // TODO publish in one go with a transaction
-                    var currentRevision = commit.StreamRevision - commit.Events.Count + 1;
 
-                    foreach (var e in commit.Events)
-                    {
-                        _bus.PublishDomainUpdate(e.Body, new DomainUpdateMetadate
+                    _bus.PublishDomainUpdate(commit.Events.Select(e => e.Body).ToArray(),
+                        new DomainUpdateMetadate
                         {
                             AggregateId = Guid.Parse(commit.Headers[AggregateRootMetadata.AggregateIdHeader] as string),
                             AggregateType = commit.Headers[AggregateRootMetadata.AggregateTypeHeader] as string,
                             Tenant = commit.Headers[AggregateRootMetadata.TenantHeader] as string,
                             ApplicationService = _endpoint,
-                            Version = currentRevision
+                            LastVersion = commit.StreamRevision
                         });
-
-                        currentRevision += 1;
-                    }
-                    
                 }
             }
             catch (Exception ex)

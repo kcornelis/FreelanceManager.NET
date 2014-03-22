@@ -6,7 +6,7 @@ namespace FreelanceManager
 {
     public interface IServiceBus : IDisposable
     {
-        void PublishDomainUpdate(object @event, DomainUpdateMetadate metadata);
+        void PublishDomainUpdate(object[] events, DomainUpdateMetadate metadata);
         void RegisterHandlers(Assembly assembly);
         void Start(string name);
     }

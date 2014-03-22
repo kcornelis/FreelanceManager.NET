@@ -26,7 +26,7 @@ namespace FreelanceManager.ReadModel.Tools
             };
         }
 
-        public void PreHandle(object @event, DomainUpdateMetadate metadata)
+        public void PreHandle(object[] events, DomainUpdateMetadate metadata)
         {
             _tenantContext.SetTenantId(metadata.Tenant);
 
@@ -38,22 +38,38 @@ namespace FreelanceManager.ReadModel.Tools
                 _collection.Insert(_info);
             }
 
-            if (_info.Version != (metadata.Version - 1))
-                throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, metadata.Version);
+            if (_info.Locked != null && _info.Locked.Value.AddSeconds(5) > DateTime.Now)
+                throw new Exception("Item locked");
+
+            if (_info.Version != (metadata.LastVersion - events.Length))
+                throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, metadata.LastVersion);
+
+            _info.Locked = DateTime.Now;
+            _collection.Save(_info);
         }
 
-        public void PostHandle(object @event, DomainUpdateMetadate metadata)
+        public void PostHandle(object[] events, DomainUpdateMetadate metadata)
         {
             _info.Errors = 0;
-            _info.Version = metadata.Version;
+            _info.Version = metadata.LastVersion;
+            _info.Locked = null;
 
             _collection.Save(_info);
         }
 
-        public void Exception(Exception ex, object @event, DomainUpdateMetadate metadata)
+        public void PreHandleEvent(object @event, DomainUpdateMetadate metadata)
+        {
+        }
+
+        public void PostHandleEvent(object @event, DomainUpdateMetadate metadata)
+        {
+        }
+
+        public void Exception(Exception ex, object[] events, DomainUpdateMetadate metadata)
         {
             // todo rebuild if errors = 5
             _info.Errors += 1;
+            _info.Locked = null;
 
             _collection.Save(_info);
         }

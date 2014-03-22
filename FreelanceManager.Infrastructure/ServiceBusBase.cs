@@ -24,13 +24,13 @@ namespace FreelanceManager.Infrastructure
         public abstract void Dispose();
         protected abstract void Publish(DomainUpdateBusMessage message);
 
-        public void PublishDomainUpdate(object @event, DomainUpdateMetadate metadata)
+        public void PublishDomainUpdate(object[] events, DomainUpdateMetadate metadata)
         {
-            _logger.Debug("Publishing a domain update for " + metadata.AggregateType + ", " + @event.GetType().Name);
+            _logger.Debug("Publishing a domain update for " + metadata.AggregateType);
 
             Publish(new DomainUpdateBusMessage
             {
-                Event = @event,
+                Events = events.Select(e => JsonSerializer.Serialize(e)).ToArray(),
                 Metadata = metadata
             });
         }
@@ -66,40 +66,51 @@ namespace FreelanceManager.Infrastructure
         {
             using (var scope = _container.BeginLifetimeScope())
             {
+                var events = domainUpdate.Events.Select(e => JsonSerializer.Deserialize(e)).ToArray();
+
                 var hook = scope.ResolveOptional<IDomainUpdateServiceBusHandlerHook>();
 
-                _logger.Debug("Received message contains event with type " + domainUpdate.Event.GetType().Name);
-
                 if (hook != null)
-                    hook.PreHandle(domainUpdate.Event, domainUpdate.Metadata);
+                    hook.PreHandle(events, domainUpdate.Metadata);
 
                 try
                 {
-                    var eventType = domainUpdate.Event.GetType();
-                    List<Type> handlerTypes;
-
-                    if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
+                    foreach (var @event in events)
                     {
-                        _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
+                        _logger.Debug("Received message contains event with type " + @event.GetType().Name);
 
-                        foreach (var handlerType in handlerTypes)
+                        if (hook != null)
+                            hook.PreHandleEvent(@event, domainUpdate.Metadata);
+
+                        var eventType = @event.GetType();
+                        List<Type> handlerTypes;
+
+                        if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
                         {
-                            var handler = scope.Resolve(handlerType);
+                            _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
 
-                            handler.AsDynamic().Handle(domainUpdate.Event);
+                            foreach (var handlerType in handlerTypes)
+                            {
+                                var handler = scope.Resolve(handlerType);
+
+                                handler.AsDynamic().Handle(@event);
+                            }
                         }
+
+                        if (hook != null)
+                            hook.PostHandleEvent(@event, domainUpdate.Metadata);
                     }
+
+                    if (hook != null)
+                        hook.PostHandle(events, domainUpdate.Metadata);
                 }
                 catch (Exception ex)
                 {
                     if (hook != null)
-                        hook.Exception(ex, domainUpdate.Event, domainUpdate.Metadata);
+                        hook.Exception(ex, events, domainUpdate.Metadata);
 
                     throw;
                 }
-
-                if (hook != null)
-                    hook.PostHandle(domainUpdate.Event, domainUpdate.Metadata);
             }
         }
     }

@@ -35,10 +35,7 @@ namespace FreelanceManager.Infrastructure
             _bus = ServiceBusFactory.New(sbc =>
             {
                 sbc.UseNLog();
-
                 sbc.UseJsonSerializer();
-                sbc.ConfigureJsonSerializer(c => JsonSerializer.Settings);
-                sbc.ConfigureJsonDeserializer(c => JsonSerializer.Settings);
 
                 var uri = credentials.BuildUri(name);
 

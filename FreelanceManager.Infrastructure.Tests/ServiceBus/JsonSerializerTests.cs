@@ -70,13 +70,17 @@ namespace FreelanceManager.Infrastructure.ServiceBus
             // BUG fixed, the constructor should contain a money type and not a decimal type
             // (Guid id, decimal rate) => NOK     (Guid id, Money rate) => OK
             var toTest = new DomainUpdateBusMessage();
-            toTest.Event = new TimeRegistrationRateRefreshed(Guid.NewGuid(), 10);
+            toTest.Events = new[]
+            { 
+                JsonSerializer.Serialize(new TimeRegistrationRateRefreshed(Guid.NewGuid(), 10)) 
+            };
 
             var result = Test(toTest);
 
             Assert.False(object.ReferenceEquals(toTest, result));
 
-            Assert.Equal(new Money(10), ((TimeRegistrationRateRefreshed)result.Event).Rate);
+            var rateRefreshedEvent = (TimeRegistrationRateRefreshed)JsonSerializer.Deserialize(result.Events.First());
+            Assert.Equal(new Money(10), rateRefreshedEvent.Rate);
         }
 
         private T Test<T>(T objectToTest)

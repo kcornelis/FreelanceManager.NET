@@ -7,7 +7,7 @@ namespace FreelanceManager
     {
         public DomainUpdateMetadate Metadata { get; set; }
 
-        public object Event { get; set; }
+        public string[] Events { get; set; }
     }
 
     public class DomainUpdateMetadate
@@ -16,6 +16,6 @@ namespace FreelanceManager
         public string Tenant { get; set; }
         public Guid AggregateId { get; set; }
         public string ApplicationService { get; set; }
-        public int Version { get; set; }
+        public int LastVersion { get; set; }
     }
 }
