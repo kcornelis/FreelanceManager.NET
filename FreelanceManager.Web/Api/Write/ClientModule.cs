@@ -6,7 +6,7 @@ using Nancy.Security;
 
 namespace FreelanceManager.Web.Api.Write
 {
-    public class ClientModule : NancyModule
+    public class ClientModule : ApiModule
     {
         public ClientModule(IAggregateRootRepository repository,
                             IIdGenerator idGenerator)
@@ -22,7 +22,7 @@ namespace FreelanceManager.Web.Api.Write
 
                 repository.Save(client);
 
-                return Response.AsJson(new
+                return Json(new
                 {
                     Client = new Client(client)
                 });
@@ -40,7 +40,7 @@ namespace FreelanceManager.Web.Api.Write
 
                     repository.Save(client);
 
-                    return Response.AsJson(new
+                    return Json(new
                     {
                         Client = new Client(client)
                     });

@@ -6,7 +6,7 @@ using Nancy.Security;
 
 namespace FreelanceManager.Web.Api.Write
 {
-    public class TimeRegistrationModule : NancyModule
+    public class TimeRegistrationModule : ApiModule
     {
         public TimeRegistrationModule(IAggregateRootRepository repository,
                                       IIdGenerator idGenerator)
@@ -35,7 +35,7 @@ namespace FreelanceManager.Web.Api.Write
 
                 repository.Save(timeRegistration);
 
-                return Response.AsJson(new
+                return Json(new
                 {
                     TimeRegistration = new TimeRegistration(timeRegistration, client, project)
                 });
@@ -70,7 +70,7 @@ namespace FreelanceManager.Web.Api.Write
 
                     repository.Save(timeRegistration);
 
-                    return Response.AsJson(new
+                    return Json(new
                     {
                         TimeRegistration = new TimeRegistration(timeRegistration, client, project)
                     });

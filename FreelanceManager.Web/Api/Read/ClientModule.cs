@@ -4,18 +4,18 @@ using FreelanceManager.ReadModel.Repositories;
 using Nancy;
 using Nancy.Security;
 
-namespace FreelanceManager.Web.Areas.Read
+namespace FreelanceManager.Web.Api.Read
 {
-    public class ClientModule : NancyModule
+    public class ClientModule : ApiModule
     {
         public ClientModule(IClientRepository clientRepository)
             :base("/read/clients")
         {
             this.RequiresAuthentication();
 
-            Get["/"] = _ => Response.AsJson(clientRepository.ToList());
+            Get["/"] = _ => Json(clientRepository.ToList());
 
-            Get["/{id:guid}"] = parameters => Response.AsJson(clientRepository.GetById((Guid)parameters.id));
+            Get["/{id:guid}"] = parameters => Json(clientRepository.GetById((Guid)parameters.id));
         }
     }
 }

@@ -6,7 +6,7 @@ using Nancy.Security;
 
 namespace FreelanceManager.Web.Api.Write
 {
-    public class AdminModule : NancyModule
+    public class AdminModule : ApiModule
     {
         public AdminModule(IAggregateRootRepository repository,
                            IIdGenerator idGenerator)
@@ -25,7 +25,7 @@ namespace FreelanceManager.Web.Api.Write
 
                 repository.Save(account);
 
-                return Response.AsJson(new
+                return Json(new
                 {
                     Account = new Account(account),
                     Password = password
@@ -43,7 +43,7 @@ namespace FreelanceManager.Web.Api.Write
 
                     repository.Save(account);
 
-                    return Response.AsJson(new
+                    return Json(new
                     {
                         Account = new Account(account)
                     });

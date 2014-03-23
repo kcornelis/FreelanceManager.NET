@@ -272,6 +272,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\ApiModule.cs" />
     <Compile Include="Api\Write\AdminModule.cs" />
     <Compile Include="Api\Write\ClientModule.cs" />
     <Compile Include="Api\Write\Models\Admin\AccountNewPassword.cs" />
