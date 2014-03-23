@@ -22,7 +22,6 @@ namespace FreelanceManager
 
         public Guid Id { get; protected set; }
         public DateTime CreatedOn { get; protected set; }
-
         public int Version { get; private set; }
 
         public IEnumerable<Event> GetUncommittedChanges()
@@ -32,7 +31,6 @@ namespace FreelanceManager
 
         public void MarkChangesAsCommitted()
         {
-            Version += _changes.Count;
             _changes.Clear();
         }
 
@@ -51,15 +49,11 @@ namespace FreelanceManager
         {
             this.AsDynamic().Apply(@event);
 
+            Version += 1;
+
             if (isNew)
             {
-                @event.Version = Version + _changes.Count + 1;
-
                 _changes.Add(@event);
-            }
-            else
-            {
-                Version += 1;
             }
         }
 
