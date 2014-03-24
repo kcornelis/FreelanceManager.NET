@@ -2,8 +2,14 @@
 
 namespace FreelanceManager.Web.Api
 {
-    public class ApiModule : NancyModule
+    public abstract class ApiModule : NancyModule
     {
+        public ApiModule()
+            : base()
+        {
+
+        }
+
         public ApiModule(string path)
             : base(path)
         {
