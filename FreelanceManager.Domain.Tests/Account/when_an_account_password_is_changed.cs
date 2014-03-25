@@ -31,7 +31,7 @@ namespace FreelanceManager.Domain.Tests
         }
 
         [Fact]
-        public void should_match_verify_password()
+        public void should_match_the_correct_password()
         {
             _account.VerifyPassword("abcd").Should().BeTrue();
         }
