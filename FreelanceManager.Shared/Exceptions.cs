@@ -2,22 +2,18 @@
 
 namespace FreelanceManager
 {
-    public class AggregateNotFoundException : Exception
-    {
-    }
-
-    public class ConcurrencyException : Exception
-    {
-    }
-
-    public class SecurityException : Exception
-    {
-
-    }
-
     public class ModelNotFoundException : Exception
     {
 
+    }
+
+    public class ModelLockedException : Exception
+    {
+        public ModelLockedException(string type, Guid id)
+            :base(string.Format("Model {0} locked ({1})", type, id))
+        {
+
+        }
     }
 
     public class InvalidVersionException : Exception

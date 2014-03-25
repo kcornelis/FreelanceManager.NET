@@ -16,33 +16,33 @@ namespace FreelanceManager.ReadModel.Tools
             _tenantContext = tenantContext;
         }
 
-        private ReadModelInfo CreateNewInfo(DomainUpdateMetadate metadata)
-        {
-            return new ReadModelInfo
-            {
-                Id = metadata.AggregateId,
-                Tenant = metadata.Tenant,
-                Type = metadata.AggregateType
-            };
-        }
-
         public void PreHandle(object[] events, DomainUpdateMetadate metadata)
         {
             _tenantContext.SetTenantId(metadata.Tenant);
 
             _info = _collection.FindOneByIdAs<ReadModelInfo>(BsonValue.Create(metadata.AggregateId));
 
-            if (_info == null)
+            try
             {
-                _info = CreateNewInfo(metadata);
-                _collection.Insert(_info);
+                if (_info == null)
+                {
+                    _info = CreateNewInfo(metadata);
+                    _collection.Insert(_info);
+                }
+            }
+            catch (WriteConcernException)
+            {
+                // possible duplicate
+                _info = _collection.FindOneByIdAs<ReadModelInfo>(BsonValue.Create(metadata.AggregateId));
             }
 
             if (_info.Locked != null && _info.Locked.Value.AddSeconds(5) > DateTime.Now)
-                throw new Exception("Item locked");
+                throw new ModelLockedException(metadata.AggregateType, metadata.AggregateId);
 
-            if (_info.Version != (metadata.LastVersion - events.Length))
-                throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, metadata.LastVersion);
+            var firstEventVersion = metadata.LastVersion - events.Length;
+
+            if (_info.Version != firstEventVersion)
+                throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, firstEventVersion);
 
             _info.Locked = DateTime.Now;
             _collection.Save(_info);
@@ -67,11 +67,22 @@ namespace FreelanceManager.ReadModel.Tools
 
         public void Exception(Exception ex, object[] events, DomainUpdateMetadate metadata)
         {
-            // todo rebuild if errors = 5
+            // TODO rebuild if errors = 5
+
             _info.Errors += 1;
             _info.Locked = null;
 
             _collection.Save(_info);
+        }
+
+        private ReadModelInfo CreateNewInfo(DomainUpdateMetadate metadata)
+        {
+            return new ReadModelInfo
+            {
+                Id = metadata.AggregateId,
+                Tenant = metadata.Tenant,
+                Type = metadata.AggregateType
+            };
         }
     }
 }

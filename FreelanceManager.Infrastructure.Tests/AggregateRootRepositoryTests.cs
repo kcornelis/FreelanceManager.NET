@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using EventStore;
 using EventStore.Serialization;
 using FreelanceManager.Events.Client;
@@ -127,7 +124,7 @@ namespace FreelanceManager.Infrastructure
             }
         }
 
-        public IAggregateRootRepository Repository()
+        private IAggregateRootRepository Repository()
         {
             var types = Assembly.GetAssembly(typeof(FreelanceManager.Events.Event))
                                 .GetTypes()

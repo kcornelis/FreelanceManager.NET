@@ -69,7 +69,13 @@
     <Compile Include="AccountTests\when_an_account_is_created.cs" />
     <Compile Include="AccountTests\when_an_account_is_made_admin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RepositoryTests\when_we_get_a_model_from_the_repository.cs" />
+    <Compile Include="SequenceModel.cs" />
     <Compile Include="Specification.cs" />
+    <Compile Include="ToolTests\when_the_hook_handles_a_lot_of_messages_for_the_same_aggregate.cs" />
+    <Compile Include="ToolTests\when_the_hook_receives_a_event_that_is_not_the_next_one.cs" />
+    <Compile Include="ToolTests\when_the_hook_receives_multiple_events_in_one_time.cs" />
+    <Compile Include="ToolTests\when_the_hook_receives_a_single_event.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

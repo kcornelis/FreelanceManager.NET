@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Reflection;
 using Autofac;
 using FreelanceManager.Infrastructure;
+using FreelanceManager.ReadModel.Tools;
 using Xunit;
 using Xunit.Sdk;
 
@@ -26,16 +27,26 @@ namespace FreelanceManager.ReadModel
 
             builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
             builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
+            builder.RegisterType<DomainUpdateServiceBusHandlerHook>().As<IDomainUpdateServiceBusHandlerHook>();
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))
                    .AsImplementedInterfaces();
-            builder.RegisterAssemblyTypes(readModelAssembly)
-                   .Where(t => t.Name.EndsWith("Handlers"))
-                   .AsSelf();
+
+            var testAssembly = typeof(Sequence).Assembly;
+            builder.RegisterAssemblyTypes(testAssembly)
+                   .Where(t => t.Name.EndsWith("Repository"))
+                   .AsImplementedInterfaces();
 
             _container = builder.Build();
+
+            builder = new ContainerBuilder();
+            builder.RegisterType<InMemoryServiceBus>().As<IServiceBus>().SingleInstance().WithParameter("container", _container);
+            builder.Update(_container.ComponentRegistry);
+
+            _container.Resolve<IServiceBus>().RegisterHandlers(readModelAssembly);
+            _container.Resolve<IServiceBus>().RegisterHandlers(testAssembly);
         }
 
         protected virtual T Resolve<T>()
