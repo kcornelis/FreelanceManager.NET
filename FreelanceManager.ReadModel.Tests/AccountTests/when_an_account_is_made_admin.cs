@@ -6,7 +6,7 @@ using FreelanceManager.ReadModel.Repositories;
 using FreelanceManager.Tools;
 using Xunit;
 
-namespace FreelanceManager.ReadModel.AccountPasswordTests
+namespace FreelanceManager.ReadModel.AccountTests
 {
     public class when_an_account_is_made_admin : Specification
     {
