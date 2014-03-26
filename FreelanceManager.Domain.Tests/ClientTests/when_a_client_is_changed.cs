@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace FreelanceManager.Domain.Tests
+namespace FreelanceManager.Domain.ClientTests
 {
     public class when_a_client_is_changed : Specification
     {

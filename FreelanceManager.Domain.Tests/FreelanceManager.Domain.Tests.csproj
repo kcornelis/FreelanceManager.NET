@@ -7,7 +7,7 @@
     <ProjectGuid>{CCFAB98D-97B5-47EA-BCDC-DC0889FF12B3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FreelanceManager.Domain.Tests</RootNamespace>
+    <RootNamespace>FreelanceManager.Domain</RootNamespace>
     <AssemblyName>FreelanceManager.Domain.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -47,15 +47,32 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Account\when_an_account_password_is_generated.cs" />
-    <Compile Include="Account\when_an_account_password_is_changed.cs" />
-    <Compile Include="Account\when_an_account_is_made_admin.cs" />
-    <Compile Include="Account\when_an_account_is_changed.cs" />
-    <Compile Include="Account\when_an_account_is_created.cs" />
-    <Compile Include="Client\when_a_client_is_changed.cs" />
-    <Compile Include="Client\when_a_client_is_created.cs" />
+    <Compile Include="AccountTests\when_an_account_password_is_generated.cs" />
+    <Compile Include="AccountTests\when_an_account_password_is_changed.cs" />
+    <Compile Include="AccountTests\when_an_account_is_made_admin.cs" />
+    <Compile Include="AccountTests\when_an_account_is_changed.cs" />
+    <Compile Include="AccountTests\when_an_account_is_created.cs" />
+    <Compile Include="ClientTests\when_a_client_is_changed.cs" />
+    <Compile Include="ClientTests\when_a_client_is_created.cs" />
+    <Compile Include="ProjectTests\when_a_project_tasks_are_updated_with_the_same_taks.cs" />
+    <Compile Include="ProjectTests\when_a_project_tasks_are_updated.cs" />
+    <Compile Include="ProjectTests\when_a_project_is_made_unhidden.cs" />
+    <Compile Include="ProjectTests\when_a_project_is_made_hidden.cs" />
+    <Compile Include="ProjectTests\when_a_project_is_changed.cs" />
+    <Compile Include="ProjectTests\when_searching_a_task_in_a_project.cs" />
+    <Compile Include="ProjectTests\when_a_project_is_created.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Specification.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_an_empty_rate.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_an_empty_corrected_income.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_a_corrected_income.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_a_corrected_income_cleared.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_a_rate.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_its_rate_refreshed.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_has_no_end_time.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_changed.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_created.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_deleted.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

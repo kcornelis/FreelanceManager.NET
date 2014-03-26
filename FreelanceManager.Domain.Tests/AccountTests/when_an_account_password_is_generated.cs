@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace FreelanceManager.Domain.Tests
+namespace FreelanceManager.Domain.AccountTests
 {
     public class when_an_account_password_is_generated : Specification
     {

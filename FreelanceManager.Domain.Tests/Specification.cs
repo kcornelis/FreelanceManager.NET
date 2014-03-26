@@ -4,7 +4,7 @@ using System.Reflection;
 using Xunit;
 using Xunit.Sdk;
 
-namespace FreelanceManager.Domain.Tests
+namespace FreelanceManager.Domain
 {
     [RunWith(typeof(SpecificationRunner))]
     public abstract class Specification

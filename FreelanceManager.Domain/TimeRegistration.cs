@@ -30,7 +30,7 @@ namespace FreelanceManager.Domain
 
         public bool Billable
         {
-            get { return Deleted ? false : (!Rate.Empty || (CorrectedIncome != null && !CorrectedIncome.Total.Empty)); }
+            get { return Income > 0; }
         }
 
         public int TotalMinutes
