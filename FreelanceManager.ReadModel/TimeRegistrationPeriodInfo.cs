@@ -82,9 +82,9 @@ namespace FreelanceManager.ReadModel
         private void RefreshState()
         {
             Count = Items.Count;
-            Income = Items.Sum(i => i.Minutes.HasValue ? i.Corrected != null ? i.Corrected.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0);
-            BillableHours = (decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected != null && i.Corrected.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0) / 60;
-            UnbillableHours = (decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected == null || i.Corrected.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0) / 60;
+            Income = Math.Round(Items.Sum(i => i.Minutes.HasValue ? i.Corrected != null ? i.Corrected.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0), 2);
+            BillableHours = Math.Round((decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected != null && i.Corrected.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0) / 60, 2);
+            UnbillableHours = Math.Round((decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected == null || i.Corrected.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0) / 60, 2);
         }
 
         private Info GetForTimeRegistration(Guid id)

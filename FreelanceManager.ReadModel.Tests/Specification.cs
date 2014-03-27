@@ -145,7 +145,7 @@ namespace FreelanceManager.ReadModel
 
         public IEnumerable<ITestCommand> EnumerateTestCommands(IMethodInfo testMethod)
         {
-            string displayName = (TypeUnderTest.Type.Name + ", it " + testMethod.Name).Replace('_', ' ');
+            string displayName = (TypeUnderTest.Type.Name + ", it or the model under test " + testMethod.Name).Replace('_', ' ');
             return new[] { new SpecTestCommand(testMethod, displayName) };
         }
 

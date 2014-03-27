@@ -1,4 +1,5 @@
-﻿using FreelanceManager.Events.Client;
+﻿using System;
+using FreelanceManager.Events.Client;
 using FreelanceManager.Events.Project;
 using FreelanceManager.Events.TimeRegistration;
 using FreelanceManager.ReadModel.Repositories;
@@ -47,7 +48,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 To = @event.To,
                 CreatedOn = @event.CreatedOn,
                 Rate = @event.Rate,
-                Income = (((decimal)totalMinutes * @event.Rate) / 60)
+                Income = Math.Round((((decimal)totalMinutes * @event.Rate) / 60), 2)
             };
 
             _timeRegistrationRepository.Add(timeRegistration);
@@ -73,7 +74,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.Date = @event.Date;
                 timeRegistration.From = @event.From;
                 timeRegistration.To = @event.To;
-                timeRegistration.Income = (((decimal)totalMinutes * timeRegistration.Rate) / 60);
+                timeRegistration.Income = Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
                 _timeRegistrationRepository.Update(timeRegistration);
             }
@@ -93,7 +94,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
                 timeRegistration.CorrectedIncome = null;
                 timeRegistration.CorrectedIncomeMessage = null;
-                timeRegistration.Income = ((decimal)totalMinutes * timeRegistration.Rate) / 60;
+                timeRegistration.Income = Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
                 _timeRegistrationRepository.Update(timeRegistration);
             }
@@ -130,7 +131,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 var totalMinutes = timeRegistration.From.TotalMinutes(timeRegistration.To);
 
                 timeRegistration.Rate = @event.Rate;
-                timeRegistration.Income = timeRegistration.CorrectedIncome != null ? timeRegistration.CorrectedIncome : (((decimal)totalMinutes * timeRegistration.Rate) / 60);
+                timeRegistration.Income = timeRegistration.CorrectedIncome != null ? (decimal)timeRegistration.CorrectedIncome : Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
                 _timeRegistrationRepository.Update(timeRegistration);
             }
