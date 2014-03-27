@@ -73,6 +73,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.Date = @event.Date;
                 timeRegistration.From = @event.From;
                 timeRegistration.To = @event.To;
+                timeRegistration.Income = (((decimal)totalMinutes * timeRegistration.Rate) / 60);
 
                 _timeRegistrationRepository.Update(timeRegistration);
             }

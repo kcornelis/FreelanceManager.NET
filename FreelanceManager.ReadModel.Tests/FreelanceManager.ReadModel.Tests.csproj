@@ -88,6 +88,15 @@
     <Compile Include="RepositoryTests\when_we_add_a_model.cs" />
     <Compile Include="SequenceModel.cs" />
     <Compile Include="Specification.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_corrected_income_is_cleared.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_deleted.cs" />
+    <Compile Include="TimeRegistrationTests\when_project_details_changed.cs" />
+    <Compile Include="TimeRegistrationTests\when_client_details_changed.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_rate_is_refreshed_with_corrected_income.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_rate_is_refreshed.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_income_is_corrected.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_changed.cs" />
+    <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_created.cs" />
     <Compile Include="ToolTests\when_the_hook_handles_a_lot_of_messages_for_the_same_aggregate.cs" />
     <Compile Include="ToolTests\when_the_hook_receives_a_event_that_is_not_the_next_one.cs" />
     <Compile Include="ToolTests\when_the_hook_receives_multiple_events_in_one_time.cs" />
@@ -114,7 +123,10 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="TimeRegistrationPeriodInfoPerTaskTests\" />
+    <Folder Include="TimeRegistrationPeriodInfoTests\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
