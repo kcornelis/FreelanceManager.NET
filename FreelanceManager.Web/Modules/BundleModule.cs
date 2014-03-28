@@ -61,7 +61,7 @@ namespace FreelanceManager.Web.Modules
                                    .Add(staticContentResolver.GetLocation("/Scripts/knockout-3.1.0.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/knockout.validation.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/moment.js"))
-                                   .Add(staticContentResolver.GetLocation("/Scripts/freelancemanager.js"))
+                                   .AddMinified(staticContentResolver.GetLocation("/Scripts/freelancemanager.js"))
                                    .AddMinifiedDirectory(staticContentResolver.GetLocation("/ViewModels/"), false)
                                    .ForceRelease()
                                    .AsCached("common", "~/bundles/js/common");

@@ -2,8 +2,6 @@
     $.ajaxSetup({ cache: false });
 });
 
-
-
 ko.bindingHandlers.moment = {
     update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
         var value = valueAccessor(),
@@ -23,7 +21,7 @@ ko.bindingHandlers.dropdown = {
         $(element).selectpicker(options);
 
         ko.utils.registerEventHandler(element, "change", function () {
-            $(element).selectpicker('refresh');
+            $('.selectpicker').selectpicker('refresh');
         });
 
         ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
@@ -32,7 +30,7 @@ ko.bindingHandlers.dropdown = {
         });
     },
     update: function (element, valueAccessor) {
-        $(element).selectpicker('refresh');
+        $('.selectpicker').selectpicker('refresh');
     }
 };
 
