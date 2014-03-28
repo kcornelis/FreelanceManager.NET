@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using FluentAssertions;
 using FreelanceManager.Events.Client;
 using FreelanceManager.Events.Project;
@@ -8,7 +9,7 @@ using FreelanceManager.ReadModel.Repositories;
 using FreelanceManager.Tools;
 using Xunit;
 
-namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoTests
+namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
 {
     public class when_a_timeregistration_rate_is_refreshed : Specification
     {
@@ -20,19 +21,19 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoTests
         private ClientHandlers _clientHandler;
         private ProjectHandlers _projectHandler;
         private TimeRegistrationHandlers _timeregistrationHandler;
-        private TimeRegistrationPeriodInfoHandlers _timeregistrationPeriodInfoHandler;
-        private ITimeRegistrationPeriodInfoRepository _timeregistrationPeriodInfoRepository;
+        private TimeRegistrationPeriodInfoPerTaskHandlers _timeregistrationPeriodInfoHandler;
+        private ITimeRegistrationPeriodInfoPerTaskRepository _timeregistrationPeriodInfoRepository;
         private ITenantContext _tenantContext;
 
-        private TimeRegistrationPeriodInfo _timeregistrationPeriodInfo;
+        private TimeRegistrationPeriodInfoPerTask _timeregistrationPeriodInfo;
 
         protected override void Context()
         {
             _clientHandler = Resolve<ClientHandlers>();
             _projectHandler = Resolve<ProjectHandlers>();
-            _timeregistrationPeriodInfoHandler = Resolve<TimeRegistrationPeriodInfoHandlers>();
+            _timeregistrationPeriodInfoHandler = Resolve<TimeRegistrationPeriodInfoPerTaskHandlers>();
             _timeregistrationHandler = Resolve<TimeRegistrationHandlers>();
-            _timeregistrationPeriodInfoRepository = Resolve<ITimeRegistrationPeriodInfoRepository>();
+            _timeregistrationPeriodInfoRepository = Resolve<ITimeRegistrationPeriodInfoPerTaskRepository>();
             _tenantContext = Resolve<ITenantContext>();
 
             _tenantContext.SetTenantId(_tenant);
@@ -53,7 +54,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoTests
         {
             _timeregistrationPeriodInfoHandler.AsDynamic().Handle(new TimeRegistrationRateRefreshed(_timeRegistrationId, 100M));
 
-            _timeregistrationPeriodInfo = _timeregistrationPeriodInfoRepository.GetForMonth(2012, 01);
+            _timeregistrationPeriodInfo = _timeregistrationPeriodInfoRepository.GetForMonth(2012, 01).First(t => t.Task == "Development");
         }
 
         [Fact]
