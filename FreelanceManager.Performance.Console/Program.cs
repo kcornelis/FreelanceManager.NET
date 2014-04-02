@@ -14,6 +14,8 @@ namespace FreelanceManager.Performance.Console
 
         static void Main(string[] args)
         {
+            Thread.Sleep(5000);
+
             using (var client = new CustomWebClient(Config.Url))
             {
                 client.Authenticate(Config.AdminEmail, Config.AdminPassword);

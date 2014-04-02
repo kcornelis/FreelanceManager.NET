@@ -3,13 +3,18 @@ using FreelanceManager.ReadModel.Repositories;
 
 namespace FreelanceManager.ReadModel.EventHandlers
 {
-    public class TimeRegistrationPeriodInfoHandlers /*: IHandleEvent<TimeRegistrationCreated>,
+    public class TimeRegistrationPeriodInfoHandlers : IHandleEvent<TimeRegistrationCreated>,
                                                       IHandleEvent<TimeRegistrationDetailsChanged>,
                                                       IHandleEvent<TimeRegistrationCorrectedIncomeCleared>,
                                                       IHandleEvent<TimeRegistrationIncomeCorrected>,
                                                       IHandleEvent<TimeRegistrationRateRefreshed>,
-                                                      IHandleEvent<TimeRegistrationDeleted>*/
+                                                      IHandleEvent<TimeRegistrationDeleted>
     {
+        // TODO fix this, this doesn't make sense if the readmodel is handled on 2 servers
+        //  - or create a group by query on the time registration period model
+        //  - or create a new Report/Statistics service (with sql database)
+        private readonly static object _lock = new object();
+
         private readonly ITimeRegistrationPeriodInfoRepository _timeRegistrationPeriodInfoRepository;
         private readonly ITimeRegistrationRepository _timeRegistrationRepository;
         private readonly ITenantContext _tenantContext;
@@ -24,79 +29,97 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
         public void Handle(TimeRegistrationCreated @event)
         {
-            var update = true;
-            var tenant = _tenantContext.GetTenantId();
-
-            var info = _timeRegistrationPeriodInfoRepository.GetForMonth(@event.Date.Year, @event.Date.Month);
-
-            if (info == null)
+            lock (_lock)
             {
-                update = false;
-                info = new TimeRegistrationPeriodInfo
+                var update = true;
+                var tenant = _tenantContext.GetTenantId();
+
+                var info = _timeRegistrationPeriodInfoRepository.GetForMonth(@event.Date.Year, @event.Date.Month);
+
+                if (info == null)
                 {
-                    Tenant = tenant,
-                    Year = @event.Date.Year,
-                    Month = @event.Date.Month
-                };
+                    update = false;
+                    info = new TimeRegistrationPeriodInfo
+                    {
+                        Tenant = tenant,
+                        Year = @event.Date.Year,
+                        Month = @event.Date.Month
+                    };
+                }
+
+                info.Add(@event.Id, @event.From, @event.To, @event.Rate);
+
+                if (update)
+                    _timeRegistrationPeriodInfoRepository.Update(info);
+                else
+                    _timeRegistrationPeriodInfoRepository.Add(info);
             }
-
-            info.Add(@event.Id, @event.From, @event.To, @event.Rate);
-
-            if (update)
-                _timeRegistrationPeriodInfoRepository.Update(info);
-            else
-                _timeRegistrationPeriodInfoRepository.Add(info);
         }
 
         public void Handle(TimeRegistrationDetailsChanged @event)
         {
-            var info = _timeRegistrationPeriodInfoRepository.GetForMonth(@event.Date.Year, @event.Date.Month);
+            lock (_lock)
+            {
+                var info = _timeRegistrationPeriodInfoRepository.GetForMonth(@event.Date.Year, @event.Date.Month);
 
-            info.Update(@event.Id, @event.From, @event.To);
+                info.Update(@event.Id, @event.From, @event.To);
 
-            _timeRegistrationPeriodInfoRepository.Update(info);
+                _timeRegistrationPeriodInfoRepository.Update(info);
+            }
         }
 
         public void Handle(TimeRegistrationCorrectedIncomeCleared @event)
         {
-            var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
+            lock (_lock)
+            {
+                var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
 
-            var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
+                var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
 
-            info.Correct(@event.Id, null);
+                info.Correct(@event.Id, null);
 
-            _timeRegistrationPeriodInfoRepository.Update(info);
+                _timeRegistrationPeriodInfoRepository.Update(info);
+            }
         }
 
         public void Handle(TimeRegistrationIncomeCorrected @event)
         {
-            var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
+            lock (_lock)
+            {
+                var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
 
-            var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
+                var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
 
-            info.Correct(@event.Id, @event.Amount);
+                info.Correct(@event.Id, @event.Amount);
 
-            _timeRegistrationPeriodInfoRepository.Update(info);
+                _timeRegistrationPeriodInfoRepository.Update(info);
+            }
         }
 
         public void Handle(TimeRegistrationRateRefreshed @event)
         {
-            var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
+            lock (_lock)
+            {
+                var timeRegistration = _timeRegistrationRepository.GetById(@event.Id);
 
-            var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
+                var info = _timeRegistrationPeriodInfoRepository.GetForMonth(timeRegistration.Date.Year, timeRegistration.Date.Month);
 
-            info.RefreshRate(@event.Id, @event.Rate);
+                info.RefreshRate(@event.Id, @event.Rate);
 
-            _timeRegistrationPeriodInfoRepository.Update(info);
+                _timeRegistrationPeriodInfoRepository.Update(info);
+            }
         }
 
         public void Handle(TimeRegistrationDeleted @event)
         {
-            var info = _timeRegistrationPeriodInfoRepository.GetForTimeRegistration(@event.Id);
+            lock (_lock)
+            {
+                var info = _timeRegistrationPeriodInfoRepository.GetForTimeRegistration(@event.Id);
 
-            info.Remove(@event.Id);
+                info.Remove(@event.Id);
 
-            _timeRegistrationPeriodInfoRepository.Update(info);
+                _timeRegistrationPeriodInfoRepository.Update(info);
+            }
         }
     }
 }
