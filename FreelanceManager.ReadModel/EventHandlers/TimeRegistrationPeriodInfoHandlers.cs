@@ -3,12 +3,12 @@ using FreelanceManager.ReadModel.Repositories;
 
 namespace FreelanceManager.ReadModel.EventHandlers
 {
-    public class TimeRegistrationPeriodInfoHandlers : IHandleEvent<TimeRegistrationCreated>,
+    public class TimeRegistrationPeriodInfoHandlers /*: IHandleEvent<TimeRegistrationCreated>,
                                                       IHandleEvent<TimeRegistrationDetailsChanged>,
                                                       IHandleEvent<TimeRegistrationCorrectedIncomeCleared>,
                                                       IHandleEvent<TimeRegistrationIncomeCorrected>,
                                                       IHandleEvent<TimeRegistrationRateRefreshed>,
-                                                      IHandleEvent<TimeRegistrationDeleted>
+                                                      IHandleEvent<TimeRegistrationDeleted>*/
     {
         private readonly ITimeRegistrationPeriodInfoRepository _timeRegistrationPeriodInfoRepository;
         private readonly ITimeRegistrationRepository _timeRegistrationRepository;
