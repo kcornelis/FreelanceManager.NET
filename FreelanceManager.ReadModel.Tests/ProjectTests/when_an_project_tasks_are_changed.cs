@@ -31,7 +31,7 @@ namespace FreelanceManager.ReadModel.ClientTests
 
             _tenantContext.SetTenantId(_tenant);
             _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow));
-            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.Now));
+            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow));
             _projectHandler.AsDynamic().Handle(new ProjectTasksChanged(_projectId, new Dtos.Task[]
             {
                 new Dtos.Task{ Name = "Initial task", Rate = 50M },

@@ -36,7 +36,7 @@ namespace FreelanceManager.ReadModel.Tools
                 _info = _collection.FindOneByIdAs<ReadModelInfo>(BsonValue.Create(metadata.AggregateId));
             }
 
-            if (_info.Locked != null && _info.Locked.Value.AddSeconds(5) > DateTime.Now)
+            if (_info.Locked != null && _info.Locked.Value.AddSeconds(5) > DateTime.UtcNow)
                 throw new ModelLockedException(metadata.AggregateType, metadata.AggregateId);
 
             var firstEventVersion = metadata.LastVersion - events.Length;
@@ -44,7 +44,7 @@ namespace FreelanceManager.ReadModel.Tools
             if (_info.Version != firstEventVersion)
                 throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, firstEventVersion);
 
-            _info.Locked = DateTime.Now;
+            _info.Locked = DateTime.UtcNow;
             _collection.Save(_info);
         }
 

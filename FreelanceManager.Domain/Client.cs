@@ -8,7 +8,7 @@ namespace FreelanceManager.Domain
         public Client() { }
         public Client(Guid id, string name)
         {
-            ApplyChange(new ClientCreated(id, name, DateTime.Now));
+            ApplyChange(new ClientCreated(id, name, DateTime.UtcNow));
         }
 
         public string Name { get; private set; }

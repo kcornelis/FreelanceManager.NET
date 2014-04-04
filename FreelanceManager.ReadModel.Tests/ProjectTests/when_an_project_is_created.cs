@@ -35,7 +35,7 @@ namespace FreelanceManager.ReadModel.ClientTests
 
         protected override void Because()
         {
-            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.Now));
+            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow));
 
             _project = _projectRepository.GetById(_projectId);
         }

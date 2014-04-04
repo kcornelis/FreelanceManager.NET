@@ -66,7 +66,7 @@ namespace FreelanceManager.Domain.AccountTests
         [Fact]
         public void should_have_a_created_date()
         {
-            _account.CreatedOn.Should().BeCloseTo(DateTime.Now, 1000);
+            _account.CreatedOn.Should().BeCloseTo(DateTime.UtcNow, 1000);
         }
 
         [Fact]

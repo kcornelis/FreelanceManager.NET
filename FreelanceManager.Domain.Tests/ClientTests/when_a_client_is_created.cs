@@ -29,7 +29,7 @@ namespace FreelanceManager.Domain.ClientTests
         [Fact]
         public void should_have_a_created_date()
         {
-            _client.CreatedOn.Should().BeCloseTo(DateTime.Now, 1000);
+            _client.CreatedOn.Should().BeCloseTo(DateTime.UtcNow, 1000);
         }
 
         [Fact]

@@ -9,7 +9,7 @@ namespace FreelanceManager.Domain
         public Account() { }
         public Account(Guid id, string name, string firstName, string lastName, string email)
         {
-            ApplyChange(new AccountCreated(id, name, firstName, lastName, email, DateTime.Now));
+            ApplyChange(new AccountCreated(id, name, firstName, lastName, email, DateTime.UtcNow));
         }
 
         public string Name { get; private set; }

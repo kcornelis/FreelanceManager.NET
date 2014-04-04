@@ -35,12 +35,12 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
 
             _tenantContext.SetTenantId(_tenant);
             _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow));
-            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.Now));
+            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow));
             _timeregistrationHandler.AsDynamic().Handle(new TimeRegistrationCreated(_timeregistrationId, _clientId, _projectId,
                                                  "Development", 50M, "Doing some work",
                                                  Date.Parse("2012-01-30"),
                                                  Time.Parse("12:00"), Time.Parse("14:00"),
-                                                 DateTime.Now));
+                                                 DateTime.UtcNow));
         }
 
         protected override void Because()

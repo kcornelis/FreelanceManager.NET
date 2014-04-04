@@ -13,7 +13,7 @@ namespace FreelanceManager.Domain
         public Project() { }
         public Project(Guid id, string name, string description, Client client)
         {
-            ApplyChange(new ProjectCreated(id, name, description, client.Id, DateTime.Now));
+            ApplyChange(new ProjectCreated(id, name, description, client.Id, DateTime.UtcNow));
             ApplyChange(new ProjectTasksChanged(id, new[]{
                 new Dtos.Task{ Name = "Development", Rate = Money.Zero },
                 new Dtos.Task{ Name = "Analyse", Rate = Money.Zero },

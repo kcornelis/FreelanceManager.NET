@@ -88,7 +88,7 @@ namespace FreelanceManager.Domain.TimeRegistrationTests
         [Fact]
         public void should_have_a_created_date()
         {
-            _timeregistration.CreatedOn.Should().BeCloseTo(DateTime.Now, 1000);
+            _timeregistration.CreatedOn.Should().BeCloseTo(DateTime.UtcNow, 1000);
         }
 
         [Fact]

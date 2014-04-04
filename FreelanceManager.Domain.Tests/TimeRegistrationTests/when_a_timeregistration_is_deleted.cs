@@ -54,7 +54,7 @@ namespace FreelanceManager.Domain.TimeRegistrationTests
         [Fact]
         public void should_have_a_deleted_date()
         {
-            _timeregistration.DeletedOn.Should().BeCloseTo(DateTime.Now, 1000);
+            _timeregistration.DeletedOn.Should().BeCloseTo(DateTime.UtcNow, 1000);
         }
     }
 }

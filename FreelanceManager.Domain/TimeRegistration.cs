@@ -13,7 +13,7 @@ namespace FreelanceManager.Domain
             ApplyChange(new TimeRegistrationCreated(id, client.Id, project.Id, 
                                                     task.Name, task.Rate,
                                                     description, date, from, to, 
-                                                    DateTime.Now));
+                                                    DateTime.UtcNow));
         }
 
         public Guid ClientId { get; private set; }
@@ -105,7 +105,7 @@ namespace FreelanceManager.Domain
                 throw new AggregateDeletedException();
 
 
-            ApplyChange(new TimeRegistrationDeleted(Id, DateTime.Now));
+            ApplyChange(new TimeRegistrationDeleted(Id, DateTime.UtcNow));
         }
 
         public void Apply(TimeRegistrationCreated e)
