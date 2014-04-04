@@ -47,6 +47,10 @@ namespace FreelanceManager.Infrastructure
 	    public virtual T GetById<T>(Guid id) where T : IAggregateRoot, new()
 		{
 			var stream = this.OpenStream(id);
+
+            if (stream.StreamRevision == 0)
+                return default(T);
+
             var aggregate = new T();
 
 			ApplyEventsToAggregate(stream, aggregate);
