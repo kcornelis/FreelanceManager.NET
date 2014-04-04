@@ -7,7 +7,7 @@ using Nancy;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public static class TimeRegistrationsToExcelExtension
     {

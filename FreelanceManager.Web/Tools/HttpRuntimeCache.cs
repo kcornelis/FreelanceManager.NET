@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Web;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     interface ICacheService
     {

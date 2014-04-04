@@ -5,7 +5,7 @@ using Nancy;
 using Nancy.Authentication.Forms;
 using Nancy.Security;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class NancyUserMapper : IUserMapper
     {

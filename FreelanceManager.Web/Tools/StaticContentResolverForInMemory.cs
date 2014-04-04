@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class StaticContentResolverForInMemory : IStaticContentResolver
     {

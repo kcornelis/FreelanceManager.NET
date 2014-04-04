@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web;
 using Nancy.Security;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class AuthenticatedUser : IUserIdentity
     {

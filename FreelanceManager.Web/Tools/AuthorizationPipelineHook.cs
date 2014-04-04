@@ -3,7 +3,7 @@ using Autofac;
 using EventStore;
 using NLog;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class AuthorizationPipelineHook : IPipelineHook
     {

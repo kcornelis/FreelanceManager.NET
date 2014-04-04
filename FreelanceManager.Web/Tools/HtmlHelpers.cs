@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Nancy.ViewEngines.Razor;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public static class HtmlHelpers
     {

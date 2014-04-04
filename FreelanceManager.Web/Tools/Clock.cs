@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Web;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class Clock
     {

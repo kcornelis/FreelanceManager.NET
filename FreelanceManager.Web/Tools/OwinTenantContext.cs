@@ -1,7 +1,7 @@
 ﻿using System.Security;
 using System.Web;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     //public class OwinTenantContext : ITenantContext
     //{

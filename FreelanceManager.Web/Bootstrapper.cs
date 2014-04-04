@@ -5,7 +5,7 @@ using Autofac;
 using EventStore;
 using EventStore.Serialization;
 using FreelanceManager.Infrastructure;
-using FreelanceManager.Web.Shared;
+using FreelanceManager.Web.Tools;
 using MongoDB.Bson.Serialization;
 using Nancy;
 using Nancy.Authentication.Forms;

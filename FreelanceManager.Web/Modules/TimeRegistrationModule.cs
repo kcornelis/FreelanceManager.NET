@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using FreelanceManager.ReadModel.Repositories;
-using FreelanceManager.Web.Shared;
+using FreelanceManager.Web.Tools;
 using FreelanceManager.Web.ViewModels.TimeRegistration;
 using Nancy;
 using Nancy.ModelBinding;

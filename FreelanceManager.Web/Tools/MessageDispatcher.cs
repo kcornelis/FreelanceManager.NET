@@ -5,7 +5,7 @@ using Autofac;
 using EventStore.Dispatcher;
 using NLog;
 
-namespace FreelanceManager.Web.Shared
+namespace FreelanceManager.Web.Tools
 {
     public class MessageDispatcher : IDispatchCommits
     {
