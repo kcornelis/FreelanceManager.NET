@@ -13,11 +13,13 @@ using Nancy.Bootstrapper;
 using Nancy.Bootstrappers.Autofac;
 using Nancy.Conventions;
 using Nancy.Security;
+using NLog;
 
 namespace FreelanceManager.Web
 {
     public class Bootstrapper : AutofacNancyBootstrapper
     {
+        private static readonly Logger _logger = LogManager.GetLogger(Loggers.Web);
 
         protected override void ConfigureConventions(Nancy.Conventions.NancyConventions nancyConventions)
         {
@@ -28,8 +30,6 @@ namespace FreelanceManager.Web
 
         protected override void ApplicationStartup(ILifetimeScope container, IPipelines pipelines)
         {
-            // No registrations should be performed in here, however you may
-            // resolve things that are needed during application startup.
         }
 
         protected override void ConfigureApplicationContainer(ILifetimeScope existingContainer)
@@ -67,6 +67,12 @@ namespace FreelanceManager.Web
                     container.Resolve<ITenantContext>().SetTenantId(null, false);
 
                 return null;
+            });
+
+            pipelines.OnError.AddItemToEndOfPipeline((z, a) =>
+            {
+                _logger.Error("Unhandled error on request: " + context.Request.Url + " : " + a.Message, a);
+                return a.Message;
             });
         }
 
