@@ -88,6 +88,7 @@ namespace FreelanceManager.Web
 
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
             builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
+            builder.RegisterType<ExcelService>().As<IExcelService>();
 
             builder.RegisterAssemblyTypes(readModelAssembly)
                    .Where(t => t.Name.EndsWith("Repository"))

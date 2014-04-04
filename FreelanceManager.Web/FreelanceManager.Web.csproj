@@ -308,6 +308,7 @@
     <Compile Include="Tools\AuthenticatedUser.cs" />
     <Compile Include="Tools\AuthorizationPipelineHook.cs" />
     <Compile Include="Tools\Clock.cs" />
+    <Compile Include="Tools\ExcelImporter.cs" />
     <Compile Include="Tools\HtmlHelpers.cs" />
     <Compile Include="Tools\HttpRuntimeCache.cs" />
     <Compile Include="Tools\IStaticContentResolver.cs" />
@@ -860,6 +861,7 @@
     <Content Include="Views\Setup\Index.cshtml" />
     <Content Include="Views\Shared\_SetupLayout.cshtml" />
     <Content Include="Views\TimeRegistration\ImportMap.cshtml" />
+    <Content Include="Views\TimeRegistration\ImportResult.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
