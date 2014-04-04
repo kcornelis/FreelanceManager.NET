@@ -65,6 +65,9 @@ namespace FreelanceManager
 
             try
             {
+                if (value == "24:00")
+                    return new Time(0, 0);
+
                 var timespan = TimeSpan.Parse(value);
                 return new Time(timespan.Hours, timespan.Minutes);
             }

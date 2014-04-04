@@ -60,6 +60,17 @@ namespace FreelanceManager
         }
 
         [Fact]
+        public void BUGParse_Should_Parse_2400_And_Get_Correct_Total_Minutes()
+        {
+            var to1 = new Time(23, 00);
+            var to2 = new Time(24, 00);
+            var to3 = Time.Parse("24:00");
+
+            Assert.Equal(60, to1.TotalMinutes(to2));
+            Assert.Equal(60, to1.TotalMinutes(to3));
+        }
+
+        [Fact]
         public void Times_With_The_Same_Time_Should_Be_Equal()
         {
             var time1 = new Time(1, 30);
