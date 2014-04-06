@@ -50,6 +50,12 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
                                                 Date.Parse("2012-01-25"),
                                                 Time.Parse("12:00"), Time.Parse("15:00"),
                                                 DateTime.UtcNow));
+
+            _timeregistrationPeriodInfoHandler.AsDynamic().Handle(new TimeRegistrationCreated(Guid.NewGuid(), _clientId, _projectId,
+                                                "Development", 0M, "Doing some other free work",
+                                                Date.Parse("2012-01-25"),
+                                                Time.Parse("12:00"), Time.Parse("15:00"),
+                                                DateTime.UtcNow));
         }
 
         protected override void Because()
@@ -75,13 +81,13 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
         [Fact]
         public void should_have_a_new_unbillable_hours()
         {
-            _timeregistrationPeriodInfo.UnbillableHours.Should().Be(0);
+            _timeregistrationPeriodInfo.UnbillableHours.Should().Be(3);
         }
 
         [Fact]
         public void should_have_a_new_time_registration_count()
         {
-            _timeregistrationPeriodInfo.Count.Should().Be(0);
+            _timeregistrationPeriodInfo.Count.Should().Be(1);
         }
     }
 }

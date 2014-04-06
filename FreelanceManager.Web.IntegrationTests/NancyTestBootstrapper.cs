@@ -87,6 +87,7 @@ namespace FreelanceManager.Web
 
             builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
             builder.RegisterType<StaticContentResolverForInMemory>().As<IStaticContentResolver>();
+            builder.RegisterType<ExcelService>().As<IExcelService>();
 
             var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
             builder.RegisterAssemblyTypes(readModelAssembly)
