@@ -47,6 +47,8 @@ namespace FreelanceManager.Web.Modules
                     }
                 }
 
+                ModelValidationResult.Errors.Add("", "The email address or password provided is incorrect");
+
                 return View["Login", model];
             };
         }
