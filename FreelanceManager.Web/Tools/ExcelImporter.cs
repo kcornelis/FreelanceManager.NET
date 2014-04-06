@@ -10,8 +10,8 @@ namespace FreelanceManager.Web.Tools
 {
     public interface IExcelService
     {
-        ExcelImportResult Import(string file, int clientColumn, int projectColumn, int taskColumn,
-                                 int fromColumn, int toColumn, int rateColumn,
+        ExcelImportResult Import(string file, int projectColumn, int taskColumn,
+                                 int dateColumn, int fromColumn, int toColumn, int rateColumn,
                                  int descriptionColumn);
     }
 
@@ -27,8 +27,8 @@ namespace FreelanceManager.Web.Tools
             _idGenerator = idGenerator;
         }
 
-        public ExcelImportResult Import(string file, int clientColumn, int projectColumn, int taskColumn,
-                                        int fromColumn, int toColumn, int rateColumn,
+        public ExcelImportResult Import(string file, int projectColumn, int taskColumn,
+                                        int dateColumn, int fromColumn, int toColumn, int rateColumn,
                                         int descriptionColumn)
         {
             var excelPackage = new ExcelPackage(new FileInfo(file));
@@ -41,47 +41,39 @@ namespace FreelanceManager.Web.Tools
             {
                 try
                 {
-                    Guid clientId, projectId;
+                    Guid projectId;
 
-                    Guid.TryParse(worksheet.Cells[r, clientColumn].Text, out clientId);
                     Guid.TryParse(worksheet.Cells[r, projectColumn].Text, out projectId);
 
-                    var client = clients.GetOrAdd(clientId, key => _aggregateRootRepository.GetById<Domain.Client>(key));
                     var project = projects.GetOrAdd(projectId, key => _aggregateRootRepository.GetById<Domain.Project>(key));
+                    var client = clients.GetOrAdd(project.ClientId, key => _aggregateRootRepository.GetById<Domain.Client>(key));
 
-                    if (client == null || project == null)
+                    if (project == null)
                     {
-                        result.Errors.Add(r, "Client or project not found.");
+                        result.Errors.Add(r, "Project not found.");
                         continue;
                     }
 
-                    if(string.IsNullOrEmpty(worksheet.Cells[r, fromColumn].Text) ||
-                        worksheet.Cells[r, fromColumn].Text.Length < 10)
-                    {
-                        result.Errors.Add(r, "From should have a minimum length of 10. It should contain the date and time.");
-                        continue;
-                    }
-
-                    if (string.IsNullOrEmpty(worksheet.Cells[r, toColumn].Text) ||
-                        worksheet.Cells[r, toColumn].Text.Length < 10)
-                    {
-                        result.Errors.Add(r, "To should have a minimum length of 10. It should contain the date and time.");
-                        continue;
-                    }
-
+                    DateTime date;
                     DateTime from;
                     DateTime to;
                     decimal rate;
 
-                    if (!DateTime.TryParse(worksheet.Cells[r, fromColumn].Text, new CultureInfo("nl-be"), DateTimeStyles.None, out from))
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, dateColumn].Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
                     {
-                        result.Errors.Add(r, "From does not contain a valid datetime.");
+                        result.Errors.Add(r, "Date does not contain a valid date.");
                         continue;
                     }
 
-                    if (!DateTime.TryParse(worksheet.Cells[r, toColumn].Text, new CultureInfo("nl-be"), DateTimeStyles.None, out to))
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, fromColumn].Text, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out from))
                     {
-                        result.Errors.Add(r, "To does not contain a valid datetime.");
+                        result.Errors.Add(r, "From does not contain a valid time.");
+                        continue;
+                    }
+
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, toColumn].Text, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out to))
+                    {
+                        result.Errors.Add(r, "To does not contain a valid time.");
                         continue;
                     }
 
@@ -98,7 +90,7 @@ namespace FreelanceManager.Web.Tools
                             Rate = rate
                         },
                         worksheet.Cells[r, descriptionColumn].Text,
-                        new Date(from.Year, from.Month, from.Day),
+                        new Date(date.Year, date.Month, date.Day),
                         new Time(from.Hour, from.Minute),
                         new Time(to.Hour, to.Minute));
 

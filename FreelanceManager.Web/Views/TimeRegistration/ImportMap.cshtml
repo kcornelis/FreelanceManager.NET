@@ -16,16 +16,6 @@
     <input type="hidden" name="serverFile" value="@Model.ServerFile" />
 
     <div class="form-group">
-        <label for="clientIdColumn">Client column</label>
-        <select id="clientIdColumn" name="clientIdColumn" class="form-control selectpicker">
-            @foreach (var column in Model.ColumnNames)
-            {
-                <option value="@column.Column">@column.Name</option>
-            }
-        </select>
-    </div>
-
-    <div class="form-group">
         <label for="projectIdColumn">Project column</label>
         <select id="projectIdColumn" name="projectIdColumn" class="form-control selectpicker">
             @foreach (var column in Model.ColumnNames)
@@ -56,7 +46,17 @@
     </div>
 
     <div class="form-group">
-        <label for="fromColumn">From column</label>
+        <label for="dateColumn">Date column (YYYY-MM-DD)</label>
+        <select id="dateColumn" name="dateColumn" class="form-control selectpicker">
+            @foreach (var column in Model.ColumnNames)
+            {
+                <option value="@column.Column">@column.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="fromColumn">From column (hh:mm)</label>
         <select id="fromColumn" name="fromColumn" class="form-control selectpicker">
             @foreach (var column in Model.ColumnNames)
             {
@@ -66,7 +66,7 @@
     </div>
 
     <div class="form-group">
-        <label for="toColumn">To column</label>
+        <label for="toColumn">To column (hh:mm)</label>
         <select id="toColumn" name="toColumn" class="form-control selectpicker">
             @foreach (var column in Model.ColumnNames)
             {

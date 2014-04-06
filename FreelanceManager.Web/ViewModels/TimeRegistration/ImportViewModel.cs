@@ -11,10 +11,10 @@ namespace FreelanceManager.Web.ViewModels.TimeRegistration
         public List<ColumnInfo> ColumnNames { get; set; }
         public string ServerFile { get; set; }
 
-        public int ClientIdColumn { get; set; }
         public int ProjectIdColumn { get; set; }
         public int TaskColumn { get; set; }
         public int RateColumn { get; set; }
+        public int DateColumn { get; set; }
         public int FromColumn { get; set; }
         public int ToColumn { get; set; }
         public int DescriptionColumn { get; set; }

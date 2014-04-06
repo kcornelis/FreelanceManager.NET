@@ -64,8 +64,9 @@ namespace FreelanceManager.Web.Modules
             {
                 var viewModel = this.Bind<ImportViewModel>();
 
-                var result = excelService.Import(viewModel.ServerFile, viewModel.ClientIdColumn, viewModel.ProjectIdColumn, viewModel.TaskColumn,
-                                                 viewModel.FromColumn, viewModel.ToColumn, viewModel.RateColumn, viewModel.DescriptionColumn);
+                var result = excelService.Import(viewModel.ServerFile, viewModel.ProjectIdColumn, viewModel.TaskColumn,
+                                                 viewModel.DateColumn, viewModel.FromColumn, viewModel.ToColumn, 
+                                                 viewModel.RateColumn, viewModel.DescriptionColumn);
 
                 return View["ImportResult", result];
             };
