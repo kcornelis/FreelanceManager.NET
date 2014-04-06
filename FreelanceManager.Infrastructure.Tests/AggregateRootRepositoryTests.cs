@@ -24,6 +24,16 @@ namespace FreelanceManager.Infrastructure
         }
 
         [Fact]
+        public void Not_Found_Id_Should_Return_Null()
+        {
+            var repo = Repository();
+
+            var id = Guid.NewGuid();
+
+            Assert.Null(repo.GetById<Client>(id));
+        }
+
+        [Fact]
         public void An_AggregateRoot_Has_A_Version()
         {
             var repo = Repository();

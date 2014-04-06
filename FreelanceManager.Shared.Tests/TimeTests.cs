@@ -60,8 +60,9 @@ namespace FreelanceManager
         }
 
         [Fact]
-        public void BUGParse_Should_Parse_2400_And_Get_Correct_Total_Minutes()
+        public void Parse_Should_Parse_2400_And_Get_Correct_Total_Minutes()
         {
+            // BUGFIX
             var to1 = new Time(23, 00);
             var to2 = new Time(24, 00);
             var to3 = Time.Parse("24:00");
