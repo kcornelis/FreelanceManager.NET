@@ -94,9 +94,8 @@ msbuild :compile => :versioning do |msb|
 	puts "Building the solution"
 
 	msb.properties = { :configuration => :Release, 
-					   :PublishDir => @par_publishdir, 
 					   :VisualStudioVersion => '12.0' }
-	msb.targets = [ :Clean, :Publish ]
+	msb.targets = [ :Clean, :Build ]
 	msb.solution = "FreelanceManager.sln"
 end
 
@@ -104,7 +103,8 @@ desc "Publish"
 msbuild :publish => :versioning  do |msb|
   puts "Publishing the website"
   msb.properties = {:configuration => :Release,
-  					:PublishProfile => :BuildServer, :VisualStudioVersion => '12.0' }
+  					:PublishProfile => :BuildServer, 
+					:VisualStudioVersion => '12.0' }
   msb.targets =[ :WebPublish ]
   msb.solution = "FreelanceManager.Web/FreelanceManager.Web.csproj"
 end
