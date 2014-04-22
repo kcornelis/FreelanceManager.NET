@@ -81,7 +81,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
         [Fact]
         public void should_have_the_total_billable_hours()
         {
-            _timeregistrationPeriodInfoJanDev.BillableHours.Should().Be(2);
+            _timeregistrationPeriodInfoJanDev.BillableMinutes.Should().Be(120);
         }
 
         [Fact]
@@ -93,15 +93,15 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
         [Fact]
         public void should_have_the_total_unbillable_hours()
         {
-            _timeregistrationPeriodInfoJanDev.UnbillableHours.Should().Be(4);
+            _timeregistrationPeriodInfoJanDev.UnbillableMinutes.Should().Be(240);
         }
 
         [Fact]
         public void should_store_the_results_per_month_and_task()
         {
-            _timeregistrationPeriodInfoJanDev.BillableHours.Should().Be(2);
-            _timeregistrationPeriodInfoJanMeeting.BillableHours.Should().Be(3);
-            _timeregistrationPeriodInfoFebDev.BillableHours.Should().Be(6);
+            _timeregistrationPeriodInfoJanDev.BillableMinutes.Should().Be(120);
+            _timeregistrationPeriodInfoJanMeeting.BillableMinutes.Should().Be(180);
+            _timeregistrationPeriodInfoFebDev.BillableMinutes.Should().Be(360);
         }
 
         [Fact]

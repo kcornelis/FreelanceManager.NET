@@ -61,7 +61,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
         [Fact]
         public void should_have_the_same_total_billable_hours()
         {
-            _timeregistrationPeriodInfo.BillableHours.Should().Be(3);
+            _timeregistrationPeriodInfo.BillableMinutes.Should().Be(180);
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoPerTaskTests
         [Fact]
         public void should_have_the_same_unbillable_hours()
         {
-            _timeregistrationPeriodInfo.UnbillableHours.Should().Be(0);
+            _timeregistrationPeriodInfo.UnbillableMinutes.Should().Be(0);
         }
     }
 }

@@ -41,8 +41,8 @@ namespace FreelanceManager.ReadModel.Tools
 
             var firstEventVersion = metadata.LastVersion - events.Length;
 
-            //if (_info.Version != firstEventVersion)
-            //    throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, firstEventVersion);
+            if (_info.Version != firstEventVersion)
+                throw new InvalidVersionException(metadata.AggregateType, metadata.AggregateId, _info.Version, firstEventVersion);
 
             _info.Locked = DateTime.UtcNow;
             _collection.Save(_info);

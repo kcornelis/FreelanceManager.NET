@@ -48,14 +48,14 @@
                 legend: {  horizontalAlignment: 'center' , verticalAlignment: 'bottom' } }"></div>
     </div>
     <div class="clearfix visible-xs"></div>
-    <div class="col-xs-6 col-sm-4" data-bind="with: info">
+    <div class="col-xs-6 col-sm-4">
         <h3>Time</h3>
-        <strong>Unbillable:</strong> <span data-bind="text: UnbillableHours">&nbsp;</span> Hour(s)<br />
-        <strong>Billable:</strong> <span data-bind="text: BillableHours">&nbsp;</span> Hour(s)
+        <strong>Unbillable:</strong> <span data-bind="text: unbillableHours">&nbsp;</span> Hour(s)<br />
+        <strong>Billable:</strong> <span data-bind="text: billableHours">&nbsp;</span> Hour(s)
     </div>
-    <div class="col-xs-6 col-sm-4" data-bind="with: info">
+    <div class="col-xs-6 col-sm-4">
         <h3>Billable</h3>
-        <strong class="text-info"><span class="text-info" data-bind="text: Income">&nbsp;</span> €</strong>
+        <strong class="text-info"><span class="text-info" data-bind="text: income">&nbsp;</span> €</strong>
     </div>
 </div>
 
@@ -73,8 +73,8 @@
                     <span data-bind="text: task"></span>
                 </div>
                 <div class="clearfix visible-xs"></div>
-                <div class="col-xs-6 col-sm-3"><strong>Billable: </strong><span data-bind="text: billableHours"></span> Hours</div>
-                <div class="col-xs-6 col-sm-3"><strong>Unbillable: </strong><span data-bind="text: unbillableHours"></span> Hours</div>
+                <div class="col-xs-6 col-sm-3"><strong>Billable: </strong><span data-bind="text: billableHours"></span> Hour(s)</div>
+                <div class="col-xs-6 col-sm-3"><strong>Unbillable: </strong><span data-bind="text: unbillableHours"></span> Hour(s)</div>
                 <div class="clearfix visible-xs"></div>
                 <div class="col-xs-12 col-sm-3"><strong>Income: </strong> <span data-bind="text: income"></span> €</div>
             </div>

@@ -18,8 +18,8 @@ namespace FreelanceManager.ReadModel
 
         public int Count { get; set; }
         public decimal Income { get; set; }
-        public decimal UnbillableHours { get; set; }
-        public decimal BillableHours { get; set; }
+        public int UnbillableMinutes { get; set; }
+        public int BillableMinutes { get; set; }
 
         public void Add(Guid id, Time from, Time to, decimal rate) 
         {
@@ -83,8 +83,8 @@ namespace FreelanceManager.ReadModel
         {
             Count = Items.Count;
             Income = Math.Round(Items.Sum(i => i.Minutes.HasValue ? i.Corrected != null ? i.Corrected.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0), 2);
-            BillableHours = Math.Round((decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected != null && i.Corrected.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0) / 60, 2);
-            UnbillableHours = Math.Round((decimal)Items.Sum(i => i.Minutes.HasValue && ((i.Corrected == null || i.Corrected.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0) / 60, 2);
+            BillableMinutes = Items.Sum(i => i.Minutes.HasValue && ((i.Corrected != null && i.Corrected.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0);
+            UnbillableMinutes = Items.Sum(i => i.Minutes.HasValue && ((i.Corrected == null || i.Corrected.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0);
         }
 
         private Info GetForTimeRegistration(Guid id)

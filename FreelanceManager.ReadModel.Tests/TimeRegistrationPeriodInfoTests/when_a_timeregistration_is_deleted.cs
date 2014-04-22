@@ -62,7 +62,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoTests
         [Fact]
         public void should_have_a_new_billable_hours()
         {
-            _timeregistrationPeriodInfo.BillableHours.Should().Be(0);
+            _timeregistrationPeriodInfo.BillableMinutes.Should().Be(0);
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationPeriodInfoTests
         [Fact]
         public void should_have_a_new_unbillable_hours()
         {
-            _timeregistrationPeriodInfo.UnbillableHours.Should().Be(0);
+            _timeregistrationPeriodInfo.UnbillableMinutes.Should().Be(0);
         }
 
         [Fact]
