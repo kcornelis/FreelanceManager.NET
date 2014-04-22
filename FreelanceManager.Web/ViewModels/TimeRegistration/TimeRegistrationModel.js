@@ -25,7 +25,6 @@
         }
     });
     self.to = ko.observable().extend({
-        required: true,
         pattern: {
             message: "The field has an invalid format (hh:mm)",
             params: /^(?:[0-5]\d):(?:[0-5]\d)$/
@@ -133,7 +132,7 @@
         self.description(data.Description);
         self.date(new moment(data.Date.Display));
         self.from(data.From.Display);
-        self.to(data.To.Display);
+        self.to(data.To ? data.To.Display : null);
         self.timespan(data.To != undefined ? new moment(data.To.Display, 'HH:mm').subtract(new moment(data.From.Display, 'HH:mm')) : new moment().subtract(new moment(data.From.Display, 'HH:mm')));
     }
 
