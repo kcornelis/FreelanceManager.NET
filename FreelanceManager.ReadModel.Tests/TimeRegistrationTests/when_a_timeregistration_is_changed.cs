@@ -118,5 +118,11 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
         {
             _timeregistration.To.Should().Be(new Time(15, 0));
         }
+
+        [Fact]
+        public void should_have_a_new_total_minutes()
+        {
+            _timeregistration.Minutes.Should().Be(240);
+        }
     }
 }

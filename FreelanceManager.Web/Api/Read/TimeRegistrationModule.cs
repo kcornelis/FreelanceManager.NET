@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Linq;
+using FreelanceManager.ReadModel;
 using FreelanceManager.ReadModel.Repositories;
-using Nancy;
 using Nancy.Security;
 
 namespace FreelanceManager.Web.Api.Read
 {
     public class TimeRegistrationModule : ApiModule
     {
-        public TimeRegistrationModule(ITimeRegistrationRepository timeRegistrationRepository,
-                                      ITimeRegistrationPeriodInfoRepository timeRegistrationInfoRepository,
-                                      ITimeRegistrationPeriodInfoPerTaskRepository timeRegistrationInfoPerTaskRepository)
+        public TimeRegistrationModule(ITimeRegistrationRepository timeRegistrationRepository)
             : base("/read/timeregistrations")
         {
             this.RequiresAuthentication();
@@ -29,9 +27,45 @@ namespace FreelanceManager.Web.Api.Read
                     .ToList());
             };
 
-            Get["/getinfoformonth/{year:int}/{month:int}"] = parameters => Json(timeRegistrationInfoRepository.GetForMonth((int)parameters.year, (int)parameters.month));
+            Get["/getinfo/{year:int}/{month:int}"] = parameters =>
+            {
+                var items = timeRegistrationRepository.GetForMonth((int)parameters.year, (int)parameters.month);
 
-            Get["/getinfopertaskformonth/{year:int}/{month:int}"] = parameters => Json(timeRegistrationInfoPerTaskRepository.GetForMonth((int)parameters.year, (int)parameters.month));
+                var perMonth = new TimeRegistrationPeriodInfo
+                {
+                    Year = (int)parameters.year,
+                    Month = (int)parameters.month,
+                    Count = items.Count(),
+                    Income = Math.Round(items.Sum(i => i.Minutes.HasValue ? i.CorrectedIncome != null ? i.CorrectedIncome.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0), 2),
+                    BillableMinutes = items.Sum(i => i.Minutes.HasValue && ((i.CorrectedIncome != null && i.CorrectedIncome.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0),
+                    UnbillableMinutes = items.Sum(i => i.Minutes.HasValue && ((i.CorrectedIncome == null || i.CorrectedIncome.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0),
+                };
+
+                var perTask = items.GroupBy(r => new { r.ClientId, r.ClientName, r.ProjectId, r.ProjectName, r.Task })
+                                   .Select(g =>
+                                   {
+                                        return new TimeRegistrationPeriodInfoPerTask
+                                        {
+                                            Year = (int)parameters.year,
+                                            Month = (int)parameters.month,
+                                            ClientId = g.Key.ClientId,
+                                            Client = g.Key.ClientName,
+                                            ProjectId = g.Key.ProjectId,
+                                            Project = g.Key.ProjectName,
+                                            Task = g.Key.Task,
+                                            Count = g.Count(),
+                                            Income = Math.Round(g.Sum(i => i.Minutes.HasValue ? i.CorrectedIncome != null ? i.CorrectedIncome.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0), 2),
+                                            BillableMinutes = g.Sum(i => i.Minutes.HasValue && ((i.CorrectedIncome != null && i.CorrectedIncome.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0),
+                                            UnbillableMinutes = g.Sum(i => i.Minutes.HasValue && ((i.CorrectedIncome == null || i.CorrectedIncome.Value <= 0) && i.Rate <= 0) ? i.Minutes.Value : 0),
+                                        };
+                                   }).ToList();
+
+                return new
+                {
+                    PerMonth = perMonth,
+                    PerTask = perTask
+                };
+            };
         }
     }
 }

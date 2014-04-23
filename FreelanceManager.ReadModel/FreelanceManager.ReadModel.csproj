@@ -74,8 +74,6 @@
     <Compile Include="EventHandlers\ClientHandlers.cs" />
     <Compile Include="EventHandlers\ProjectHandlers.cs" />
     <Compile Include="EventHandlers\TimeRegistrationHandlers.cs" />
-    <Compile Include="EventHandlers\TimeRegistrationPeriodInfoPerTaskHandlers.cs" />
-    <Compile Include="EventHandlers\TimeRegistrationPeriodInfoHandlers.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -85,8 +83,6 @@
     <Compile Include="Repositories\IRepository.cs" />
     <Compile Include="Repositories\ProjectRepository.cs" />
     <Compile Include="Repositories\Repository.cs" />
-    <Compile Include="Repositories\TimeRegistrationPeriodInfoPerTaskRepository.cs" />
-    <Compile Include="Repositories\TimeRegistrationPeriodInfoRepository.cs" />
     <Compile Include="Repositories\TimeRegistrationRepository.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="TimeRegistration.cs" />

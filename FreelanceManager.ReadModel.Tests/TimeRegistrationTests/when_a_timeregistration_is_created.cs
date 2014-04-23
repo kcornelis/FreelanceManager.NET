@@ -123,6 +123,12 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
         }
 
         [Fact]
+        public void should_have_the_total_minutes()
+        {
+            _timeregistration.Minutes.Should().Be(120);
+        }
+
+        [Fact]
         public void should_have_a_tenant()
         {
             _timeregistration.Tenant.Should().Be(_tenant);

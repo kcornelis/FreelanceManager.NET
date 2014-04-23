@@ -14,6 +14,7 @@ namespace FreelanceManager.ReadModel
         public Money Income { get; set; }
         public Date Date { get; set; }
         public Time From { get; set; }
+        public int? Minutes { get; set; }
         public Time To { get; set; }
         public DateTime CreatedOn { get; set; }
         public Money CorrectedIncome { get; set; }

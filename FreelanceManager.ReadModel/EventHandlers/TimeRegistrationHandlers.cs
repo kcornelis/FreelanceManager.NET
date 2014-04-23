@@ -37,15 +37,16 @@ namespace FreelanceManager.ReadModel.EventHandlers
             var timeRegistration = new TimeRegistration
             {
                 Id = @event.Id,
-                ClientId = client.Id,
-                ClientName = client.Name,
-                ProjectId = project.Id,
-                ProjectName = project.Name,
+                ClientId = @event.ClientId,
+                ClientName = client != null ? client.Name : "",
+                ProjectId = @event.ProjectId,
+                ProjectName = project != null ? project.Name : "",
                 Task = @event.Task,
                 Description = @event.Description,
                 Date = @event.Date,
                 From = @event.From,
                 To = @event.To,
+                Minutes = totalMinutes,
                 CreatedOn = @event.CreatedOn,
                 Rate = @event.Rate,
                 Income = Math.Round((((decimal)totalMinutes * @event.Rate) / 60), 2)
@@ -65,14 +66,15 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 var totalMinutes = @event.From.TotalMinutes(@event.To);
 
                 timeRegistration.Id = @event.Id;
-                timeRegistration.ClientId = client.Id;
-                timeRegistration.ClientName = client.Name;
-                timeRegistration.ProjectId = project.Id;
-                timeRegistration.ProjectName = project.Name;
+                timeRegistration.ClientId = @event.ClientId;
+                timeRegistration.ClientName = client != null ? client.Name : "";
+                timeRegistration.ProjectId = @event.ProjectId;
+                timeRegistration.ProjectName = project != null ? project.Name : "";
                 timeRegistration.Task = @event.Task;
                 timeRegistration.Description = @event.Description;
                 timeRegistration.Date = @event.Date;
                 timeRegistration.From = @event.From;
+                timeRegistration.Minutes = totalMinutes;
                 timeRegistration.To = @event.To;
                 timeRegistration.Income = Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 

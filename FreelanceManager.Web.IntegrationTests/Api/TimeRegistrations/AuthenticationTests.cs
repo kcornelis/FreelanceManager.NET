@@ -67,21 +67,11 @@ namespace FreelanceManager.Web.Api.TimeRegistrations
         }
 
         [Fact]
-        public void Read_TimeRegistrationGetInfoForMonth_Needs_Authentication()
+        public void Read_TimeRegistrationGetInfo_Needs_Authentication()
         {
             var browser = Context.CreateBrowser();
 
-            var response = browser.Get("/read/timeregistrations/getinfoformonth/2012/01");
-
-            Assert.True(response.RedirectedToLogin());
-        }
-
-        [Fact]
-        public void Read_TimeRegistrationGetInfoPerTaskForMonth_Needs_Authentication()
-        {
-            var browser = Context.CreateBrowser();
-
-            var response = browser.Get("/read/timeregistrations/getinfopertaskformonth/2012/01");
+            var response = browser.Get("/read/timeregistrations/getinfo/2012/01");
 
             Assert.True(response.RedirectedToLogin());
         }

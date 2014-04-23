@@ -32,7 +32,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 Name = @event.Name,
                 ClientId = @event.ClientId,
                 Description = @event.Description,
-                ClientName = client.Name
+                ClientName = client != null ? client.Name : ""
             };
 
             _projectRepository.Add(project);
