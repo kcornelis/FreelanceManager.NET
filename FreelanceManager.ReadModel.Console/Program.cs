@@ -1,8 +1,14 @@
 ﻿using System.Configuration;
+using System.Reflection;
+using System.Linq;
 using Autofac;
 using FreelanceManager.Infrastructure;
 using FreelanceManager.ReadModel.Tools;
+using MongoDB.Bson.Serialization;
 using NLog;
+using EventStore;
+using EventStore.Serialization;
+using System;
 
 namespace FreelanceManager.ReadModel.Console
 {
@@ -18,6 +24,15 @@ namespace FreelanceManager.ReadModel.Console
             {
                 RegisterServices(container);
                 RegisterBus(container);
+
+                if (args.Any(a => a.ToLower().Contains("rebuild")))
+                {
+                    using (var scope = container.BeginLifetimeScope())
+                    {
+                        RegisterEventStore(scope);
+                        scope.Resolve<IRebuild>().FromEventStore();
+                    }
+                }
 
                 _logger.Info("Registering services finished");
 
@@ -57,6 +72,33 @@ namespace FreelanceManager.ReadModel.Console
 
             builder.RegisterInstance(bus).As<IServiceBus>();
 
+            builder.Update(container.ComponentRegistry);
+        }
+
+        static void RegisterEventStore(ILifetimeScope container)
+        {
+            var types = Assembly.GetAssembly(typeof(FreelanceManager.Events.Event))
+                                .GetTypes()
+                                .Where(type => type.IsClass && !type.ContainsGenericParameters)
+                                .Where(type => type.IsSubclassOf(typeof(FreelanceManager.Events.Event)) ||
+                                               type.Namespace.Contains("FreelanceManager.Dtos"));
+
+            foreach (var t in types)
+                BsonClassMap.LookupClassMap(t);
+
+            BsonClassMap.LookupClassMap(typeof(Date));
+            BsonClassMap.LookupClassMap(typeof(Time));
+            BsonClassMap.LookupClassMap(typeof(Money));
+
+            var eventStore = Wireup.Init()
+                .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())
+                .InitializeStorageEngine()
+                .Build();
+
+            var builder = new ContainerBuilder();
+            builder.RegisterInstance<IStoreEvents>(eventStore).ExternallyOwned();
+            builder.RegisterInstance<ILifetimeScope>(container).ExternallyOwned();
+            builder.RegisterType<Rebuild>().As<IRebuild>();
             builder.Update(container.ComponentRegistry);
         }
     }

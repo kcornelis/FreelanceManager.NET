@@ -52,6 +52,13 @@
     <Reference Include="Autofac">
       <HintPath>..\packages\Autofac.3.3.0\lib\net40\Autofac.dll</HintPath>
     </Reference>
+    <Reference Include="EventStore, Version=3.2.0.0, Culture=neutral, PublicKeyToken=7735eb81c0bd9948, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\EventStore.3.2.0.29\lib\net40\EventStore.dll</HintPath>
+    </Reference>
+    <Reference Include="EventStore.Persistence.MongoPersistence">
+      <HintPath>..\packages\EventStore.Persistence.MongoPersistence.3.2.0.29\lib\net40\EventStore.Persistence.MongoPersistence.dll</HintPath>
+    </Reference>
     <Reference Include="Magnum">
       <HintPath>..\packages\Magnum.2.1.2\lib\NET40\Magnum.dll</HintPath>
     </Reference>
