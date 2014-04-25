@@ -8,11 +8,13 @@ namespace FreelanceManager.Performance.Console.Models
 {
     public class Account
     {
-        public static DynamicFluentBuilder<Account> builder = new DynamicFluentBuilder<Account>()
-            .For(x => x.Name, ARandom.FullName())
-            .For(x => x.FirstName, ARandom.FirstName())
-            .For(x => x.LastName, ARandom.LastName())
-            .For(x => x.Email, ARandom.Email());
+        public Account()
+        {
+            Name = ARandom.FullName();
+            FirstName = ARandom.FirstName();
+            LastName = ARandom.LastName();
+            Email = ARandom.Email();
+        }
 
         public string Name { get; set; }
         public string FirstName { get; set; }
@@ -25,7 +27,7 @@ namespace FreelanceManager.Performance.Console.Models
     {
         public static Account CreateAccount(this CustomWebClient browser)
         {
-            var account = Account.builder.build();
+            var account = new Account(); ;
             var r = browser.Post("/write/admin/account/create", JsonConvert.SerializeObject(account));
 
             var response = (dynamic)JObject.Parse(r);

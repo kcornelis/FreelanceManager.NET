@@ -22,7 +22,11 @@ namespace FreelanceManager.Performance.Console
 
                 for (int i = 0; i < Config.Accounts; i++)
                 {
-                    _accounts.Add(client.CreateAccount());
+                    var account = client.CreateAccount();
+
+                    _accounts.Add(account);
+
+                    System.Console.WriteLine(string.Format("Email: {0}, Password: {1}", account.Email, account.Password));
                 }
             }
 
@@ -100,6 +104,8 @@ namespace FreelanceManager.Performance.Console
                         }
                     }
                 }
+
+                System.Console.WriteLine(string.Format("Generated items for {0}-{1}", month, year));
             }
         }
     }

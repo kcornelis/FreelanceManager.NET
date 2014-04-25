@@ -8,8 +8,10 @@ namespace FreelanceManager.Performance.Console.Models
 {
     public class Client
     {
-        public static DynamicFluentBuilder<Client> builder = new DynamicFluentBuilder<Client>()
-            .With(x => x.Name, ARandom.FullName());
+        public Client()
+        {
+            Name = ARandom.FullName();
+        }
 
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -19,7 +21,7 @@ namespace FreelanceManager.Performance.Console.Models
     {
         public static Client CreateClient(this CustomWebClient browser)
         {
-            var client = Client.builder.build();
+            var client = new Client();
             var r = browser.Post("/write/client/create", JsonConvert.SerializeObject(client));
 
             var response = (dynamic)JObject.Parse(r);

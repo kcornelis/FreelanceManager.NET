@@ -12,7 +12,7 @@ namespace FreelanceManager.Performance.Console.Models
         {
             ClientId = clientId;
             Name = ARandom.String(20);
-            Description = ARandom.String(50);
+            Description = ARandom.String(100);
         }
 
         public Guid Id { get; set; }
