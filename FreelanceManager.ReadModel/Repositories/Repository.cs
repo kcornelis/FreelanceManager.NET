@@ -89,7 +89,16 @@ namespace FreelanceManager.ReadModel.Repositories
             if(!TenantIndependant)
                 entity.Tenant = CurrentTenant;
 
-            Collection.Insert<T>(entity);
+            entity.Version = 1;
+
+            try
+            {
+                Collection.Insert<T>(entity);
+            }
+            catch (WriteConcernException ex)
+            {
+                throw new DatabaseException(ex.Message);
+            }
 
             return entity;
         }
@@ -102,28 +111,71 @@ namespace FreelanceManager.ReadModel.Repositories
                     e.Tenant = CurrentTenant;
             }
 
-            Collection.InsertBatch<T>(entities);
+            foreach (var e in entities)
+                e.Version = 1;
+
+            try
+            {
+                Collection.InsertBatch<T>(entities);
+            }
+            catch (WriteConcernException ex)
+            {
+                throw new DatabaseException(ex.Message);
+            }
         }
 
         public virtual T Update(T entity)
         {
+            return InternalUpdate(entity, null);
+        }
+
+        public virtual T Update(T entity, int newVersion)
+        {
+            return InternalUpdate(entity, newVersion);
+        }
+
+        private T InternalUpdate(T entity, int? newVersion)
+        {
             if (entity != null && !VerifyTenant(entity.Tenant))
                 return entity;
 
-            Collection.Save<T>(entity);
-
-            return entity;
-        }
-
-        public void Update(IEnumerable<T> entities)
-        {
-            foreach (T entity in entities)
+            if (newVersion.HasValue)
             {
-                Update(entity);
+                if (entity.Version + 1 != newVersion.Value)
+                    throw new InvalidVersionException(entity.GetType().Name, entity.Id, entity.Version, newVersion.Value);
+            }
+
+            var originalDBVersion = entity.Version;
+            entity.Version = newVersion.HasValue ? newVersion.Value : entity.Version;
+
+            IMongoQuery versionCheck = Query.And(Query.EQ("_id", entity.Id), Query.EQ("Version", originalDBVersion));
+
+            var wrap = new BsonDocumentWrapper(entity);
+            var document = new UpdateDocument(wrap.ToBsonDocument());
+            WriteConcernResult res = Collection.Update(versionCheck, document);
+
+            if (res.DocumentsAffected == 1 && res.Ok)
+            {
+                return entity;
+            }
+
+            if (!res.Ok)
+            {
+                throw new Exception(res.ErrorMessage);
+            }
+
+            bool isConcurrencyError = Collection.Find(Query.EQ("_id", entity.Id)).Any();
+            if (isConcurrencyError)
+            {
+                throw new ConcurrencyException();
+            }
+            else
+            {
+                throw new ModelNotFoundException();
             }
         }
 
-        public virtual void Delete(TKey id)
+        public virtual void Delete(TKey id, int versionToDelete)
         {
             if (id is string)
             {
@@ -135,30 +187,14 @@ namespace FreelanceManager.ReadModel.Repositories
             }
         }
 
-        public virtual void Delete(ObjectId id)
+        public virtual void Delete(ObjectId id, int versionToDelete)
         {
             Collection.Remove(Query.And(Query.EQ("_id", id), Query.EQ("Tenant", CurrentTenant)));
         }
 
-        public void Delete(T entity)
+        public void Delete(T entity, int versionToDelete)
         {
-            Delete(((dynamic)entity).Id);
-        }
-
-        public void Delete(Expression<Func<T, bool>> predicate)
-        {
-            foreach (T entity in this.AsQueryable<T>().Where(predicate))
-            {
-                Delete(((dynamic)entity).Id);
-            }
-        }
-
-        public virtual void DeleteAll()
-        {
-            if (TenantIndependant)
-                return;
-
-            Collection.Remove(Query.EQ("Tenant", CurrentTenant));
+            Delete(((dynamic)entity).Id, versionToDelete);
         }
 
         public virtual long Count()

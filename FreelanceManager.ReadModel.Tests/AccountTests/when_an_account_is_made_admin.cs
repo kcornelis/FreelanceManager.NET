@@ -20,12 +20,12 @@ namespace FreelanceManager.ReadModel.AccountTests
             _handler = Resolve<AccountHandlers>();
             _accountRepository = Resolve<IAccountRepository>();
 
-            _handler.AsDynamic().Handle(new AccountCreated(_id, "John Doe BVBA", "John", "Doe", "john@doe.com", DateTime.UtcNow));
+            _handler.AsDynamic().Handle(new AccountCreated(_id, "John Doe BVBA", "John", "Doe", "john@doe.com", DateTime.UtcNow) { Version = 1 });
         }
 
         protected override void Because()
         {
-            _handler.AsDynamic().Handle(new AccountMadeAdmin(_id));
+            _handler.AsDynamic().Handle(new AccountMadeAdmin(_id) { Version = 2 });
 
             _account = _accountRepository.GetById(_id);
         }

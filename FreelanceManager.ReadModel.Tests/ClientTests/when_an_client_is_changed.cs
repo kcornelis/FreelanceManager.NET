@@ -26,12 +26,12 @@ namespace FreelanceManager.ReadModel.ClientTests
             _tenantContext = Resolve<ITenantContext>();
 
             _tenantContext.SetTenantId(_tenant);
-            _handler.AsDynamic().Handle(new ClientCreated(_id, "John Doe BVBA", DateTime.UtcNow));
+            _handler.AsDynamic().Handle(new ClientCreated(_id, "John Doe BVBA", DateTime.UtcNow) { Version = 1 });
         }
 
         protected override void Because()
         {
-            _handler.AsDynamic().Handle(new ClientDetailsChanged(_id, "Jane Turbo BVBA"));
+            _handler.AsDynamic().Handle(new ClientDetailsChanged(_id, "Jane Turbo BVBA") { Version = 2 });
 
             _client = _clientRepository.GetById(_id);
         }

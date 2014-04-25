@@ -47,7 +47,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 project.Name = @event.Name;
                 project.Description = @event.Description;
 
-                _projectRepository.Update(project);
+                _projectRepository.Update(project, @event.Version);
             }
             else
             {
@@ -63,7 +63,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
             {
                 project.Tasks = @event.Tasks.Select(p => new Task { Name = p.Name, Rate = p.Rate }).ToArray();
 
-                _projectRepository.Update(project);
+                _projectRepository.Update(project, @event.Version);
             }
             else
             {
@@ -79,7 +79,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
             {
                 project.Hidden = true;
 
-                _projectRepository.Update(project);
+                _projectRepository.Update(project, @event.Version);
             }
             else
             {
@@ -95,7 +95,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
             {
                 project.Hidden = false;
 
-                _projectRepository.Update(project);
+                _projectRepository.Update(project, @event.Version);
             }
             else
             {

@@ -24,7 +24,7 @@ namespace FreelanceManager.ReadModel.RepositoryTests
         protected override void Because()
         {
             _tenantContext.SetTenantId(Guid.NewGuid().ToString());
-            _repository.Delete(_id);
+            _repository.Delete(_id, 1);
 
             _tenantContext.SetTenantId(_tenant);
             _model = _repository.GetById(_id);

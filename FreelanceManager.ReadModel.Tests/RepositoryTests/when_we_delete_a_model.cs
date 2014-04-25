@@ -23,7 +23,7 @@ namespace FreelanceManager.ReadModel.RepositoryTests
 
         protected override void Because()
         {
-            _repository.Delete(_id);
+            _repository.Delete(_id, 1);
 
             _model = _repository.GetById(_id);
         }

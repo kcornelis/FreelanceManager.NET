@@ -30,12 +30,12 @@ namespace FreelanceManager.ReadModel.ClientTests
             _tenantContext = Resolve<ITenantContext>();
 
             _tenantContext.SetTenantId(_tenant);
-            _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow));
-            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow));
+            _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow) { Version = 1 });
+            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow) { Version = 1 });
             _projectHandler.AsDynamic().Handle(new ProjectTasksChanged(_projectId, new Dtos.Task[]
             {
                 new Dtos.Task{ Name = "Initial task", Rate = 50M },
-            }));
+            }) { Version = 2 });
         }
 
         protected override void Because()
@@ -44,7 +44,7 @@ namespace FreelanceManager.ReadModel.ClientTests
             {
                 new Dtos.Task{ Name = "Task 1", Rate = 0M },
                 new Dtos.Task{ Name = "Task 2", Rate = 30M },
-            }));
+            }) { Version = 3 });
             
             _project = _projectRepository.GetById(_projectId);
         }

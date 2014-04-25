@@ -18,15 +18,11 @@ namespace FreelanceManager.ReadModel.Repositories
 
         T Update(T entity);
 
-        void Update(IEnumerable<T> entities);
+        T Update(T entity, int newVersion);
 
-        void Delete(TKey id);
+        void Delete(TKey id, int versionToDelete);
 
-        void Delete(T entity);
-
-        void Delete(Expression<Func<T, bool>> predicate);
-
-        void DeleteAll();
+        void Delete(T entity, int versionToDelete);
 
         long Count();
     }

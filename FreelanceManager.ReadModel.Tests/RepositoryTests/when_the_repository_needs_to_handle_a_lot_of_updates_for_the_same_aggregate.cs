@@ -5,7 +5,7 @@ using TPL = System.Threading.Tasks;
 
 namespace FreelanceManager.ReadModel.ToolTests
 {
-    public class when_the_hook_handles_a_lot_of_messages_for_the_same_aggregate : Specification
+    public class when_the_repository_needs_to_handle_a_lot_of_updates_for_the_same_aggregate : Specification
     {
         private const int _repeat = 100;
 
@@ -15,25 +15,26 @@ namespace FreelanceManager.ReadModel.ToolTests
         private Sequence _model;
         private ISequenceRepository _repository;
         private ITenantContext _tenantContext;
-        private IServiceBus _bus;
+        private SequenceAddNumberHandlers _handler;
 
         protected override void Context()
         {
-            _bus = Resolve<IServiceBus>();
             _repository = Resolve<ISequenceRepository>();
             _tenantContext = Resolve<ITenantContext>();
+            _handler = Resolve<SequenceAddNumberHandlers>();
         }
 
         protected override void Because()
         {
             var task1 = TPL.Task.Factory.StartNew(() =>
             {
+                _tenantContext.SetTenantId(_tenant);
+
                 for (int i = 1; i < _repeat; )
                 {
                     try
                     {
-                        _bus.PublishDomainUpdate(new[] { new SequenceNumberAdded(_id, i) },
-                                                 Metadata(i));
+                        _handler.Handle(new SequenceNumberAdded(_id, i){ Version = i });
 
                         i += 3;
                     }
@@ -43,12 +44,13 @@ namespace FreelanceManager.ReadModel.ToolTests
 
             var task2 = TPL.Task.Factory.StartNew(() =>
             {
+                _tenantContext.SetTenantId(_tenant);
+
                 for (int i = 2; i < _repeat; )
                 {
                     try
                     {
-                        _bus.PublishDomainUpdate(new[] { new SequenceNumberAdded(_id, i) },
-                                                 Metadata(i));
+                        _handler.Handle(new SequenceNumberAdded(_id, i) { Version = i });
 
                         i += 3;
                     }
@@ -58,12 +60,13 @@ namespace FreelanceManager.ReadModel.ToolTests
 
             var task3 = TPL.Task.Factory.StartNew(() =>
             {
+                _tenantContext.SetTenantId(_tenant);
+
                 for (int i = 3; i < _repeat; )
                 {
                     try
                     {
-                        _bus.PublishDomainUpdate(new[] { new SequenceNumberAdded(_id, i) },
-                                                 Metadata(i));
+                        _handler.Handle(new SequenceNumberAdded(_id, i) { Version = i });
 
                         i += 3;
                     }
@@ -78,24 +81,12 @@ namespace FreelanceManager.ReadModel.ToolTests
         }
 
         [Fact]
-        public void should_process_the_events_in_order()
+        public void should_process_the_updates_in_order()
         {
             var result = "";
             for (int i = 1; i < _repeat; i++) { result += i.ToString(); }
 
             _model.Result.Should().Be(result);
-        }
-
-        private DomainUpdateMetadate Metadata(int version)
-        {
-            return new DomainUpdateMetadate
-            {
-                Tenant = _tenant,
-                AggregateId = _id,
-                AggregateType = "Sequence",
-                ApplicationService = "ReadModelTests",
-                LastVersion = version
-            };
         }
     }
 }

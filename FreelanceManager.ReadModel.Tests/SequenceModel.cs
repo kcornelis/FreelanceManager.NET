@@ -19,6 +19,7 @@ namespace FreelanceManager.ReadModel
         public int Number { get; set; }
 
         public Guid Id { get; set; }
+        public int Version { get; set; }
     }
 
     public class Sequence : Model
@@ -69,7 +70,7 @@ namespace FreelanceManager.ReadModel
             {
                 model.Result += @event.Number.ToString();
 
-                _repository.Update(model);
+                _repository.Update(model, @event.Version);
             }
         }
     }

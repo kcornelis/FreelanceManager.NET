@@ -78,7 +78,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.To = @event.To;
                 timeRegistration.Income = Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
-                _timeRegistrationRepository.Update(timeRegistration);
+                _timeRegistrationRepository.Update(timeRegistration, @event.Version);
             }
             else
             {
@@ -98,7 +98,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.CorrectedIncomeMessage = null;
                 timeRegistration.Income = Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
-                _timeRegistrationRepository.Update(timeRegistration);
+                _timeRegistrationRepository.Update(timeRegistration, @event.Version);
             }
             else
             {
@@ -116,7 +116,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.CorrectedIncomeMessage = @event.Message;
                 timeRegistration.Income = @event.Amount;
 
-                _timeRegistrationRepository.Update(timeRegistration);
+                _timeRegistrationRepository.Update(timeRegistration, @event.Version);
             }
             else
             {
@@ -135,7 +135,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 timeRegistration.Rate = @event.Rate;
                 timeRegistration.Income = timeRegistration.CorrectedIncome != null ? (decimal)timeRegistration.CorrectedIncome : Math.Round((((decimal)totalMinutes * timeRegistration.Rate) / 60), 2);
 
-                _timeRegistrationRepository.Update(timeRegistration);
+                _timeRegistrationRepository.Update(timeRegistration, @event.Version);
             }
             else
             {
@@ -173,7 +173,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
 
             if (timeRegistration != null)
             {
-                _timeRegistrationRepository.Delete(timeRegistration);
+                _timeRegistrationRepository.Delete(timeRegistration, @event.Version);
             }
         }
     }

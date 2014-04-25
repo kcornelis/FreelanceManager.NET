@@ -9,7 +9,7 @@ namespace FreelanceManager.Performance.Console.Models
     public class Client
     {
         public static DynamicFluentBuilder<Client> builder = new DynamicFluentBuilder<Client>()
-            .For(x => x.Name, ARandom.FullName());
+            .With(x => x.Name, ARandom.FullName());
 
         public Guid Id { get; set; }
         public string Name { get; set; }

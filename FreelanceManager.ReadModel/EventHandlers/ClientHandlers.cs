@@ -33,7 +33,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
             {
                 client.Name = @event.Name;
 
-                _clientRepository.Update(client);
+                _clientRepository.Update(client, @event.Version);
             }
             else
             {

@@ -38,7 +38,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
                                                             "Development", 50M, "Doing some work",
                                                             Date.Parse("2012-01-30"),
                                                             Time.Parse("12:00"), Time.Parse("14:00"),
-                                                            DateTime.UtcNow));
+                                                            DateTime.UtcNow) { Version = 1 });
 
             _timeregistration = _timeregistrationRepository.GetById(_timeregistrationId);
         }

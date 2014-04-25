@@ -6,5 +6,6 @@ namespace FreelanceManager.ReadModel
     {
         public Guid Id { get; set; }
         public string Tenant { get; set; }
+        public int Version { get; set; }
     }
 }

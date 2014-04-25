@@ -436,6 +436,8 @@
     <Content Include="Scripts\moment.min.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.min.js" />
+    <Content Include="Scripts\underscore-min.js" />
+    <Content Include="Scripts\underscore.js" />
     <Content Include="Scripts\vectormap-data\africa.js" />
     <Content Include="Scripts\vectormap-data\canada.js" />
     <Content Include="Scripts\vectormap-data\eurasia.js" />
@@ -862,6 +864,7 @@
     <Content Include="Views\Shared\_SetupLayout.cshtml" />
     <Content Include="Views\TimeRegistration\ImportMap.cshtml" />
     <Content Include="Views\TimeRegistration\ImportResult.cshtml" />
+    <Content Include="Scripts\underscore-min.map" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

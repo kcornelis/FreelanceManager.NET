@@ -19,11 +19,13 @@ namespace FreelanceManager.ReadModel.AccountPasswordTests
         {
             _handler = Resolve<AccountPasswordHandlers>();
             _accountPasswordRepository = Resolve<IAccountPasswordRepository>();
+
+            _handler.AsDynamic().Handle(new AccountCreated(_id, "John Doe BVBA", "John", "Doe", "john@doe.com", DateTime.UtcNow) { Version = 1 });
         }
 
         protected override void Because()
         {
-            _handler.AsDynamic().Handle(new AccountPasswordChanged(_id, "hash", 20));
+            _handler.AsDynamic().Handle(new AccountPasswordChanged(_id, "hash", 20) { Version = 2 });
 
             _account = _accountPasswordRepository.GetById(_id);
         }

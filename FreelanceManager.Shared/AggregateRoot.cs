@@ -53,6 +53,7 @@ namespace FreelanceManager
 
             if (isNew)
             {
+                @event.Version = Version;
                 _changes.Add(@event);
             }
         }

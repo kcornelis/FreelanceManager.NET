@@ -6,7 +6,8 @@ namespace FreelanceManager.ReadModel.EventHandlers
 {
     public class AccountHandlers : IHandleEvent<AccountCreated>,
                                    IHandleEvent<AccountDetailsChanged>,
-                                   IHandleEvent<AccountMadeAdmin>
+                                   IHandleEvent<AccountMadeAdmin>,
+                                   IHandleEvent<AccountPasswordChanged>
     {
         private readonly IAccountRepository _accountRepository;
 
@@ -43,11 +44,25 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 account.Email = @event.Email;
                 account.Name = @event.Name;
 
-                _accountRepository.Update(account);
+                _accountRepository.Update(account, @event.Version);
             }
             else
             {
                 throw new ModelNotFoundException();
+            }
+        }
+
+        public void Handle(AccountPasswordChanged @event)
+        {
+            var account = _accountRepository.GetById(@event.Id);
+
+            if (account == null)
+            {
+                throw new ModelNotFoundException();
+            }
+            else
+            {
+                _accountRepository.Update(account, @event.Version);
             }
         }
 
@@ -59,7 +74,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
             {
                 account.Admin = true;
 
-                _accountRepository.Update(account);
+                _accountRepository.Update(account, @event.Version);
             }
             else
             {

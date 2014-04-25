@@ -34,6 +34,12 @@ namespace FreelanceManager.ReadModel.RepositoryTests
         }
 
         [Fact]
+        public void should_have_a_version()
+        {
+            _model.Version.Should().Be(1);
+        }
+
+        [Fact]
         public void should_have_a_tenant_id()
         {
             _model.Tenant.Should().Be(_tenant);

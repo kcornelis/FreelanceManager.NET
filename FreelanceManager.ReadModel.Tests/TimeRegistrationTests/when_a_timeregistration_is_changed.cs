@@ -34,13 +34,13 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
             _tenantContext = Resolve<ITenantContext>();
 
             _tenantContext.SetTenantId(_tenant);
-            _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow));
-            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow));
+            _clientHandler.AsDynamic().Handle(new ClientCreated(_clientId, "John Doe BVBA", DateTime.UtcNow) { Version = 1 });
+            _projectHandler.AsDynamic().Handle(new ProjectCreated(_projectId, "Project 1", "A test project", _clientId, DateTime.UtcNow) { Version = 1 });
             _timeregistrationHandler.AsDynamic().Handle(new TimeRegistrationCreated(_timeregistrationId, _clientId, _projectId,
                                                 "Development", 50M, "Doing some work",
                                                 Date.Parse("2012-01-30"),
                                                 Time.Parse("12:00"), Time.Parse("14:00"),
-                                                DateTime.UtcNow));
+                                                DateTime.UtcNow) { Version = 1 });
         }
 
         protected override void Because()
@@ -48,7 +48,7 @@ namespace FreelanceManager.ReadModel.TimeRegistrationTests
             _timeregistrationHandler.AsDynamic().Handle(new TimeRegistrationDetailsChanged(_timeregistrationId, _clientId, _projectId,
                                                 "Meeting", "Doing some other work",
                                                 Date.Parse("2012-03-30"),
-                                                Time.Parse("11:00"), Time.Parse("15:00")));
+                                                Time.Parse("11:00"), Time.Parse("15:00")) { Version = 2 });
 
             _timeregistration = _timeregistrationRepository.GetById(_timeregistrationId);
         }

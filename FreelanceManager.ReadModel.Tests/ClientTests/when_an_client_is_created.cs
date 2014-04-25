@@ -30,7 +30,7 @@ namespace FreelanceManager.ReadModel.ClientTests
 
         protected override void Because()
         {
-            _handler.AsDynamic().Handle(new ClientCreated(_id, "John Doe BVBA", DateTime.UtcNow));
+            _handler.AsDynamic().Handle(new ClientCreated(_id, "John Doe BVBA", DateTime.UtcNow) { Version = 1 });
 
             _client = _clientRepository.GetById(_id);
         }

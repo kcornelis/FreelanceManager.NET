@@ -55,6 +55,7 @@ namespace FreelanceManager.Web.Modules
                                    .AsCached("modernizr", "~/bundles/js/modernizr");
 
                 Bundle.JavaScript().Add(staticContentResolver.GetLocation("/Scripts/bootstrap.js"))
+                                   .Add(staticContentResolver.GetLocation("/Scripts/underscore-min.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/bootstrap-select.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/bootstrap-datepicker.js"))
                                    .Add(staticContentResolver.GetLocation("/Scripts/respond.js"))

@@ -23,7 +23,7 @@ namespace FreelanceManager.ReadModel.AccountTests
 
         protected override void Because()
         {
-            _handler.AsDynamic().Handle(new AccountCreated(_id, "John Doe BVBA", "John", "Doe", "john@doe.com", DateTime.UtcNow));
+            _handler.AsDynamic().Handle(new AccountCreated(_id, "John Doe BVBA", "John", "Doe", "john@doe.com", DateTime.UtcNow) { Version = 1 });
 
             _account = _accountRepository.GetById(_id);
         }

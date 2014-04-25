@@ -34,7 +34,7 @@
             success: function (data) {
 
                 $.each(data, function (index, project) {
-                    var client = ko.utils.arrayFirst(self.clients(), function (c) {
+                    var client = _.find(self.clients(), function (c) {
                         return project.ClientId === c.id();
                     });
                     if (client) {
