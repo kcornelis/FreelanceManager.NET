@@ -18,6 +18,7 @@ task :deploy => [ :build, :deployLocal ]
 @env_version = ENV['env_buildversion'] || '1.0.0.0'
 @env_loglevel = ENV['env_loglevel'] || 'Debug'
 @env_localReadModelServiceDir = ENV['env_localReadModelServiceDir'] || 'C:\Test\ReadModelService'
+@env_localReadModelServiceName = ENV['env_localReadModelServiceName'] || 'FreelanceManagerReadModel'
 @env_localWebsiteDir = ENV['env_localWebsiteDir'] || 'C:\Test\Websites'
 
 @env_azureServiceBusNamespace = ENV['env_azureServiceBusNamespace'] || ''
@@ -113,9 +114,9 @@ desc "Deploy Local"
 task :deployLocal do
 	puts "Local deploy"
 
-	if Service.exists?('FreelanceManager.ReadModel') && Service.status('FreelanceManager.ReadModel').current_state == 'running'
-		Service.stop("FreelanceManager.ReadModel")
-		while Service.status('FreelanceManager.ReadModel').current_state != 'stopped'
+	if Service.exists?(@env_localReadModelServiceName) && Service.status(@env_localReadModelServiceName).current_state == 'running'
+		Service.stop(@env_localReadModelServiceName)
+		while Service.status(@env_localReadModelServiceName).current_state != 'stopped'
             sleep 5
          end
 	end
@@ -123,14 +124,15 @@ task :deployLocal do
 	FileUtils.cp_r( Dir[@par_publishdir + 'Web/*'], @env_localWebsiteDir)
 	FileUtils.cp_r( Dir[@par_basedir + 'FreelanceManager.ReadModel.WindowsService/bin/Release/*'], @env_localReadModelServiceDir)
 	
-	if Service.exists?('FreelanceManager.ReadModel') == false
+	if Service.exists?(@env_localReadModelServiceName) == false
+		puts "#{@env_localReadModelServiceDir}\\FreelanceManager.ReadModel.WindowsService.exe"
 		Service.new(
-	        :service_name     => "FreelanceManager.ReadModel",
-	        :display_name     => "FreelanceManager.ReadModel",
+	        :service_name     => @env_localReadModelServiceName,
+	        :display_name     => @env_localReadModelServiceName,
 	        :description      => "FreelanceManager Read Model Service",
 	        :binary_path_name => "#{@env_localReadModelServiceDir}\\FreelanceManager.ReadModel.WindowsService.exe"
       	)
 	end
 
-	Service.start('FreelanceManager.ReadModel')
+	Service.start(@env_localReadModelServiceName)
 end

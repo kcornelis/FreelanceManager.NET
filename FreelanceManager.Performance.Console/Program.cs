@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FreelanceManager.Performance.Console.Models;
+using NLog;
 
 namespace FreelanceManager.Performance.Console
 {
     class Program
     {
         static readonly List<Account> _accounts = new List<Account>();
+        private static readonly Logger _logger = LogManager.GetLogger("FreelanceManager.Performance");
 
         static void Main(string[] args)
         {
-            Thread.Sleep(5000);
+            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
 
             using (var client = new CustomWebClient(Config.Url))
             {
@@ -26,7 +30,7 @@ namespace FreelanceManager.Performance.Console
 
                     _accounts.Add(account);
 
-                    System.Console.WriteLine(string.Format("Email: {0}, Password: {1}", account.Email, account.Password));
+                    _logger.Info(string.Format("Email: {0}, Password: {1}", account.Email, account.Password));
                 }
             }
 
@@ -39,7 +43,7 @@ namespace FreelanceManager.Performance.Console
 
             Task.WaitAll(workers);
 
-            System.Console.WriteLine("Finished");
+            _logger.Info("Finished");
             System.Console.Read();
         }
 
@@ -83,6 +87,8 @@ namespace FreelanceManager.Performance.Console
                 var days = DateTime.DaysInMonth(year, month);
                 var interval = ((18 - 8) * 60) / Config.TimeRegistrationsPerDay;
                 var random = new Random();
+                List<long> times = new List<long>();
+                Stopwatch sw = new Stopwatch();
 
                 for (int day = 1; day <= days; day++)
                 {
@@ -93,19 +99,35 @@ namespace FreelanceManager.Performance.Console
                         var start = new DateTime(year, month, day, 8, 0, 0);
                         for (int i = 0; i < Config.TimeRegistrationsPerDay; i++)
                         {
-                            var next = start.AddMinutes(interval);
-                            var project = _projects[random.Next(0, _projects.Count - 1)];
+                            try
+                            {
+                                var next = start.AddMinutes(interval);
+                                var project = _projects[random.Next(0, _projects.Count - 1)];
 
-                            client.CreateTimeRegistration(project.ClientId, project.Id,
-                                string.Format("{0}-{1}-{2}", year, month, day),
-                                start.ToString("HH:mm"), next.ToString("HH:mm"));
+                                sw.Reset();
+                                sw.Start();
+                                client.CreateTimeRegistration(project.ClientId, project.Id,
+                                    string.Format("{0}-{1}-{2}", year, month, day),
+                                    start.ToString("HH:mm"), next.ToString("HH:mm"));
+                                sw.Stop();
 
-                            start = next;
+                                times.Add(sw.ElapsedMilliseconds);
+
+                                start = next;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error(ex);
+                                Thread.Sleep(1000);                                
+                            }
                         }
                     }
                 }
 
-                System.Console.WriteLine(string.Format("Generated items for {0}-{1}", month, year));
+                _logger.Info(string.Format("Generated {0} items for {1}-{2} (min {3}ms) (max {4}ms) (avg {5}ms)", 
+                    Config.TimeRegistrationsPerDay * days,
+                    month, year,
+                    times.Min(), times.Max(), times.Average()));
             }
         }
     }
