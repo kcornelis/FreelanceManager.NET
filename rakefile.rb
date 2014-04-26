@@ -6,7 +6,7 @@ include Win32
 
 task :default => [ :build ]
 task :build => [ :config_setup, :nlog_setup, :compile, :publish ]
-task :deploy => [ :build, :deploy ]
+task :deploy => [ :build, :deployLocal ]
 
 
 # Good tutorials
