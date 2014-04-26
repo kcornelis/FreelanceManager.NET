@@ -128,7 +128,7 @@ task :deployLocal do
 	        :service_name     => "FreelanceManager.ReadModel",
 	        :display_name     => "FreelanceManager.ReadModel",
 	        :description      => "FreelanceManager Read Model Service",
-	        :binary_path_name => "#{@env_localTaskCenterDir}\\FreelanceManager.ReadModel.WindowsService.exe"
+	        :binary_path_name => "#{@env_localReadModelServiceDir}\\FreelanceManager.ReadModel.WindowsService.exe"
       	)
 	end
 
