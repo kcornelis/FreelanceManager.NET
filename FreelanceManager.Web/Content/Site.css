@@ -233,27 +233,27 @@ input[type="checkbox"].input-validation-error {
 
 /*
 *
-* TIME REGISTRATION
+* PAGE ACTIONS
 *
 */
 
-.date-selection {
+.page-actions {
     position: relative;
     display: inline-block;
     margin-top: -1px;
 }
-.date-selection .form-control{
+.page-actions .form-control{
     float: left;
     padding: 0px 12px;
     height: 24px;
     display: inline-block;
     border-left-width: 0px;
 }
-.date-selection .btn{
+.page-actions .btn{
     float:left;
     height: 24px;
     border-left-width: 0px;
 }
-.date-selection :first-child {
+.page-actions > :first-child {
     border-left-width: 1px;
 }

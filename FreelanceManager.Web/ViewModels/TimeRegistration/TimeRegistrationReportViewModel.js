@@ -12,6 +12,8 @@
     self.selectedDate = ko.observable(new moment(new moment().format("YYYY-MM-DD")));
     self.billableUnbillable = ko.observableArray([]);
     self.hasNoHours = ko.computed(function () { return !self.info() || (self.info().UnbillableMinutes == 0 && self.info().BillableMinutes == 0) }, self);
+    self.dateFromSelector = ko.observable(new moment().format("YYYY-MM-DD"));
+    self.dateToSelector = ko.observable(new moment().format("YYYY-MM-DD"));
 
     self.refresh = function () {
         self.info(null);

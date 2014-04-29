@@ -852,7 +852,6 @@
     <Content Include="Views\TimeRegistration\Index.cshtml" />
     <Content Include="Views\TimeRegistration\Report.cshtml" />
     <Content Include="Views\TimeRegistration\Import.cshtml" />
-    <Content Include="Views\TimeRegistration\Export.cshtml" />
     <Content Include="Views\Config\ClientDialog.cshtml" />
     <Content Include="Views\Config\ProjectDialog.cshtml" />
     <Content Include="Views\TimeRegistration\TimeRegistrationDialog.cshtml" />

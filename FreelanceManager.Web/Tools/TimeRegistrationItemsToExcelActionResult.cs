@@ -11,7 +11,7 @@ namespace FreelanceManager.Web.Tools
 {
     public static class TimeRegistrationsToExcelExtension
     {
-        public static Response AsExcel(this IResponseFormatter response, int year, int month, IEnumerable<TimeRegistration> items)
+        public static Response AsExcel(this IResponseFormatter response, IEnumerable<TimeRegistration> items)
         {
             using (var package = new ExcelPackage())
             {
@@ -19,7 +19,7 @@ namespace FreelanceManager.Web.Tools
                 var stream = new MemoryStream(package.GetAsByteArray());
 
                 return response.FromStream(() => stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                              .WithHeader("content-disposition", string.Format("attachment;filename=Timeregistrations_{0}_{1}.xlsx", year, month));
+                              .WithHeader("content-disposition", string.Format("attachment;filename=Timeregistrations_all.xlsx"));
             }
 
         }

@@ -3,14 +3,7 @@
     ViewBag.Title = "Time Registration - Import";
 }
 
-@section Menu{
-    <li><a href="/timeregistration">Registrations</a></li>
-    <li><a href="/timeregistration/report">Report</a></li>
-    <li class="active"><a href="/timeregistration/import">Import</a></li>
-    <li><a href="/timeregistration/export">Export</a></li>
-}
-
-<h1 class="text-center">Import</h1>
+<h1 class="text-center">Import Time Registrations</h1>
 
 <form method="post" action="/timeregistration/import">
     <input type="hidden" name="serverFile" value="@Model.ServerFile" />
@@ -86,6 +79,7 @@
     </div>
 
     <button type="submit" class="btn btn-default">Submit</button>
+    <a href="/timeregistration">Cancel</a>
 
 </form>
 
