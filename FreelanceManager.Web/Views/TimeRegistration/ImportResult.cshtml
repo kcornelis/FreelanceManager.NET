@@ -4,13 +4,6 @@
     ViewBag.Title = "Time Registration - Import";
 }
 
-@section Menu{
-    <li><a href="/timeregistration">Registrations</a></li>
-    <li><a href="/timeregistration/report">Report</a></li>
-    <li class="active"><a href="/timeregistration/import">Import</a></li>
-    <li><a href="/timeregistration/export">Export</a></li>
-}
-
 @section Scripts{
     <script src="/bundles/viewmodels/timeregistration" type="text/javascript"></script>
     <script type="text/javascript">
@@ -24,7 +17,7 @@
     </script>
 }
 
-<h1 class="text-center">Import</h1>
+<h1 class="text-center">Import Time Registrations</h1>
 
 <div class="alert alert-success">
     @Model.Success rows imported
@@ -33,7 +26,7 @@
 @if (Model.Errors.Any())
 {
     <div class="alert alert-danger">
-        Somme errors occurred while importing the excel
+        Some errors occurred while importing the excel
     </div>
     <table class="table table-bordered table-condensed">
         <thead>
@@ -53,6 +46,8 @@
         </tbody>
     </table>
 }
+
+<a href="/timeregistration">Go back to the overview</a>
 
 
 

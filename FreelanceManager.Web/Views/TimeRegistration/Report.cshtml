@@ -6,8 +6,6 @@
 @section Menu{
     <li><a href="/timeregistration">Registrations</a></li>
     <li class="active"><a href="/timeregistration/report">Report</a></li>
-    <li><a href="/timeregistration/import">Import</a></li>
-    <li><a href="/timeregistration/export">Export</a></li>
 }
 
 @section Scripts{
@@ -20,13 +18,28 @@
         $(document).ready(function () {
 
             ko.applyBindings(viewModel);
+
+            $('.date-selector').datepicker({
+                format: 'yyyy-mm-dd'
+            });
         });
     </script>
 }
 
-<div class="date-selection pull-right">
+<div class="page-actions pull-right">
     <button type="button" class="btn btn-default btn-xs" data-bind="click: previousDate"><span class="glyphicon glyphicon-chevron-left"></span></button>
+    @*<input type="text" class="form-control date-selector" data-bind="value: dateFromSelector" style="width: 100px;" />
+    <input type="text" class="form-control date-selector" data-bind="value: dateToSelector" style="width: 100px;" />*@
     <button type="button" class="btn btn-default btn-xs" data-bind="click: nextDate"><span class="glyphicon glyphicon-chevron-right"></span></button>
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+            <span class="glyphicon glyphicon-cog"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="/timeregistration/export">Export</a></li>
+        </ul>
+    </div>
 </div>
 
 <div class="clearfix"></div>
@@ -35,7 +48,7 @@
 
 <div class="panel panel-default panel-margin" data-bind="visible: hasNoHours">
     <div class="panel-body text-center">
-        No hours registered for this month
+        No hours registered for this period
     </div>
 </div>
 

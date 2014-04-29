@@ -9,6 +9,7 @@ namespace FreelanceManager.ReadModel.Repositories
         IEnumerable<TimeRegistration> FindForClient(Guid clientId);
         IEnumerable<TimeRegistration> FindForProject(Guid projectId);
         IEnumerable<TimeRegistration> GetForMonth(int year, int month);
+        IEnumerable<TimeRegistration> GetAll();
     }
 
     public class TimeRegistrationRepository : Repository<TimeRegistration>, ITimeRegistrationRepository
@@ -36,6 +37,11 @@ namespace FreelanceManager.ReadModel.Repositories
         public IEnumerable<TimeRegistration> GetForMonth(int year, int month)
         {
             return Context.Where(t => t.Date.Year == year && t.Date.Month == month).ToList();
+        }
+
+        public IEnumerable<TimeRegistration> GetAll()
+        {
+            return Context.ToList();
         }
     }
 }

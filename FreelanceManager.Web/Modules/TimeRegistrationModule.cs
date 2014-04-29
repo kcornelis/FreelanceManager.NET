@@ -71,12 +71,10 @@ namespace FreelanceManager.Web.Modules
                 return View["ImportResult", result];
             };
 
-            Get["/export"] = _ => View["Export"];
-
-            Post["/export"] = parameters =>
+            Get["/export"] = parameters =>
             {
-                var items = timeRegistrationRepository.GetForMonth((int)Request.Form.year, (int)Request.Form.month);
-                return Response.AsExcel((int)Request.Form.year, (int)Request.Form.month, items);
+                var items = timeRegistrationRepository.GetAll();
+                return Response.AsExcel(items);
             };
         }
     }
