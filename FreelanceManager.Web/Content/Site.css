@@ -199,6 +199,16 @@ input[type="checkbox"].input-validation-error {
 
 /*
 *
+* TIME REGISTRATION VIEWS
+*
+*/
+
+.time-registration-list .list-group{
+    display: inline;
+}
+
+/*
+*
 * HOME SCREEN
 *
 */

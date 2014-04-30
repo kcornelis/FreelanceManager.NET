@@ -46,6 +46,19 @@ function toggleDialog(selector, show) {
     else $(selector).modal("hide");
 }
 
+function minutesToDisplayValue(time) {
+    if (!time)
+        return '0';
+
+    return ((time - (time % 60)) / 60) + ':' + pad(time % 60, 2);
+}
+
+function pad(n, width, z) {
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
 $('body').on('shown.bs.modal', function (e) {
     $(e.target).find("input[type=text]").first().focus();
 })

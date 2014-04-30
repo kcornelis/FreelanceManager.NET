@@ -831,6 +831,7 @@
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationIndexViewModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationProjectModel.js" />
+    <Content Include="ViewModels\TimeRegistration\TimeRegistrationOverviewViewModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationReportViewModel.js" />
     <Content Include="ViewModels\TimeRegistration\TimeRegistrationTaskModel.js" />
     <Content Include="Web.config">
@@ -864,6 +865,8 @@
     <Content Include="Views\TimeRegistration\ImportMap.cshtml" />
     <Content Include="Views\TimeRegistration\ImportResult.cshtml" />
     <Content Include="Scripts\underscore-min.map" />
+    <Content Include="Views\TimeRegistration\Menu.cshtml" />
+    <Content Include="Views\TimeRegistration\Overview.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

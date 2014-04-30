@@ -4,8 +4,7 @@
 }
 
 @section Menu{
-    <li><a href="/timeregistration">Registrations</a></li>
-    <li class="active"><a href="/timeregistration/report">Report</a></li>
+    @Html.Partial("Menu", "Report")
 }
 
 @section Scripts{
@@ -37,6 +36,10 @@
             <span class="glyphicon glyphicon-cog"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
+            <li><a href="#">Week</a></li>
+            <li><a href="#">Month</a></li>
+            <li><a href="#">Year</a></li>
+            <li><hr /></li>
             <li><a href="/timeregistration/export">Export</a></li>
         </ul>
     </div>
@@ -52,7 +55,7 @@
     </div>
 </div>
 
-<div class="row" style="height: 200px;" data-bind="visible: !hasNoHours()">
+<div class="row" style="height: 200px; display:none;" data-bind="visible: !hasNoHours()">
     <div class="col-xs-12 col-sm-4">
         <div id="chartContainer" style="width: 100%;height: 200px;" data-bind="dxPieChart: { dataSource: billableUnbillable,
                 series: { argumentField: 'type', valueField: 'value' ,

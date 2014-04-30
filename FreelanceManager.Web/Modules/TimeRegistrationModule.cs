@@ -28,6 +28,8 @@ namespace FreelanceManager.Web.Modules
 
             Get["/"] = _ => View["Index"];
 
+            Get["/overview"] = _ => View["Overview"];
+
             Get["/report"] = _ => View["Report"];
 
             Get["/import"] = _ => View["Import"];

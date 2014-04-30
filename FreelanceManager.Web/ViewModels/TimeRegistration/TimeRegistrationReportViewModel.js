@@ -3,17 +3,14 @@
     var self = this;
     $.extend(self, new BaseViewModel());
 
-    self.selectedDate = ko.observable(new moment());
     self.info = ko.observable();
-    self.billableHours = ko.computed(function () { return self.info() ? self.timeToDisplay(self.info().BillableMinutes) : '0' });
-    self.unbillableHours = ko.computed(function () { return self.info() ? self.timeToDisplay(self.info().UnbillableMinutes) : '0' });
+    self.billableHours = ko.computed(function () { return self.info() ? minutesToDisplayValue(self.info().BillableMinutes) : '0' });
+    self.unbillableHours = ko.computed(function () { return self.info() ? minutesToDisplayValue(self.info().UnbillableMinutes) : '0' });
     self.income = ko.computed(function () { return self.info() ? self.info().Income : '0' });
     self.infoPerTask = ko.observableArray([]);
     self.selectedDate = ko.observable(new moment(new moment().format("YYYY-MM-DD")));
     self.billableUnbillable = ko.observableArray([]);
     self.hasNoHours = ko.computed(function () { return !self.info() || (self.info().UnbillableMinutes == 0 && self.info().BillableMinutes == 0) }, self);
-    self.dateFromSelector = ko.observable(new moment().format("YYYY-MM-DD"));
-    self.dateToSelector = ko.observable(new moment().format("YYYY-MM-DD"));
 
     self.refresh = function () {
         self.info(null);
@@ -34,8 +31,8 @@
         self.info(data);
         self.markNotBusy();
         self.billableUnbillable.removeAll();
-        self.billableUnbillable.push({ type: "Unbillable", value: data.UnbillableMinutes, display: self.timeToDisplay(data.UnbillableMinutes) });
-        self.billableUnbillable.push({ type: "Billable", value: data.BillableMinutes, display: self.timeToDisplay(data.BillableMinutes) });
+        self.billableUnbillable.push({ type: "Unbillable", value: data.UnbillableMinutes, display: minutesToDisplayValue(data.UnbillableMinutes) });
+        self.billableUnbillable.push({ type: "Billable", value: data.BillableMinutes, display: minutesToDisplayValue(data.BillableMinutes) });
     };
 
     self.loadInfoPerTask = function (data) {
@@ -51,7 +48,7 @@
             }
 
             if (found) {
-                found.tasks.push({ task: row.Task, income: row.Income, unbillableHours: self.timeToDisplay(row.UnbillableMinutes), billableHours: self.timeToDisplay(row.BillableMinutes) });
+                found.tasks.push({ task: row.Task, income: row.Income, unbillableHours: minutesToDisplayValue(row.UnbillableMinutes), billableHours: minutesToDisplayValue(row.BillableMinutes) });
             }
             else {
                 self.infoPerTask.push({
@@ -60,7 +57,7 @@
                     project: row.Project,
                     projectId: row.ProjectId,
                     tasks: ko.observableArray([
-                        { task: row.Task, income: row.Income, unbillableHours: self.timeToDisplay(row.UnbillableMinutes), billableHours: self.timeToDisplay(row.BillableMinutes) }
+                        { task: row.Task, income: row.Income, unbillableHours: minutesToDisplayValue(row.UnbillableMinutes), billableHours: minutesToDisplayValue(row.BillableMinutes) }
                     ])
                 });
             }
@@ -75,12 +72,5 @@
     self.previousDate = function () {
         self.selectedDate(self.selectedDate().subtract('months', 1));
         self.refresh();
-    };
-
-    self.timeToDisplay = function (time) {
-        if (!time)
-            return '0';
-
-        return ((time - (time % 60)) / 60) + ':' + (time % 60);
     };
 }

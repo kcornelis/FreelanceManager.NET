@@ -1,0 +1,86 @@
+﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+@{
+    ViewBag.Title = "Time Registration - Overview";
+}
+
+@section Menu{
+    @Html.Partial("Menu", "Overview")
+}
+
+@section Scripts{
+    <script src="/bundles/viewmodels/timeregistration" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        var viewModel = new TimeRegistrationOverviewViewModel();
+
+        $(document).ready(function () {
+
+            ko.applyBindings(viewModel);
+
+            $('.date-selector').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+        });
+    </script>
+}
+
+<div class="page-actions pull-right">
+    
+    <input type="text" class="form-control date-selector" data-bind="value: dateFromSelector" style="width: 100px;" />
+    <input type="text" class="form-control date-selector" data-bind="value: dateToSelector" style="width: 100px;" />
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+            <span class="glyphicon glyphicon-cog"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="#">This Week</a></li>
+            <li><a href="#">Last Week</a></li>
+            <li><a href="#">This Month</a></li>
+            <li><a href="#">Last Month</a></li>
+            <li><a href="#">This Year</a></li>
+            <li><a href="#">Last Year</a></li>
+            <li><hr /></li>
+            <li><a href="/timeregistration/export">Export</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="clearfix"></div>
+
+<h1 class="text-center" data-bind="text: title"></h1>
+
+<div class="panel panel-default panel-margin" data-bind="visible: hasNoTimeRegistrations">
+    <div class="panel-body text-center">
+        No hours registered for this period
+    </div>
+</div>
+
+<div class="time-registration-list" data-bind="foreach: timeRegistrations">
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading" data-bind="text: date.Display"></div>
+
+        <!-- List group -->
+        <ul class="list-group" data-bind="foreach: items">
+            <li class="list-group-item">
+                <div class="row">
+                    <div class="col-xs-8">
+                        <strong class="hideOverflow"><span data-bind="text: ClientName">&nbsp;</span> - <span data-bind="    text: ProjectName">&nbsp;</span></strong>
+                        <span class="hideOverflow"><span data-bind="text: Task">&nbsp;</span> - <span data-bind="    text: Description">&nbsp;</span></span>
+                    </div>
+                    <div class="col-xs-2 pull-right">
+                        <div class="pull-right">
+                            <span class="hideOverflow" data-bind="text: (From.Display + ' - ' + To.Display)">&nbsp;</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="pull-right">
+                            <strong><span data-bind="text: minutesToDisplayValue(Minutes)">&nbsp;</span></strong>
+                        </div>
+                    </div>
+  
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

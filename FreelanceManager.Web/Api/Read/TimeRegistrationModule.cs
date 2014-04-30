@@ -23,7 +23,20 @@ namespace FreelanceManager.Web.Api.Read
 
                 return Json(timeRegistrationRepository
                     .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
-                    .OrderBy(t => t.From.Numeric)
+                    .OrderBy(t => t.Date.Numeric)
+                    .ThenBy(t => t.From.Numeric)
+                    .ToList());
+            };
+
+            Get["/getforperiod/{fromDate}/{toDate}"] = parameters =>
+            {
+                var min = ((DateTime)parameters.fromDate).GetNumericValue();
+                var max = ((DateTime)parameters.toDate).AddDays(1).GetNumericValue();
+
+                return Json(timeRegistrationRepository
+                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
+                    .OrderBy(t => t.Date.Numeric)
+                    .ThenBy(t => t.From.Numeric)
                     .ToList());
             };
 

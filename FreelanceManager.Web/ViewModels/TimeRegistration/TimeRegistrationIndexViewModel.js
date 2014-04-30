@@ -6,9 +6,9 @@
     self.timeRegistrations = ko.observableArray([]);
     self.clients = ko.observableArray([]);
     self.selectedTimeRegistration = ko.observable();
-    self.selectedDate = ko.observable(new moment(new moment().format("YYYY-MM-DD")));
+    self.selectedDate = ko.observable(new moment(new moment()));
     self.hasNoTimeRegistrations = ko.computed(function () { return self.timeRegistrations().length == 0; }, self);
-    self.dateSelector = ko.observable(new moment().format("YYYY-MM-DD"));
+    self.dateSelector = ko.observable(new moment().format("YYYY-MM-DD")); // for the date picker
     self.dateSelector.subscribe(function () {
         self.selectedDate(new moment(self.dateSelector()));
         self.refreshTimeRegistrations();
