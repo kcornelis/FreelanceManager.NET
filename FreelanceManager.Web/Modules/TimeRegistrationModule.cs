@@ -73,9 +73,17 @@ namespace FreelanceManager.Web.Modules
                 return View["ImportResult", result];
             };
 
-            Get["/export"] = parameters =>
+            Get["/export/{fromDate}/{toDate}"] = parameters =>
             {
-                var items = timeRegistrationRepository.GetAll();
+                var min = ((DateTime)parameters.fromDate).GetNumericValue();
+                var max = ((DateTime)parameters.toDate).AddDays(1).GetNumericValue();
+
+                var items = timeRegistrationRepository
+                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
+                    .OrderBy(t => t.Date.Numeric)
+                    .ThenBy(t => t.From.Numeric)
+                    .ToList();
+
                 return Response.AsExcel(items);
             };
         }

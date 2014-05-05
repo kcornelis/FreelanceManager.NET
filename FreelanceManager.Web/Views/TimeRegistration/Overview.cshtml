@@ -26,6 +26,10 @@
                 var periodtype = $(this).data('periodtype');
                 viewModel.changePeriod(period, periodtype);
             });
+
+            $('.export-link').click(function () {
+                window.location = '/timeregistration/export/' + viewModel.dateFromSelector() + '/' + viewModel.dateToSelector();
+            });
         });
     </script>
 }
@@ -47,7 +51,7 @@
             <li><a href="#" class="change-period" data-period="current" data-periodtype="year">This Year</a></li>
             <li><a href="#" class="change-period" data-period="previous" data-periodtype="year">Last Year</a></li>
             <li><hr /></li>
-            <li><a href="/timeregistration/export">Export</a></li>
+            <li><a href="#" class="export-link">Export</a></li>
         </ul>
     </div>
 </div>
