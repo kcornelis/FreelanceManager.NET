@@ -20,6 +20,12 @@
             $('.date-selector').datepicker({
                 format: 'yyyy-mm-dd'
             });
+
+            $('.change-period').click(function () {
+                var period = $(this).data('period');
+                var periodtype = $(this).data('periodtype');
+                viewModel.changePeriod(period, periodtype);
+            });
         });
     </script>
 }
@@ -34,12 +40,12 @@
             <span class="glyphicon glyphicon-cog"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
-            <li><a href="#">This Week</a></li>
-            <li><a href="#">Last Week</a></li>
-            <li><a href="#">This Month</a></li>
-            <li><a href="#">Last Month</a></li>
-            <li><a href="#">This Year</a></li>
-            <li><a href="#">Last Year</a></li>
+            <li><a href="#" class="change-period" data-period="current" data-periodtype="week">This Week</a></li>
+            <li><a href="#" class="change-period" data-period="previous" data-periodtype="week">Last Week</a></li>
+            <li><a href="#" class="change-period" data-period="current" data-periodtype="month">This Month</a></li>
+            <li><a href="#" class="change-period" data-period="previous" data-periodtype="month">Last Month</a></li>
+            <li><a href="#" class="change-period" data-period="current" data-periodtype="year">This Year</a></li>
+            <li><a href="#" class="change-period" data-period="previous" data-periodtype="year">Last Year</a></li>
             <li><hr /></li>
             <li><a href="/timeregistration/export">Export</a></li>
         </ul>

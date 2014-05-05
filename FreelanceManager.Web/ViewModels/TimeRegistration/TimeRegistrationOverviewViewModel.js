@@ -26,14 +26,9 @@
         if (!self.selectedFromDate() || !self.selectedToDate())
             return '';
 
-        return 'From ' + self.selectedFromDate().format('DD MMMM YYYY') + ' to ' + self.selectedToDate().format('DD MMMM YYYY');
+        return self.selectedFromDate().format('DD MMMM YYYY') + ' - ' + self.selectedToDate().format('DD MMMM YYYY');
     });
 
-    self.init = function () {
-        self.dateFromSelector(new moment().set('date', 1).format("YYYY-MM-DD"));
-        self.dateToSelector(new moment().set('date', new moment().daysInMonth()).format("YYYY-MM-DD"));
-    };
-    
     self.refresh = function () {
 
         if (!self.dateFromSelector() || !self.dateToSelector())
@@ -58,5 +53,45 @@
         });
     };
 
-    self.init();
+    self.changePeriod = function (period, type) {
+
+        self.dateFromSelector(null);
+        self.dateToSelector(null);
+
+        var from = new moment();
+        var to = new moment();
+
+        if (type == 'week') {
+            from = new moment().day(1);
+            to = new moment().day(7);
+        }
+        else if (type == 'month') {
+            from = new moment().set('date', 1);
+            to = new moment().set('date', new moment().daysInMonth());
+        }
+        else if (type == 'year') {
+            from = new moment().set('month', 0).set('date', 1);
+            to = new moment().set('month', 11).set('date', 31);
+        }
+
+        if (period == 'previous') {
+            if (type == 'week') {
+                from = from.subtract('days', 7);
+                to = to.subtract('days', 7);
+            }
+            else if (type == 'month') {
+                from = from.subtract('months', 1);
+                to = new moment(from).set('date', from.daysInMonth());
+            }
+            else if (type == 'year') {
+                from = from.subtract('years', 1);
+                to = to.subtract('years', 1);
+            }
+        }
+
+        self.dateFromSelector(from.format('YYYY-MM-DD'));
+        self.dateToSelector(to.format('YYYY-MM-DD'));
+    };
+
+    self.changePeriod('current', 'month');
 }
