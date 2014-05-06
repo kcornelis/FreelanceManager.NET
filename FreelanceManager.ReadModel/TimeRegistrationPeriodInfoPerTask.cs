@@ -6,8 +6,6 @@ namespace FreelanceManager.ReadModel
 {
     public class TimeRegistrationPeriodInfoPerTask
     {
-        public int Year { get; set; }
-        public int Month { get; set; }
         public Guid ClientId { get; set; }
         public string Client { get; set; }
         public Guid ProjectId { get; set; }

@@ -40,14 +40,19 @@ namespace FreelanceManager.Web.Api.Read
                     .ToList());
             };
 
-            Get["/getinfo/{year:int}/{month:int}"] = parameters =>
+            Get["/getinfo/{fromDate}/{toDate}"] = parameters =>
             {
-                var items = timeRegistrationRepository.GetForMonth((int)parameters.year, (int)parameters.month);
+                var min = ((DateTime)parameters.fromDate).GetNumericValue();
+                var max = ((DateTime)parameters.toDate).AddDays(1).GetNumericValue();
 
-                var perMonth = new TimeRegistrationPeriodInfo
+                var items = timeRegistrationRepository
+                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
+                    .OrderBy(t => t.Date.Numeric)
+                    .ThenBy(t => t.From.Numeric)
+                    .ToList();
+
+                var summary = new TimeRegistrationPeriodInfo
                 {
-                    Year = (int)parameters.year,
-                    Month = (int)parameters.month,
                     Count = items.Count(),
                     Income = Math.Round(items.Sum(i => i.Minutes.HasValue ? i.CorrectedIncome != null ? i.CorrectedIncome.Value : (i.Minutes.Value * ((decimal)i.Rate / 60)) : 0), 2),
                     BillableMinutes = items.Sum(i => i.Minutes.HasValue && ((i.CorrectedIncome != null && i.CorrectedIncome.Value > 0) || i.Rate > 0) ? i.Minutes.Value : 0),
@@ -59,8 +64,6 @@ namespace FreelanceManager.Web.Api.Read
                                    {
                                         return new TimeRegistrationPeriodInfoPerTask
                                         {
-                                            Year = (int)parameters.year,
-                                            Month = (int)parameters.month,
                                             ClientId = g.Key.ClientId,
                                             Client = g.Key.ClientName,
                                             ProjectId = g.Key.ProjectId,
@@ -75,7 +78,7 @@ namespace FreelanceManager.Web.Api.Read
 
                 return new
                 {
-                    PerMonth = perMonth,
+                    Summary = summary,
                     PerTask = perTask
                 };
             };
