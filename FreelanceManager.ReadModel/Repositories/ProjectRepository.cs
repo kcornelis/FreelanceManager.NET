@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MongoDB.Driver;
+using MongoDB.Driver.Builders;
 
 namespace FreelanceManager.ReadModel.Repositories
 {
@@ -20,6 +22,14 @@ namespace FreelanceManager.ReadModel.Repositories
         protected override string GetCollectionName()
         {
             return "Project";
+        }
+
+        protected override void CreateIndexes(MongoCollection<Project> collection)
+        {
+            base.CreateIndexes(collection);
+
+            collection.EnsureIndex(IndexKeys<Project>.Ascending(p => p.ClientId), IndexOptions.SetName("IX_ClientId"));
+            collection.EnsureIndex(IndexKeys<Project>.Ascending(p => p.Hidden), IndexOptions.SetName("IX_Hidden"));
         }
 
         public IEnumerable<Project> FindForClient(Guid clientId)

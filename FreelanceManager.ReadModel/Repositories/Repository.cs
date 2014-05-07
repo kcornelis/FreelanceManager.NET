@@ -14,11 +14,30 @@ namespace FreelanceManager.ReadModel.Repositories
     {
         private MongoCollection<T> _collection;
         private ITenantContext _tenantContext;
+        private static bool _initialized;
+        private object _lock = new object();
 
         public Repository(IMongoContext mongoContext, ITenantContext tenantContext)
         {
             _collection = mongoContext.GetDatabase().GetCollection<T>(GetCollectionName());
             _tenantContext = tenantContext;
+
+            if (!_initialized)
+            {
+                lock (_lock)
+                {
+                    if (!_initialized)
+                    {
+                        CreateIndexes(_collection);
+                        _initialized = true;
+                    }
+                }
+            }
+        }
+
+        protected virtual void CreateIndexes(MongoCollection<T> collection)
+        {
+            collection.EnsureIndex(IndexKeys.Ascending("Tenant"), IndexOptions.SetName("IX_Tenant"));
         }
 
         protected string CurrentTenant

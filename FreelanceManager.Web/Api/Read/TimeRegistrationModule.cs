@@ -17,39 +17,16 @@ namespace FreelanceManager.Web.Api.Read
 
             Get["/{id:guid}"] = parameters => Json(timeRegistrationRepository.GetById((Guid)parameters.id));
 
-            Get["/getfordate/{date:datetime}"] = parameters => {
-                var min = ((DateTime)parameters.date).GetNumericValue();
-                var max = ((DateTime)parameters.date).AddDays(1).GetNumericValue();
+            Get["/getfordate/{date:datetime}"] = parameters => Json(timeRegistrationRepository.GetForPeriod((DateTime)parameters.date, 
+                                                                                                            ((DateTime)parameters.date).AddDays(1)));
 
-                return Json(timeRegistrationRepository
-                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
-                    .OrderBy(t => t.Date.Numeric)
-                    .ThenBy(t => t.From.Numeric)
-                    .ToList());
-            };
-
-            Get["/getforperiod/{fromDate}/{toDate}"] = parameters =>
-            {
-                var min = ((DateTime)parameters.fromDate).GetNumericValue();
-                var max = ((DateTime)parameters.toDate).AddDays(1).GetNumericValue();
-
-                return Json(timeRegistrationRepository
-                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
-                    .OrderBy(t => t.Date.Numeric)
-                    .ThenBy(t => t.From.Numeric)
-                    .ToList());
-            };
+            Get["/getforperiod/{fromDate}/{toDate}"] = parameters => Json(timeRegistrationRepository.GetForPeriod((DateTime)parameters.fromDate,
+                                                                                                                  ((DateTime)parameters.toDate).AddDays(1)));
 
             Get["/getinfo/{fromDate}/{toDate}"] = parameters =>
             {
-                var min = ((DateTime)parameters.fromDate).GetNumericValue();
-                var max = ((DateTime)parameters.toDate).AddDays(1).GetNumericValue();
-
-                var items = timeRegistrationRepository
-                    .Where(t => t.Date.Numeric >= min && t.Date.Numeric < max)
-                    .OrderBy(t => t.Date.Numeric)
-                    .ThenBy(t => t.From.Numeric)
-                    .ToList();
+                var items = timeRegistrationRepository.GetForPeriod((DateTime)parameters.fromDate, 
+                                                                    ((DateTime)parameters.toDate).AddDays(1));
 
                 var summary = new TimeRegistrationPeriodInfo
                 {

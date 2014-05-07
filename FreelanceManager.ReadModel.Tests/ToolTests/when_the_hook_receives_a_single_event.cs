@@ -23,7 +23,7 @@ namespace FreelanceManager.ReadModel.ToolTests
             _sequenceRepository = Resolve<ISequenceRepository>();
             _tenantContext = Resolve<ITenantContext>();
 
-            _bus.PublishDomainUpdate(new [] { new SequenceNumberAdded(_id, 1) },
+            _bus.PublishDomainUpdate(new [] { new SequenceNumberAdded(_id, 1) { Version = 1 }},
                                      Metadata(1));
 
         
@@ -31,7 +31,7 @@ namespace FreelanceManager.ReadModel.ToolTests
 
         protected override void Because()
         {
-            _bus.PublishDomainUpdate(new[] { new SequenceNumberAdded(_id, 2) },
+            _bus.PublishDomainUpdate(new[] { new SequenceNumberAdded(_id, 2){ Version = 2 } },
                                      Metadata(2));
 
             _sequence = _sequenceRepository.GetById(_id);
