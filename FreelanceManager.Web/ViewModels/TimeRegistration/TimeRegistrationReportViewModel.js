@@ -17,7 +17,7 @@
 
     self.title = ko.computed(function () {
 
-        if (!self.selectedFromDate() || !self.selectedFoDate())
+        if (!self.selectedFromDate() || !self.selectedToDate())
             return '';
 
         if (self.periodType() == 'month') {
