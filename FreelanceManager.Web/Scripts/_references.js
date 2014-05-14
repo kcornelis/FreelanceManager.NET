@@ -94,6 +94,7 @@
 /// <reference path="../viewmodels/timeregistration/timeregistrationimportviewmodel.js" />
 /// <reference path="../viewmodels/timeregistration/timeregistrationindexviewmodel.js" />
 /// <reference path="../viewmodels/timeregistration/timeregistrationmodel.js" />
+/// <reference path="../viewmodels/timeregistration/timeregistrationoverviewviewmodel.js" />
 /// <reference path="../viewmodels/timeregistration/timeregistrationprojectmodel.js" />
 /// <reference path="../viewmodels/timeregistration/timeregistrationreportviewmodel.js" />
 /// <reference path="../viewmodels/timeregistration/timeregistrationtaskmodel.js" />

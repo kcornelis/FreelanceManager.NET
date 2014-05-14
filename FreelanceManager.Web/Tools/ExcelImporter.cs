@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
+using FreelanceManager.Domain;
 using OfficeOpenXml;
 
 namespace FreelanceManager.Web.Tools
@@ -36,6 +37,7 @@ namespace FreelanceManager.Web.Tools
             var clients = new Dictionary<Guid, Domain.Client>();
             var projects = new Dictionary<Guid, Domain.Project>();
             var result = new ExcelImportResult();
+            var toAdd = new List<TimeRegistration>();
 
             for (int r = 2; r <= worksheet.Dimension.End.Row; r++)
             {
@@ -59,19 +61,19 @@ namespace FreelanceManager.Web.Tools
                     DateTime to;
                     decimal rate;
 
-                    if (!DateTime.TryParseExact(worksheet.Cells[r, dateColumn].Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, dateColumn].Text, "yyyy-M-d", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
                     {
                         result.Errors.Add(r, "Date does not contain a valid date.");
                         continue;
                     }
 
-                    if (!DateTime.TryParseExact(worksheet.Cells[r, fromColumn].Text, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out from))
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, fromColumn].Text, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out from))
                     {
                         result.Errors.Add(r, "From does not contain a valid time.");
                         continue;
                     }
 
-                    if (!DateTime.TryParseExact(worksheet.Cells[r, toColumn].Text, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out to))
+                    if (!DateTime.TryParseExact(worksheet.Cells[r, toColumn].Text, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out to))
                     {
                         result.Errors.Add(r, "To does not contain a valid time.");
                         continue;
@@ -83,7 +85,7 @@ namespace FreelanceManager.Web.Tools
                         continue;
                     }
 
-                    var timeRegistration = new Domain.TimeRegistration(_idGenerator.NextGuid(),
+                    toAdd.Add(new Domain.TimeRegistration(_idGenerator.NextGuid(),
                         client, project, new Domain.ValueObjects.Task
                         {
                             Name = worksheet.Cells[r, taskColumn].Text,
@@ -92,15 +94,20 @@ namespace FreelanceManager.Web.Tools
                         worksheet.Cells[r, descriptionColumn].Text,
                         new Date(date.Year, date.Month, date.Day),
                         new Time(from.Hour, from.Minute),
-                        new Time(to.Hour, to.Minute));
-
-                    _aggregateRootRepository.Save(timeRegistration);
-
-                    result.Success++;
+                        new Time(to.Hour, to.Minute)));
                 }
                 catch (Exception ex)
                 {
                     result.Errors.Add(r, ex.Message);
+                }
+            }
+
+            if (!result.Errors.Any())
+            {
+                foreach (var timeRegistration in toAdd)
+                {
+                    _aggregateRootRepository.Save(timeRegistration);
+                    result.Success++;
                 }
             }
 
