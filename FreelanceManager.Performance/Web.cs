@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace FreelanceManager.Performance.Console
+namespace FreelanceManager.Performance
 {
     public class CustomWebClient : WebClient
     {

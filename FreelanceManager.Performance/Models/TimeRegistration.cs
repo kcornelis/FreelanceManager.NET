@@ -3,7 +3,7 @@ using Fluency.DataGeneration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace FreelanceManager.Performance.Console.Models
+namespace FreelanceManager.Performance.Models
 {
     public class TimeRegistration
     {

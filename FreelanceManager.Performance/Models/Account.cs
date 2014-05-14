@@ -1,11 +1,12 @@
-﻿using Fluency;
+﻿using System;
+using Fluency;
 using Fluency.DataGeneration;
-using FreelanceManager.Performance.Console;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace FreelanceManager.Performance.Console.Models
+namespace FreelanceManager.Performance.Models
 {
+    [Serializable]
     public class Account
     {
         public Account()
