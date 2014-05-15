@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30324.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Web", "FreelanceManager.Web\FreelanceManager.Web.csproj", "{E35D84C4-82EB-4615-BA72-C2AC75BA8D0B}"
 EndProject
@@ -37,6 +37,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.ReadModel.WindowsService", "FreelanceManager.ReadModel.WindowsService\FreelanceManager.ReadModel.WindowsService.csproj", "{87BDE5CE-1A55-4369-B17F-39C7483C5BA1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Performance", "FreelanceManager.Performance\FreelanceManager.Performance.csproj", "{C507D565-040B-4A0F-8E9D-6B2107FF7279}"
+EndProject
+Project("{CC5FD16D-436D-48AD-A40C-5A424C6E3E79}") = "FreelanceManager.Azure", "FreelanceManager.Azure\FreelanceManager.Azure.ccproj", "{E9D5C02A-32A8-494A-93B9-F2214B4E6EE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.ReadModel.WorkerRole", "FreelanceManager.ReadModel.WorkerRole\FreelanceManager.ReadModel.WorkerRole.csproj", "{FBB4A181-B317-49EC-9A52-3A6C93D8A871}"
+EndProject
+Project("{CC5FD16D-436D-48AD-A40C-5A424C6E3E79}") = "FreelanceManager.Azure.Performance", "FreelanceManager.Azure.Performance\FreelanceManager.Azure.Performance.ccproj", "{9A01A795-67C7-4BFA-A756-1BFD408010F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Performance.WorkerRole", "FreelanceManager.Performance.WorkerRole\FreelanceManager.Performance.WorkerRole.csproj", "{695D5824-6F83-4B10-B18B-BC091909A88D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +108,22 @@ Global
 		{C507D565-040B-4A0F-8E9D-6B2107FF7279}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C507D565-040B-4A0F-8E9D-6B2107FF7279}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C507D565-040B-4A0F-8E9D-6B2107FF7279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D5C02A-32A8-494A-93B9-F2214B4E6EE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D5C02A-32A8-494A-93B9-F2214B4E6EE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D5C02A-32A8-494A-93B9-F2214B4E6EE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D5C02A-32A8-494A-93B9-F2214B4E6EE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBB4A181-B317-49EC-9A52-3A6C93D8A871}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBB4A181-B317-49EC-9A52-3A6C93D8A871}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBB4A181-B317-49EC-9A52-3A6C93D8A871}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBB4A181-B317-49EC-9A52-3A6C93D8A871}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A01A795-67C7-4BFA-A756-1BFD408010F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A01A795-67C7-4BFA-A756-1BFD408010F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A01A795-67C7-4BFA-A756-1BFD408010F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A01A795-67C7-4BFA-A756-1BFD408010F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{695D5824-6F83-4B10-B18B-BC091909A88D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{695D5824-6F83-4B10-B18B-BC091909A88D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{695D5824-6F83-4B10-B18B-BC091909A88D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{695D5824-6F83-4B10-B18B-BC091909A88D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
