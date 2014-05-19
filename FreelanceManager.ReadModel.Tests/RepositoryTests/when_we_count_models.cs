@@ -21,12 +21,12 @@ namespace FreelanceManager.ReadModel.RepositoryTests
 
         protected override void Because()
         {
-            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "1" });
-            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "2" });
-            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "3" });
+            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "1", Version = 1 }, 1);
+            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "2", Version = 1 }, 1);
+            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "3", Version = 1 }, 1);
 
             _tenantContext.SetTenantId(Guid.NewGuid().ToString());
-            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "4" });
+            _repository.Add(new Sequence { Id = Guid.NewGuid(), Result = "4", Version = 1 }, 1);
 
             _tenantContext.SetTenantId(_tenant);
             _count = (int)_repository.Count();

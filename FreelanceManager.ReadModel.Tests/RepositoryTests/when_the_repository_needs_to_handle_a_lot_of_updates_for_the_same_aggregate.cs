@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using FluentAssertions;
 using Xunit;
 using TPL = System.Threading.Tasks;
@@ -28,22 +29,31 @@ namespace FreelanceManager.ReadModel.ToolTests
         {
             var task1 = TPL.Task.Factory.StartNew(() =>
             {
+                var errors = 0;
                 _tenantContext.SetTenantId(_tenant);
 
                 for (int i = 1; i < _repeat; )
                 {
                     try
                     {
-                        _handler.Handle(new SequenceNumberAdded(_id, i){ Version = i });
+                        _handler.Handle(new SequenceNumberAdded(_id, i) { Version = i });
 
                         i += 3;
+                        errors = 0;
                     }
-                    catch { }
+                    catch
+                    {
+                        Thread.Sleep(100);
+                        errors += 1;
+                        if (errors > 20)
+                            throw;
+                    }
                 }
             });
 
             var task2 = TPL.Task.Factory.StartNew(() =>
             {
+                var errors = 0;
                 _tenantContext.SetTenantId(_tenant);
 
                 for (int i = 2; i < _repeat; )
@@ -53,13 +63,21 @@ namespace FreelanceManager.ReadModel.ToolTests
                         _handler.Handle(new SequenceNumberAdded(_id, i) { Version = i });
 
                         i += 3;
+                        errors = 0;
                     }
-                    catch { }
+                    catch
+                    {
+                        Thread.Sleep(100);
+                        errors += 1;
+                        if (errors > 20)
+                            throw;
+                    }
                 }
             });
-
+             
             var task3 = TPL.Task.Factory.StartNew(() =>
             {
+                var errors = 0;
                 _tenantContext.SetTenantId(_tenant);
 
                 for (int i = 3; i < _repeat; )
@@ -69,8 +87,15 @@ namespace FreelanceManager.ReadModel.ToolTests
                         _handler.Handle(new SequenceNumberAdded(_id, i) { Version = i });
 
                         i += 3;
+                        errors = 0;
                     }
-                    catch { }
+                    catch
+                    {
+                        Thread.Sleep(100);
+                        errors += 1;
+                        if (errors > 20)
+                            throw;
+                    }
                 }
             });
 

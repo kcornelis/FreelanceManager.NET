@@ -22,7 +22,7 @@ namespace FreelanceManager.ReadModel.RepositoryTests
 
         protected override void Because()
         {
-            _repository.Add(new Sequence { Id = _id, Result = "1" });
+            _repository.Add(new Sequence { Id = _id, Result = "1", Version = 1 }, 1);
             _model = _repository.GetById(_id);
         }
 

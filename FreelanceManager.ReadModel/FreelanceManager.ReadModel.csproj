@@ -84,6 +84,7 @@
     <Compile Include="Repositories\ProjectRepository.cs" />
     <Compile Include="Repositories\Repository.cs" />
     <Compile Include="Repositories\TimeRegistrationRepository.cs" />
+    <Compile Include="SetupExtensions.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="TimeRegistration.cs" />
     <Compile Include="TimeRegistrationPeriodInfo.cs" />

@@ -52,7 +52,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 Income = Math.Round((((decimal)totalMinutes * @event.Rate) / 60), 2)
             };
 
-            _timeRegistrationRepository.Add(timeRegistration);
+            _timeRegistrationRepository.Add(timeRegistration, @event.Version);
         }
 
         public void Handle(TimeRegistrationDetailsChanged @event)

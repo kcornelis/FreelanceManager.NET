@@ -25,6 +25,7 @@ namespace FreelanceManager.Infrastructure
                 throw new Exception("Bus already started");
 
             _logger.Info("Starting service bus, enpoint name " + name);
+            _logger.Info("Service bus type: msmq");
 
             _bus = ServiceBusFactory.New(sbc =>
             {

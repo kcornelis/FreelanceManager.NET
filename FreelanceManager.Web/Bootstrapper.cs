@@ -1,12 +1,8 @@
 ﻿using System.Configuration;
-using System.Linq;
-using System.Reflection;
 using Autofac;
-using EventStore;
-using EventStore.Serialization;
 using FreelanceManager.Infrastructure;
+using FreelanceManager.ReadModel;
 using FreelanceManager.Web.Tools;
-using MongoDB.Bson.Serialization;
 using Nancy;
 using Nancy.Authentication.Forms;
 using Nancy.Bootstrapper;
@@ -34,9 +30,36 @@ namespace FreelanceManager.Web
 
         protected override void ConfigureApplicationContainer(ILifetimeScope existingContainer)
         {
-            RegisterServices(existingContainer);
-            RegisterBus(existingContainer);
-            RegisterEventStore(existingContainer);
+            var setup = new Setup(existingContainer);
+
+            // defaults
+            setup.WithGuidGenerator();
+            setup.WithThreadStaticTenantContext();
+            setup.WithMongo("MongoConnectionReadModel");
+            setup.RegisterReadModelRepositories();
+
+            // web specific
+            var builder = new ContainerBuilder();
+            builder.RegisterType<NancyUserMapper>().As<IUserMapper>();
+            builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
+            builder.RegisterType<ExcelService>().As<IExcelService>();
+            builder.Update(setup.Container.ComponentRegistry);
+
+            // bus
+#if DEBUG
+            setup.WithRabbitMqBus();
+#else
+            setup.WithAzureBus();
+#endif
+
+            // eventstore
+            setup.WithMongoEventStore("MongoConnectionEventStore", 
+                new AuthorizationPipelineHook(setup.Container),
+                new MessageDispatcher(setup.Container),
+                false);
+            
+            // start the bus
+            setup.Container.Resolve<IServiceBus>().Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
         }
 
         protected override void ConfigureRequestContainer(ILifetimeScope container, NancyContext context)
@@ -74,74 +97,6 @@ namespace FreelanceManager.Web
                 _logger.Error("Unhandled error on request: " + context.Request.Url + " : " + a.Message, a);
                 return a.Message;
             });
-        }
-
-        private void RegisterServices(ILifetimeScope container)
-        {
-            var builder = new ContainerBuilder();
-            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
-
-            builder.RegisterType<NancyUserMapper>().As<IUserMapper>();
-            builder.RegisterType<GuidGenerator>().As<IIdGenerator>();
-            builder.RegisterType<ThreadStaticTenantContext>().As<ITenantContext>();
-            builder.RegisterType<MongoContext>().As<IMongoContext>().SingleInstance().WithParameter("url", ConfigurationManager.ConnectionStrings["MongoConnectionReadModel"].ConnectionString);
-
-            builder.RegisterType<AggregateRootRepository>().As<IAggregateRootRepository>();
-            builder.RegisterType<StaticContentResolverForWeb>().As<IStaticContentResolver>();
-            builder.RegisterType<ExcelService>().As<IExcelService>();
-
-            builder.RegisterAssemblyTypes(readModelAssembly)
-                   .Where(t => t.Name.EndsWith("Repository"))
-                   .AsImplementedInterfaces();
-
-            builder.Update(container.ComponentRegistry);
-        }
-
-        private void RegisterBus(ILifetimeScope container)
-        {
-            var builder = new ContainerBuilder();
-
-            var readModelAssembly = typeof(FreelanceManager.ReadModel.Account).Assembly;
-
-#if DEBUG
-            var bus = new RabbitMqServiceBus(container);
-#else
-            var bus = new AzureServiceBus(container);
-#endif
-
-            bus.Start(ConfigurationManager.AppSettings["serviceBusEndpoint"]);
-
-            builder.RegisterInstance(bus).As<IServiceBus>();
-
-            builder.Update(container.ComponentRegistry);
-        }
-
-        private void RegisterEventStore(ILifetimeScope container)
-        {
-            var types = Assembly.GetAssembly(typeof(FreelanceManager.Events.Event))
-                                .GetTypes()
-                                .Where(type => type.IsClass && !type.ContainsGenericParameters)
-                                .Where(type => type.IsSubclassOf(typeof(FreelanceManager.Events.Event)) ||
-                                               type.Namespace.Contains("FreelanceManager.Dtos"));
-
-            foreach (var t in types)
-                BsonClassMap.LookupClassMap(t);
-
-            BsonClassMap.LookupClassMap(typeof(Date));
-            BsonClassMap.LookupClassMap(typeof(Time));
-            BsonClassMap.LookupClassMap(typeof(Money));
-
-            var eventStore = Wireup.Init()
-                .UsingMongoPersistence("MongoConnectionEventStore", new DocumentObjectSerializer())
-                .InitializeStorageEngine()
-                .HookIntoPipelineUsing(new[] { new AuthorizationPipelineHook(container) })
-                .UsingSynchronousDispatchScheduler()
-                    .DispatchTo(new MessageDispatcher(container))
-                .Build();
-
-            var builder = new ContainerBuilder();
-            builder.RegisterInstance<IStoreEvents>(eventStore).ExternallyOwned();
-            builder.Update(container.ComponentRegistry);
         }
     }
 }

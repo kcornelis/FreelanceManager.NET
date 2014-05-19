@@ -12,9 +12,7 @@ namespace FreelanceManager.ReadModel.Repositories
 
         T GetById(TKey id);
 
-        T Add(T entity);
-
-        void Add(IEnumerable<T> entities);
+        T Add(T entity, int version);
 
         T Update(T entity);
 
