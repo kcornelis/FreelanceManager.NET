@@ -3,7 +3,7 @@
     public static class Config
     {
         //public static string Url = "https://fm-kcornelis.cloudapp.net:8443";
-        public static string Url = "http://localhost:3443";
+        public static string Url = "http://localhost:8090";
         public static string AdminEmail = "kevin.cornelis@outlook.com";
         public static string AdminPassword = "kevin";
 

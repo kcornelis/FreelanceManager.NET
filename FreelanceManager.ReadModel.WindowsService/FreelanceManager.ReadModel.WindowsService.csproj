@@ -53,6 +53,10 @@
     <Reference Include="MassTransit.AutofacIntegration">
       <HintPath>..\packages\MassTransit.Autofac.2.9.5\lib\net40\MassTransit.AutofacIntegration.dll</HintPath>
     </Reference>
+    <Reference Include="MassTransit.NLogIntegration, Version=2.9.0.0, Culture=neutral, PublicKeyToken=b8e0e9f2f1e657fa, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\MassTransit.NLog.2.9.5\lib\net40\MassTransit.NLogIntegration.dll</HintPath>
+    </Reference>
     <Reference Include="MassTransit.Transports.AzureServiceBus">
       <HintPath>..\packages\MassTransit.AzureServiceBus.0.2.0\lib\net40\MassTransit.Transports.AzureServiceBus.dll</HintPath>
     </Reference>
