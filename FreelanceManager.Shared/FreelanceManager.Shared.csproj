@@ -75,6 +75,7 @@
     <Compile Include="IDomainUpdateServiceBusHandlerHook.cs" />
     <Compile Include="Loggers.cs" />
     <Compile Include="Money.cs" />
+    <Compile Include="Setup.cs" />
     <Compile Include="Time.cs" />
     <Compile Include="Events\Account\AccountCreated.cs" />
     <Compile Include="Events\Account\AccountDetailsChanged.cs" />

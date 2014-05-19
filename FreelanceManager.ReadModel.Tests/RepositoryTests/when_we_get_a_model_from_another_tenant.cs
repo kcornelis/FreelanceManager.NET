@@ -19,7 +19,7 @@ namespace FreelanceManager.ReadModel.RepositoryTests
 
             _tenantContext.SetTenantId(_tenant);
 
-            _repository.Add(new Sequence { Id = _id, Tenant = _tenant, Result = "1" });
+            _repository.Add(new Sequence { Id = _id, Tenant = _tenant, Result = "1", Version = 1 }, 1);
         }
 
         protected override void Because()

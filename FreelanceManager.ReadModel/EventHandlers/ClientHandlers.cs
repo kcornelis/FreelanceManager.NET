@@ -22,7 +22,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 Name = @event.Name
             };
 
-            _clientRepository.Add(client);
+            _clientRepository.Add(client, @event.Version);
         }
 
         public void Handle(ClientDetailsChanged @event)

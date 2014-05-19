@@ -24,7 +24,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 PasswordSalt = 0
             };
 
-            _accountRepository.Add(account);
+            _accountRepository.Add(account, @event.Version);
         }
 
         public void Handle(AccountDetailsChanged @event)

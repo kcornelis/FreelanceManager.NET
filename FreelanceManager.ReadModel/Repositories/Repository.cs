@@ -103,10 +103,14 @@ namespace FreelanceManager.ReadModel.Repositories
             return entity;
         }
 
-        public virtual T Add(T entity)
+        public virtual T Add(T entity, int version)
         {
             if(!TenantIndependant)
                 entity.Tenant = CurrentTenant;
+
+            // a new entity should always have version 1
+            if (version != 1)
+                throw new InvalidVersionException(entity.GetType().Name, entity.Id, entity.Version, 1);
 
             entity.Version = 1;
 
@@ -122,32 +126,20 @@ namespace FreelanceManager.ReadModel.Repositories
             return entity;
         }
 
-        public virtual void Add(IEnumerable<T> entities)
-        {
-            if (!TenantIndependant)
-            {
-                foreach (var e in entities)
-                    e.Tenant = CurrentTenant;
-            }
-
-            foreach (var e in entities)
-                e.Version = 1;
-
-            try
-            {
-                Collection.InsertBatch<T>(entities);
-            }
-            catch (WriteConcernException ex)
-            {
-                throw new DatabaseException(ex.Message);
-            }
-        }
-
+        /// <summary>
+        /// Update the entity but don't touch the version.
+        /// </summary>
         public virtual T Update(T entity)
         {
             return InternalUpdate(entity, null);
         }
 
+        /// <summary>
+        /// Verify the version and update the entity.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="newVersion"></param>
+        /// <returns></returns>
         public virtual T Update(T entity, int newVersion)
         {
             return InternalUpdate(entity, newVersion);

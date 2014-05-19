@@ -26,7 +26,8 @@ namespace FreelanceManager.Infrastructure
 
         public void PublishDomainUpdate(object[] events, DomainUpdateMetadate metadata)
         {
-            _logger.Debug("Publishing a domain update for " + metadata.AggregateType);
+            if (_logger.IsDebugEnabled)
+                _logger.Debug("Publishing a domain update for " + metadata.AggregateType);
 
             Publish(new DomainUpdateBusMessage
             {
@@ -39,9 +40,11 @@ namespace FreelanceManager.Infrastructure
 
         public void RegisterHandlers(Assembly assembly)
         {
+            _logger.Info("Registering handlers from " + assembly.FullName);
+
             var builder = new ContainerBuilder();
             builder.RegisterAssemblyTypes(assembly)
-                   .Where(t => t.Name.EndsWith("Handlers")) // todo: implements ihandleevent
+                   .Where(t => t.Name.EndsWith("Handlers")) //TODO should become => implements ihandleevent
                    .AsSelf();
 
             builder.Update(_container.ComponentRegistry);
@@ -60,6 +63,8 @@ namespace FreelanceManager.Infrastructure
                     _eventTypesWithHandlers[messageType].Add(type);
                 }
             }
+
+            _logger.Info("The service bus contains {0} handlers for {1} event types", _eventTypesWithHandlers.Values.Sum(h => h.Count), _eventTypesWithHandlers.Count);
         }
 
         protected void HandleDomainUpdate(DomainUpdateBusMessage domainUpdate)
@@ -77,7 +82,8 @@ namespace FreelanceManager.Infrastructure
                 {
                     foreach (var @event in events)
                     {
-                        _logger.Debug("Received message contains event with type " + @event.GetType().Name);
+                        if(_logger.IsDebugEnabled)
+                           _logger.Debug("Received message contains event with type " + @event.GetType().Name);
 
                         if (hook != null)
                             hook.PreHandleEvent(@event, domainUpdate.Metadata);
@@ -87,7 +93,8 @@ namespace FreelanceManager.Infrastructure
 
                         if (_eventTypesWithHandlers.TryGetValue(eventType, out handlerTypes))
                         {
-                            _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
+                            if (_logger.IsDebugEnabled)
+                                _logger.Debug("Sending received event to " + handlerTypes.Count + " handlers.");
 
                             foreach (var handlerType in handlerTypes)
                             {

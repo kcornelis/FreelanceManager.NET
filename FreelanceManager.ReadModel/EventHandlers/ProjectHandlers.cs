@@ -35,7 +35,7 @@ namespace FreelanceManager.ReadModel.EventHandlers
                 ClientName = client != null ? client.Name : ""
             };
 
-            _projectRepository.Add(project);
+            _projectRepository.Add(project, @event.Version);
         }
 
         public void Handle(ProjectDetailsChanged @event)

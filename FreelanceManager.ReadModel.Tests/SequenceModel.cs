@@ -64,7 +64,7 @@ namespace FreelanceManager.ReadModel
                     Result = @event.Number.ToString()
                 };
 
-                _repository.Add(model);
+                _repository.Add(model, @event.Version);
             }
             else
             {

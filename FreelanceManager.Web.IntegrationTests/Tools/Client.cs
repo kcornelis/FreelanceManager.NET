@@ -7,13 +7,15 @@ namespace FreelanceManager.Web.Tools
     {
         public static dynamic CreateClient(this Browser browser, string name = "johny bvba")
         {
-            return JObject.Parse(browser.Post("/write/client/create", c =>
+            var body = browser.Post("/write/client/create", c =>
             {
                 c.JsonBody(new
                 {
                     Name = name
                 });
-            }).Body.AsString());
+            }).Body.AsString();
+
+            return JObject.Parse(body);
         }
 
         public static dynamic ReadClient(this Browser browser, string id)

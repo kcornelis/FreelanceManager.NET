@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Configuration;
 using Autofac;
-using FreelanceManager.Infrastructure.ServiceBus;
 using MassTransit;
 using MassTransit.NLogIntegration;
 using NLog;
@@ -24,6 +23,7 @@ namespace FreelanceManager.Infrastructure
                 throw new Exception("Bus already started");
 
             _logger.Info("Starting service bus, enpoint name " + name);
+            _logger.Info("Service bus type: rabbit mq");
 
             _bus = ServiceBusFactory.New(sbc =>
             {

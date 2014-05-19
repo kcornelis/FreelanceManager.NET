@@ -24,26 +24,6 @@ namespace FreelanceManager.Infrastructure
             _idGenerator = idGenerator;
         }
 
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!disposing)
-				return;
-
-			lock (_streams)
-			{
-				foreach (var stream in _streams)
-					stream.Value.Dispose();
-
-				_streams.Clear();
-			}
-		}
-
 	    public virtual T GetById<T>(Guid id) where T : IAggregateRoot, new()
 		{
 			var stream = this.OpenStream(id);
@@ -126,5 +106,25 @@ namespace FreelanceManager.Infrastructure
 
 			return headers;
 		}
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing)
+                return;
+
+            lock (_streams)
+            {
+                foreach (var stream in _streams)
+                    stream.Value.Dispose();
+
+                _streams.Clear();
+            }
+        }
     }
 }
