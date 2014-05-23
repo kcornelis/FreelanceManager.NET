@@ -4,8 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Web", "FreelanceManager.Web\FreelanceManager.Web.csproj", "{E35D84C4-82EB-4615-BA72-C2AC75BA8D0B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E43DFE0E-174B-4CC2-B1AE-1FD63661DE57} = {E43DFE0E-174B-4CC2-B1AE-1FD63661DE57}
+		{74F2E22B-A171-4165-8DCB-FDE71BE70EBC} = {74F2E22B-A171-4165-8DCB-FDE71BE70EBC}
+		{539E3088-7D55-4D3C-9E57-4CB754F09D1C} = {539E3088-7D55-4D3C-9E57-4CB754F09D1C}
+		{D2326592-01BC-412B-A468-6CB687349908} = {D2326592-01BC-412B-A468-6CB687349908}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Domain", "FreelanceManager.Domain\FreelanceManager.Domain.csproj", "{E43DFE0E-174B-4CC2-B1AE-1FD63661DE57}"
+	ProjectSection(ProjectDependencies) = postProject
+		{74F2E22B-A171-4165-8DCB-FDE71BE70EBC} = {74F2E22B-A171-4165-8DCB-FDE71BE70EBC}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreelanceManager.Shared", "FreelanceManager.Shared\FreelanceManager.Shared.csproj", "{74F2E22B-A171-4165-8DCB-FDE71BE70EBC}"
 EndProject
