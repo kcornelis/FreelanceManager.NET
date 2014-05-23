@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FreelanceManager.Performance.Console")]
+[assembly: AssemblyTitle("FreelanceManager.ReadModel.WorkerRole")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("FreelanceManager.Performance.Console")]
+[assembly: AssemblyProduct("FreelanceManager.ReadModel.WorkerRole")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("d07b8451-b260-49f3-bc87-eddb7fdb5545")]
+[assembly: Guid("cdeb672e-5f18-4d42-a1ef-a50e3400a4fb")]
 
 // Version information for an assembly consists of the following four values:
 //
