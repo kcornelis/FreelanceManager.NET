@@ -74,6 +74,7 @@
     <Compile Include="EventHandlers\ClientHandlers.cs" />
     <Compile Include="EventHandlers\ProjectHandlers.cs" />
     <Compile Include="EventHandlers\TimeRegistrationHandlers.cs" />
+    <Compile Include="EventHandlers\WorkItemHandlers.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Repositories\ProjectRepository.cs" />
     <Compile Include="Repositories\Repository.cs" />
     <Compile Include="Repositories\TimeRegistrationRepository.cs" />
+    <Compile Include="Repositories\WorkItemRepository.cs" />
     <Compile Include="SetupExtensions.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="TimeRegistration.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="Tools\ReadModelInfo.cs" />
     <Compile Include="Tools\Rebuild.cs" />
     <Compile Include="Tools\ServiceBusMessageHandlerHook.cs" />
+    <Compile Include="WorkItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -103,6 +103,10 @@
     <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_changed.cs" />
     <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_created.cs" />
     <Compile Include="ToolTests\when_the_hook_receives_a_single_event.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_duedate_is_changed.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_is_changed.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_is_created.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_is_deleted.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
