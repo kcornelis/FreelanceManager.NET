@@ -69,6 +69,10 @@
     <Compile Include="Events\Project\ProjectUnhidden.cs" />
     <Compile Include="Events\TimeRegistration\TimeRegistrationDeleted.cs" />
     <Compile Include="Events\TimeRegistration\TimeRegistrationRateRefreshed.cs" />
+    <Compile Include="Events\WorkItem\WorkItemCreated.cs" />
+    <Compile Include="Events\WorkItem\WorkItemDeleted.cs" />
+    <Compile Include="Events\WorkItem\WorkItemDetailsChanged.cs" />
+    <Compile Include="Events\WorkItem\WorkItemDueDateChanged.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="IHandleEvent.cs" />
     <Compile Include="IServiceBus.cs" />

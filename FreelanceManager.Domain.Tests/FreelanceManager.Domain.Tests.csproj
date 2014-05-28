@@ -73,6 +73,10 @@
     <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_changed.cs" />
     <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_created.cs" />
     <Compile Include="TimeRegistrationTests\when_a_timeregistration_is_deleted.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_details_are_changed.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_duedate_is_changed.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_is_created.cs" />
+    <Compile Include="WorkItemTests\when_a_workitem_is_deleted.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -61,6 +61,7 @@
     <Compile Include="TimeRegistration.cs" />
     <Compile Include="ValueObjects\CorrectedIncome.cs" />
     <Compile Include="ValueObjects\Task.cs" />
+    <Compile Include="WorkItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
