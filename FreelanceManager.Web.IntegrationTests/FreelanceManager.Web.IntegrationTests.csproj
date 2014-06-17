@@ -197,6 +197,7 @@
     <Compile Include="Api\TimeRegistrations\ApiTests.cs" />
     <Compile Include="Api\TimeRegistrations\AuthenticationTests.cs" />
     <Compile Include="Api\TimeRegistrations\ScenarioTests.cs" />
+    <Compile Include="Api\WorkItem\ApiTests.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="NancyTestBootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -204,6 +205,7 @@
     <Compile Include="Tools\Client.cs" />
     <Compile Include="Tools\Project.cs" />
     <Compile Include="Tools\TimeRegistration.cs" />
+    <Compile Include="Tools\WorkItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
